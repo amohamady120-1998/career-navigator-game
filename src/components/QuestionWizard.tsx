@@ -7,8 +7,8 @@ interface Question {
   id: string;
   text_ar: string;
   category: string;
-  options_json: any[];
-  riasec_code?: string;
+  options_json: unknown;
+  riasec_code?: string | null;
 }
 
 interface QuestionWizardProps {

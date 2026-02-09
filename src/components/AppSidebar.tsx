@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
-import { BookOpen, BarChart3, Compass, Gamepad2, FileText, Lock } from "lucide-react";
+import { BookOpen, BarChart3, Compass, Gamepad2, FileText, Lock, CheckCircle2 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -22,6 +22,9 @@ const stepIcons: Record<string, typeof BookOpen> = {
   report: FileText,
 };
 
+// For now, all steps unlocked for development — lock logic will use user_progress later
+const UNLOCKED_SLUGS = ["intro", "pre-impact", "holland", "simulation", "report"];
+
 export function AppSidebar() {
   const location = useLocation();
 
@@ -40,7 +43,6 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-l-0">
       <SidebarContent>
-        {/* Brand */}
         <div className="p-6 border-b border-sidebar-border">
           <h2 className="text-xl font-black text-sidebar-primary">أثر ستارت</h2>
           <p className="text-xs text-sidebar-foreground/60 mt-1">رحلة اكتشاف المسار المهني</p>
@@ -54,17 +56,16 @@ export function AppSidebar() {
             <SidebarMenu>
               {steps?.map((step) => {
                 const Icon = stepIcons[step.slug] || BookOpen;
-                const isLocked = step.is_locked;
+                const isUnlocked = UNLOCKED_SLUGS.includes(step.slug);
                 const path = `/dashboard/${step.slug}`;
-                const isActive = location.pathname === path;
 
                 return (
                   <SidebarMenuItem key={step.id}>
                     <SidebarMenuButton
                       asChild
-                      className={isLocked ? "opacity-50 pointer-events-none" : ""}
+                      className={!isUnlocked ? "opacity-50 pointer-events-none" : ""}
                     >
-                      {isLocked ? (
+                      {!isUnlocked ? (
                         <div className="flex items-center gap-3 px-3 py-2">
                           <Lock className="w-4 h-4" />
                           <span>{step.name_ar}</span>
