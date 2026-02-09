@@ -26,6 +26,7 @@ const Auth = () => {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        toast({ title: "مرحباً بعودتك 👋" });
         navigate("/dashboard");
       } else {
         const userType = localStorage.getItem("athar_user_type") || "student";

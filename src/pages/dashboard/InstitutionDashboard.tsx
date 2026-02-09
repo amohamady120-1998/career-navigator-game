@@ -276,31 +276,33 @@ export default function InstitutionDashboard() {
               <Card>
                 <CardHeader><CardTitle className="text-base">قائمة الطلاب</CardTitle></CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>الاسم</TableHead>
-                        <TableHead>المرحلة الدراسية</TableHead>
-                        <TableHead>نسبة الإتمام</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pagedStudents.map((s) => (
-                        <TableRow key={s.user_id}>
-                          <TableCell>{s.full_name}</TableCell>
-                          <TableCell>{s.grade_level}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${s.progressPercent}%` }} />
-                              </div>
-                              <span className="text-xs text-muted-foreground">{s.progressPercent}%</span>
-                            </div>
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>الاسم</TableHead>
+                          <TableHead>المرحلة الدراسية</TableHead>
+                          <TableHead>نسبة الإتمام</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {pagedStudents.map((s) => (
+                          <TableRow key={s.user_id}>
+                            <TableCell>{s.full_name}</TableCell>
+                            <TableCell>{s.grade_level}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                  <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${s.progressPercent}%` }} />
+                                </div>
+                                <span className="text-xs text-muted-foreground">{s.progressPercent}%</span>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                   {totalPages > 1 && (
                     <div className="flex items-center justify-center gap-4 mt-4">
                       <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
