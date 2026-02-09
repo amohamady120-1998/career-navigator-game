@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Lock, UserPlus, Loader2 } from "lucide-react";
+import { Check, Clock, UserPlus, Loader2, Users } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface LinkedChild {
   child_user_id: string;
@@ -13,32 +15,28 @@ interface LinkedChild {
 
 interface StepProgress {
   name_ar: string;
+  slug: string;
   order_index: number;
   completed: boolean;
 }
+
+// Map slugs to user-friendly labels for the key milestones
+const MILESTONE_SLUGS = ["pre-impact", "holland", "simulation", "report"];
 
 export default function ParentDashboard() {
   const [email, setEmail] = useState("");
   const [linking, setLinking] = useState(false);
   const [linkedChildren, setLinkedChildren] = useState<LinkedChild[]>([]);
-  const [selectedChild, setSelectedChild] = useState<string | null>(null);
-  const [progress, setProgress] = useState<StepProgress[]>([]);
-  const [loadingProgress, setLoadingProgress] = useState(false);
+  const [childProgress, setChildProgress] = useState<Record<string, StepProgress[]>>({});
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Load linked children on mount
   useEffect(() => {
     loadLinkedChildren();
   }, []);
 
-  // Load progress when child is selected
-  useEffect(() => {
-    if (selectedChild) {
-      loadChildProgress(selectedChild);
-    }
-  }, [selectedChild]);
-
   const loadLinkedChildren = async () => {
+    setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -49,10 +47,10 @@ export default function ParentDashboard() {
 
     if (!links || links.length === 0) {
       setLinkedChildren([]);
+      setLoading(false);
       return;
     }
 
-    // Get child names from profiles
     const childIds = links.map((l) => l.child_user_id);
     const { data: profiles } = await supabase
       .from("profiles")
@@ -68,39 +66,35 @@ export default function ParentDashboard() {
     });
 
     setLinkedChildren(children);
-    if (children.length > 0 && !selectedChild) {
-      setSelectedChild(children[0].child_user_id);
-    }
-  };
 
-  const loadChildProgress = async (childId: string) => {
-    setLoadingProgress(true);
-
-    // Get all journey steps
+    // Load progress for all children
     const { data: steps } = await supabase
       .from("journey_steps")
-      .select("id, name_ar, order_index")
+      .select("id, name_ar, order_index, slug")
       .order("order_index");
 
-    // Get child's progress
-    const { data: userProgress } = await supabase
-      .from("user_progress")
-      .select("step_id, status, completed_at")
-      .eq("user_id", childId);
-
     if (steps) {
-      const result: StepProgress[] = steps.map((step) => {
-        const prog = userProgress?.find((p) => p.step_id === step.id);
-        return {
-          name_ar: step.name_ar,
-          order_index: step.order_index,
-          completed: prog?.status === "completed",
-        };
-      });
-      setProgress(result);
+      const progressMap: Record<string, StepProgress[]> = {};
+      for (const child of children) {
+        const { data: userProg } = await supabase
+          .from("user_progress")
+          .select("step_id, status")
+          .eq("user_id", child.child_user_id);
+
+        progressMap[child.child_user_id] = steps.map((step) => {
+          const prog = userProg?.find((p) => p.step_id === step.id);
+          return {
+            name_ar: step.name_ar,
+            slug: step.slug,
+            order_index: step.order_index,
+            completed: prog?.status === "completed",
+          };
+        });
+      }
+      setChildProgress(progressMap);
     }
 
-    setLoadingProgress(false);
+    setLoading(false);
   };
 
   const handleLinkChild = async () => {
@@ -108,51 +102,33 @@ export default function ParentDashboard() {
     setLinking(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const response = await supabase.functions.invoke("lookup-child", {
-        body: { email: email.trim() },
+      const { data, error } = await supabase.rpc("link_student_by_email", {
+        student_email: email.trim(),
       });
 
-      if (response.error || response.data?.error) {
+      if (error) {
         toast({
           title: "خطأ",
-          description: response.data?.error || "حدث خطأ أثناء البحث",
+          description: error.message.includes("Only parents")
+            ? "هذه الخدمة متاحة لأولياء الأمور فقط"
+            : "حدث خطأ أثناء الربط",
           variant: "destructive",
         });
         return;
       }
 
-      const { child_user_id } = response.data;
-
-      // Check if already linked
-      const existing = linkedChildren.find((c) => c.child_user_id === child_user_id);
-      if (existing) {
-        toast({ title: "تنبيه", description: "هذا الطالب مرتبط بالفعل" });
-        return;
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error: insertError } = await supabase
-        .from("parent_child_links")
-        .insert({ parent_user_id: user.id, child_user_id });
-
-      if (insertError) {
+      if (data === false) {
         toast({
-          title: "خطأ",
-          description: "فشل في ربط الطالب",
+          title: "لم يتم العثور",
+          description: "لم يتم العثور على حساب طالب بهذا البريد الإلكتروني",
           variant: "destructive",
         });
         return;
       }
 
-      toast({ title: "تم الربط بنجاح ✓" });
+      toast({ title: "تم ربط الحساب بنجاح ✓" });
       setEmail("");
       await loadLinkedChildren();
-      setSelectedChild(child_user_id);
     } catch (err: any) {
       toast({
         title: "خطأ",
@@ -164,95 +140,137 @@ export default function ParentDashboard() {
     }
   };
 
-  return (
-    <div className="space-y-6" dir="rtl">
-      {/* Link Child Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <UserPlus className="w-5 h-5" />
-            ربط حساب طالب
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-3">
-            <Input
-              type="email"
-              placeholder="البريد الإلكتروني للطالب"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              dir="ltr"
-              className="text-left flex-1"
-            />
-            <Button onClick={handleLinkChild} disabled={linking || !email.trim()}>
-              {linking ? <Loader2 className="w-4 h-4 animate-spin" /> : "ربط"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+  const getCompletionPercent = (steps: StepProgress[]) => {
+    if (steps.length === 0) return 0;
+    const completed = steps.filter((s) => s.completed).length;
+    return Math.round((completed / steps.length) * 100);
+  };
 
-      {/* Child Tabs (if multiple) */}
-      {linkedChildren.length > 1 && (
-        <div className="flex gap-2 flex-wrap">
-          {linkedChildren.map((child) => (
-            <Button
-              key={child.child_user_id}
-              variant={selectedChild === child.child_user_id ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedChild(child.child_user_id)}
-            >
-              {child.child_name}
-            </Button>
-          ))}
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8" dir="rtl">
+      {/* Link Child Card — Prominent */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Card className="border-2 border-accent/30 shadow-lg">
+          <CardHeader className="bg-primary/5 rounded-t-lg">
+            <CardTitle className="flex items-center gap-2 text-xl text-primary">
+              <UserPlus className="w-6 h-6" />
+              ربط حساب طالب
+            </CardTitle>
+            <CardDescription>
+              أدخل البريد الإلكتروني المسجّل لابنك/ابنتك لمتابعة تقدمهم في الرحلة
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="flex gap-3">
+              <Input
+                type="email"
+                placeholder="student@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                dir="ltr"
+                className="text-left flex-1"
+                onKeyDown={(e) => e.key === "Enter" && handleLinkChild()}
+              />
+              <Button
+                onClick={handleLinkChild}
+                disabled={linking || !email.trim()}
+                className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold px-6"
+              >
+                {linking ? <Loader2 className="w-4 h-4 animate-spin" /> : "ربط الحساب"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Children Section */}
+      {linkedChildren.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-bold flex items-center gap-2 text-primary">
+            <Users className="w-5 h-5" />
+            أبنائي ({linkedChildren.length})
+          </h2>
+
+          {linkedChildren.map((child, idx) => {
+            const steps = childProgress[child.child_user_id] || [];
+            const percent = getCompletionPercent(steps);
+            const milestones = steps.filter((s) => MILESTONE_SLUGS.includes(s.slug));
+
+            return (
+              <motion.div
+                key={child.child_user_id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: idx * 0.1 }}
+              >
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">{child.child_name}</CardTitle>
+                    <div className="flex items-center gap-3 mt-2">
+                      <Progress value={percent} className="flex-1 h-2.5" />
+                      <span className="text-sm font-bold text-primary whitespace-nowrap">
+                        {percent}%
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {milestones.map((step) => (
+                        <div
+                          key={step.slug}
+                          className={`flex items-center gap-2 p-2.5 rounded-lg border ${
+                            step.completed
+                              ? "border-[hsl(var(--success))]/30 bg-[hsl(var(--success))]/5"
+                              : "border-border bg-muted/30"
+                          }`}
+                        >
+                          {step.completed ? (
+                            <div className="w-6 h-6 rounded-full bg-[hsl(var(--success))] flex items-center justify-center shrink-0">
+                              <Check className="w-3.5 h-3.5 text-white" />
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center shrink-0">
+                              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <span
+                            className={`text-xs leading-tight ${
+                              step.completed ? "font-medium text-foreground" : "text-muted-foreground"
+                            }`}
+                          >
+                            {step.name_ar}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
-      {/* Progress Card */}
-      {selectedChild && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">
-              تقدم الرحلة — {linkedChildren.find((c) => c.child_user_id === selectedChild)?.child_name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingProgress ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : progress.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">لم يبدأ الطالب الرحلة بعد</p>
-            ) : (
-              <div className="space-y-3">
-                {progress.map((step, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 p-3 rounded-lg border border-border"
-                  >
-                    {step.completed ? (
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Check className="w-4 h-4 text-primary" />
-                      </div>
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                        <Lock className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                    )}
-                    <span className={step.completed ? "font-medium" : "text-muted-foreground"}>
-                      {step.name_ar}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
       {linkedChildren.length === 0 && (
-        <p className="text-center text-muted-foreground">
-          أدخل البريد الإلكتروني لابنك/ابنتك أعلاه لربط حسابهم ومتابعة تقدمهم
-        </p>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center text-muted-foreground py-8"
+        >
+          لم يتم ربط أي حساب طالب بعد. أدخل بريد ابنك/ابنتك أعلاه للبدء.
+        </motion.p>
       )}
     </div>
   );

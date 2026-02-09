@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 import atharLogoDark from "@/assets/athar-logo-dark.png";
 
 export default function ParentLayout() {
@@ -26,17 +28,20 @@ export default function ParentLayout() {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      <header className="h-14 flex items-center justify-between border-b border-border px-6 bg-card">
+      <header className="h-16 flex items-center justify-between border-b border-border px-6 bg-primary text-primary-foreground">
         <div className="flex items-center gap-3">
-          <img src={atharLogoDark} alt="أثر البداية" className="h-8 object-contain" />
+          <img src={atharLogoDark} alt="أثر البداية" className="h-9 object-contain brightness-0 invert" />
           <h1 className="font-bold text-lg">لوحة ولي الأمر</h1>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={handleLogout}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
         >
+          <LogOut className="w-4 h-4 ml-2" />
           تسجيل الخروج
-        </button>
+        </Button>
       </header>
       <main className="max-w-3xl mx-auto p-6">
         <Outlet />

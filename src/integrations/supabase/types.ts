@@ -334,6 +334,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      link_student_by_email: {
+        Args: { student_email: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
