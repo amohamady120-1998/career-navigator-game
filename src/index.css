@@ -115,17 +115,29 @@
   }
 }
 
+@page {
+  margin: 0.5in;
+}
+
 @media print {
   .sidebar,
   header,
+  nav,
   .print\:hidden,
+  .no-print,
+  .theme-toggle,
   [data-sidebar] {
     display: none !important;
   }
 
   body {
     background: white !important;
+    color: #051730 !important;
+  }
+
+  a {
     color: black !important;
+    text-decoration: none !important;
   }
 
   #certificate {

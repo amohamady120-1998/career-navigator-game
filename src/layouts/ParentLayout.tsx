@@ -55,6 +55,7 @@ export default function ParentLayout() {
             variant="ghost"
             size="sm"
             onClick={() => navigate("/parent/settings")}
+            aria-label="الإعدادات"
             className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
           >
             <Settings className="w-4 h-4" />
@@ -63,6 +64,7 @@ export default function ParentLayout() {
             variant="ghost"
             size="sm"
             onClick={handleLogout}
+            aria-label="تسجيل الخروج"
             className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
           >
             <LogOut className="w-4 h-4 ml-2" />
