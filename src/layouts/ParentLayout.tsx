@@ -10,23 +10,28 @@ export default function ParentLayout() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("user_type")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === "SIGNED_OUT" || !session) {
+          navigate("/auth");
+          return;
+        }
+        if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("user_type")
+            .eq("user_id", session.user.id)
+            .maybeSingle();
 
-      if (profile?.user_type !== "parent") {
-        navigate("/dashboard", { replace: true });
-        return;
+          if (profile?.user_type !== "parent") {
+            navigate("/dashboard", { replace: true });
+            return;
+          }
+          setAuthChecked(true);
+        }
       }
-      setAuthChecked(true);
-    });
+    );
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const handleLogout = async () => {

@@ -20,6 +20,7 @@ import SettingsPage from "./pages/dashboard/Settings";
 import Certificate from "./pages/dashboard/Certificate";
 import ParentDashboard from "./pages/dashboard/ParentDashboard";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
+import { StepGuard } from "./components/StepGuard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,14 +37,14 @@ const App = () => (
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<IntroStep />} />
             <Route path="intro" element={<IntroStep />} />
-            <Route path="pre-impact" element={<PreImpactStep />} />
-            <Route path="holland" element={<HollandStep />} />
-            <Route path="simulation" element={<SimulationStep />} />
-            <Route path="post-impact" element={<PostImpactStep />} />
-            <Route path="report" element={<ReportStep />} />
+            <Route path="pre-impact" element={<StepGuard requiredStep="intro"><PreImpactStep /></StepGuard>} />
+            <Route path="holland" element={<StepGuard requiredStep="pre-impact"><HollandStep /></StepGuard>} />
+            <Route path="simulation" element={<StepGuard requiredStep="holland"><SimulationStep /></StepGuard>} />
+            <Route path="post-impact" element={<StepGuard requiredStep="simulation"><PostImpactStep /></StepGuard>} />
+            <Route path="report" element={<StepGuard requiredStep="post-impact"><ReportStep /></StepGuard>} />
             <Route path="profile" element={<ProfileStep />} />
             <Route path="settings" element={<SettingsPage />} />
-            <Route path="certificate" element={<Certificate />} />
+            <Route path="certificate" element={<StepGuard requiredStep="report"><Certificate /></StepGuard>} />
           </Route>
           <Route path="/parent" element={<ParentLayout />}>
             <Route index element={<ParentDashboard />} />
