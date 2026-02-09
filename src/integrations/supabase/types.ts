@@ -97,6 +97,27 @@ export type Database = {
         }
         Relationships: []
       }
+      institution_student_links: {
+        Row: {
+          created_at: string
+          id: string
+          institution_user_id: string
+          student_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          institution_user_id: string
+          student_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          institution_user_id?: string
+          student_user_id?: string
+        }
+        Relationships: []
+      }
       journey_steps: {
         Row: {
           id: string
@@ -337,6 +358,10 @@ export type Database = {
       link_student_by_email: {
         Args: { student_email: string }
         Returns: boolean
+      }
+      link_students_by_school: {
+        Args: { school_name: string }
+        Returns: number
       }
     }
     Enums: {
