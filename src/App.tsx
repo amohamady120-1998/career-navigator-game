@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -26,40 +28,44 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<IntroStep />} />
-            <Route path="intro" element={<IntroStep />} />
-            <Route path="pre-impact" element={<StepGuard requiredStep="intro"><PreImpactStep /></StepGuard>} />
-            <Route path="holland" element={<StepGuard requiredStep="pre-impact"><HollandStep /></StepGuard>} />
-            <Route path="simulation" element={<StepGuard requiredStep="holland"><SimulationStep /></StepGuard>} />
-            <Route path="post-impact" element={<StepGuard requiredStep="simulation"><PostImpactStep /></StepGuard>} />
-            <Route path="report" element={<StepGuard requiredStep="post-impact"><ReportStep /></StepGuard>} />
-            <Route path="profile" element={<ProfileStep />} />
-            <Route path="settings" element={<SettingsPage />} />
-            <Route path="certificate" element={<StepGuard requiredStep="report"><Certificate /></StepGuard>} />
-          </Route>
-          <Route path="/parent" element={<ParentLayout />}>
-            <Route index element={<ParentDashboard />} />
-            <Route path="settings" element={<SettingsPage />} />
-          </Route>
-          <Route path="/institution" element={<InstitutionLayout />}>
-            <Route index element={<InstitutionDashboard />} />
-            <Route path="settings" element={<SettingsPage />} />
-          </Route>
-          <Route path="/admin" element={<SuperAdminDashboard />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <ErrorBoundary>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route index element={<IntroStep />} />
+                <Route path="intro" element={<IntroStep />} />
+                <Route path="pre-impact" element={<StepGuard requiredStep="intro"><PreImpactStep /></StepGuard>} />
+                <Route path="holland" element={<StepGuard requiredStep="pre-impact"><HollandStep /></StepGuard>} />
+                <Route path="simulation" element={<StepGuard requiredStep="holland"><SimulationStep /></StepGuard>} />
+                <Route path="post-impact" element={<StepGuard requiredStep="simulation"><PostImpactStep /></StepGuard>} />
+                <Route path="report" element={<StepGuard requiredStep="post-impact"><ReportStep /></StepGuard>} />
+                <Route path="profile" element={<ProfileStep />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="certificate" element={<StepGuard requiredStep="report"><Certificate /></StepGuard>} />
+              </Route>
+              <Route path="/parent" element={<ParentLayout />}>
+                <Route index element={<ParentDashboard />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
+              <Route path="/institution" element={<InstitutionLayout />}>
+                <Route index element={<InstitutionDashboard />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
+              <Route path="/admin" element={<SuperAdminDashboard />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </ErrorBoundary>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;
