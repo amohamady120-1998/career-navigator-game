@@ -16,7 +16,10 @@ import SimulationStep from "./pages/dashboard/SimulationStep";
 import ReportStep from "./pages/dashboard/ReportStep";
 import PostImpactStep from "./pages/dashboard/PostImpactStep";
 import ProfileStep from "./pages/dashboard/ProfileStep";
+import SettingsPage from "./pages/dashboard/Settings";
+import Certificate from "./pages/dashboard/Certificate";
 import ParentDashboard from "./pages/dashboard/ParentDashboard";
+import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +42,8 @@ const App = () => (
             <Route path="post-impact" element={<PostImpactStep />} />
             <Route path="report" element={<ReportStep />} />
             <Route path="profile" element={<ProfileStep />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="certificate" element={<Certificate />} />
           </Route>
           <Route path="/parent" element={<ParentLayout />}>
             <Route index element={<ParentDashboard />} />
@@ -46,6 +51,7 @@ const App = () => (
           <Route path="/institution" element={<InstitutionLayout />}>
             <Route index element={<InstitutionDashboard />} />
           </Route>
+          <Route path="/admin" element={<SuperAdminDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

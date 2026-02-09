@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, BarChart3, Compass, Gamepad2, FileText, Lock, CheckCircle2, LogOut, ClipboardCheck } from "lucide-react";
+import { BookOpen, BarChart3, Compass, Gamepad2, FileText, Lock, CheckCircle2, LogOut, ClipboardCheck, Settings, Award } from "lucide-react";
 import atharLogoDark from "@/assets/athar-logo-dark.png";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +26,6 @@ const stepIcons: Record<string, typeof BookOpen> = {
   report: FileText,
 };
 
-// Step unlock order: each step requires the previous step to be completed
 const STEP_ORDER = ["intro", "pre-impact", "holland", "simulation", "post-impact", "report"];
 
 export function AppSidebar() {
@@ -65,8 +64,7 @@ export function AppSidebar() {
 
   const isStepUnlocked = (slug: string): boolean => {
     const idx = STEP_ORDER.indexOf(slug);
-    if (idx === 0) return true; // intro always unlocked
-    // Previous step must be completed
+    if (idx === 0) return true;
     const prevSlug = STEP_ORDER[idx - 1];
     return completedSlugs?.includes(prevSlug) ?? false;
   };
@@ -74,6 +72,8 @@ export function AppSidebar() {
   const isStepCompleted = (slug: string): boolean => {
     return completedSlugs?.includes(slug) ?? false;
   };
+
+  const reportCompleted = completedSlugs?.includes("report") ?? false;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -129,12 +129,45 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
+
+              {/* Certificate link */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className={!reportCompleted ? "opacity-50 pointer-events-none" : ""}
+                >
+                  {!reportCompleted ? (
+                    <div className="flex items-center gap-3 px-3 py-2">
+                      <Lock className="w-4 h-4" />
+                      <span>الشهادة</span>
+                    </div>
+                  ) : (
+                    <NavLink
+                      to="/dashboard/certificate"
+                      end
+                      className="hover:bg-sidebar-accent/50"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    >
+                      <Award className="w-4 h-4 ml-3 text-accent" />
+                      <span>الشهادة</span>
+                    </NavLink>
+                  )}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-3 border-t border-sidebar-border">
+      <SidebarFooter className="p-3 border-t border-sidebar-border space-y-1">
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+          onClick={() => navigate("/dashboard/settings")}
+        >
+          <Settings className="w-4 h-4" />
+          الإعدادات
+        </Button>
         <Button
           variant="ghost"
           className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive"

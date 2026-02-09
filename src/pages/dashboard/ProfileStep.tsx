@@ -74,9 +74,9 @@ export default function ProfileStep() {
         className="w-full max-w-md bg-card rounded-xl p-8 shadow-2xl"
       >
         <img src={atharLogoLight} alt="أثر البداية" className="h-16 mx-auto mb-2 object-contain" />
-        <h2 className="text-xl font-bold text-center mb-1">أكمل بياناتك</h2>
+        <h2 className="text-xl font-bold text-center mb-1">أهلاً بك في أثر! 🚀</h2>
         <p className="text-muted-foreground text-center mb-6 text-sm">
-          نحتاج بعض المعلومات قبل بدء الرحلة
+          لنبني تجربتك بشكل صحيح، نحتاج لبعض المعلومات الدراسية.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -86,7 +86,7 @@ export default function ProfileStep() {
               id="schoolName"
               value={schoolName}
               onChange={(e) => setSchoolName(e.target.value)}
-              placeholder="مثال: مدرسة الملك فهد"
+              placeholder="مثال: مدارس الرياض الأهلية"
               required
             />
           </div>
@@ -124,7 +124,7 @@ export default function ProfileStep() {
             disabled={loading || !schoolName.trim() || !gradeLevel}
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-lg h-12"
           >
-            {loading ? "جاري الحفظ..." : "متابعة"}
+            {loading ? "جاري الحفظ..." : "حفظ وبدء الرحلة"}
           </Button>
         </form>
       </motion.div>
