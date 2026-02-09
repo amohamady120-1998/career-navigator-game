@@ -41,7 +41,7 @@ export default function DashboardLayout() {
               <SidebarTrigger>
                 <Menu className="w-5 h-5" />
               </SidebarTrigger>
-              <h1 className="mr-4 font-bold text-lg">لوحة التحكم</h1>
+              <h1 className="mr-4 font-bold text-lg">أثر البداية</h1>
             </header>
             <main className="flex-1 p-6">
               <Outlet />
