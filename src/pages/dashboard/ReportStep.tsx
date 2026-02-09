@@ -4,7 +4,32 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Trophy, Briefcase, GraduationCap, TrendingUp, TrendingDown, Brain, Sparkles } from "lucide-react";
 import confetti from "canvas-confetti";
-import { computeDimensionScores, MAJOR_LABELS, type DimensionScore } from "@/lib/traitMapping";
+import { analyzeSimulationTraits, TRAIT_LABELS, type TraitDimension } from "@/lib/traitMapping";
+
+const MAJOR_LABELS: Record<string, string> = {
+  MED_001: "الطب البشري", ENG_001: "الهندسة", LAW_001: "القانون", FIN_001: "التمويل والاستثمار",
+  CS_001: "علوم الحاسب", MEDIA_001: "الإعلام", PHARM_001: "الصيدلة", DESIGN_001: "التصميم",
+  EDU_001: "التعليم", BA_001: "إدارة الأعمال", SOCIAL_001: "العمل الاجتماعي", NURSE_001: "التمريض",
+  AVIATION_001: "الطيران", ARCH_001: "العمارة", CYBER_001: "الأمن السيبراني",
+  AI_001: "الذكاء الاصطناعي", PSY_001: "علم النفس", MKT_001: "التسويق الرقمي",
+};
+
+const DIMENSION_COLORS: Record<TraitDimension, string> = {
+  ethics: "hsl(var(--accent))", leadership: "hsl(142, 71%, 45%)", analytical: "hsl(221, 83%, 53%)",
+  empathy: "hsl(280, 67%, 55%)", risk_action: "hsl(0, 84%, 60%)", creativity: "hsl(38, 92%, 50%)",
+  compliance: "hsl(190, 70%, 45%)", commercial: "hsl(330, 65%, 50%)",
+};
+
+const DIMENSION_DESCRIPTIONS: Record<TraitDimension, string> = {
+  ethics: "تتمسك بالمبادئ الأخلاقية وتضع النزاهة فوق المكاسب الشخصية. تتخذ قراراتك بناءً على ما هو صحيح وليس ما هو سهل.",
+  leadership: "تبرز قدراتك القيادية في أصعب اللحظات. تتحمل المسؤولية وتوجه الفريق بثقة عندما تشتد الأزمات.",
+  analytical: "تعتمد على البيانات والتحليل المنهجي في قراراتك. تبحث عن الأسباب الجذرية وتتحقق من المعلومات قبل التصرف.",
+  empathy: "تمتلك حساسية عالية تجاه مشاعر الآخرين وتسعى لحل النزاعات بالحوار. تؤمن بقوة التعاون والعمل الجماعي.",
+  risk_action: "لا تتردد في اتخاذ قرارات جريئة عندما يتطلب الموقف ذلك. تتحرك بسرعة وحسم حتى في ظل عدم اليقين.",
+  creativity: "تبحث عن حلول مبتكرة وغير تقليدية للتحديات. تحول القيود إلى فرص وتجد مخارج ذكية من المواقف الصعبة.",
+  compliance: "تلتزم بالإجراءات والبروتوكولات المعتمدة وتحرص على الدقة. تفضل الأمان والتخطيط المسبق على المجازفة.",
+  commercial: "تهتم بالجوانب المالية والتجارية وتسعى لتحقيق أفضل عائد. تفهم ديناميكيات السوق وتتخذ قرارات موجهة بالنتائج.",
+};
 
 export default function ReportStep() {
   const { data: result, isLoading } = useQuery({
@@ -37,7 +62,6 @@ export default function ReportStep() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return null;
 
-      // Get user's simulation responses
       const { data: responses } = await supabase
         .from("simulation_responses")
         .select("selected_option_id, scenario_id")
@@ -45,7 +69,6 @@ export default function ReportStep() {
 
       if (!responses?.length) return null;
 
-      // Get the scenarios to extract ai_tags from options_json
       const scenarioIds = [...new Set(responses.map((r) => r.scenario_id))];
       const { data: scenarios } = await supabase
         .from("simulation_scenarios")
@@ -54,39 +77,17 @@ export default function ReportStep() {
 
       if (!scenarios?.length) return null;
 
-      // Build a lookup: scenarioId -> { optionId -> ai_tag }
-      const scenarioMap = new Map<string, { majorId: string; optionTags: Record<string, string> }>();
-      scenarios.forEach((s) => {
-        const opts = s.options_json as Array<{ id: string; ai_tag: string }>;
-        const optionTags: Record<string, string> = {};
-        opts.forEach((o) => { optionTags[o.id] = o.ai_tag; });
-        scenarioMap.set(s.id, { majorId: s.major_id, optionTags });
-      });
+      const traitScores = analyzeSimulationTraits(responses, scenarios);
+      const completedMajors = [...new Set(scenarios.map((s) => s.major_id))];
 
-      // Collect selected ai_tags and completed majors
-      const selectedTags: string[] = [];
-      const completedMajors = new Set<string>();
-
-      responses.forEach((r) => {
-        const scenario = scenarioMap.get(r.scenario_id);
-        if (!scenario) return;
-        completedMajors.add(scenario.majorId);
-        const tag = scenario.optionTags[r.selected_option_id];
-        if (tag) selectedTags.push(tag);
-      });
-
-      const scores = computeDimensionScores(selectedTags);
-      return { scores, completedMajors: Array.from(completedMajors), totalResponses: selectedTags.length };
+      return { traitScores, completedMajors, totalResponses: responses.length };
     },
   });
 
-  // Confetti on load
   useEffect(() => {
     if (result) {
       confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { y: 0.6 },
+        particleCount: 150, spread: 100, origin: { y: 0.6 },
         colors: ["#faaa25", "#00a870", "#6966f2", "#051730"],
       });
     }
@@ -110,6 +111,10 @@ export default function ReportStep() {
     R: "واقعي", I: "بحثي", A: "فني", S: "اجتماعي", E: "مبادر", C: "تقليدي",
   };
   const maxScore = Math.max(...Object.values(scores).map(Number), 1);
+
+  const maxTraitScore = simAnalysis
+    ? Math.max(...simAnalysis.traitScores.map((t) => t.score), 1)
+    : 1;
 
   return (
     <motion.div
@@ -223,14 +228,13 @@ export default function ReportStep() {
       )}
 
       {/* ============ SIMULATION ANALYSIS ============ */}
-      {simAnalysis && simAnalysis.scores.length > 0 && (
+      {simAnalysis && simAnalysis.traitScores.some((t) => t.score > 0) && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
           className="space-y-6"
         >
-          {/* Section Header */}
           <div className="text-center pt-4">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
               <Brain className="w-8 h-8 text-primary" />
@@ -243,20 +247,23 @@ export default function ReportStep() {
           <div className="bg-card border border-border rounded-lg p-6">
             <h3 className="text-lg font-bold mb-4">ملامح شخصيتك المهنية</h3>
             <div className="space-y-3">
-              {simAnalysis.scores.map((s: DimensionScore, i: number) => (
-                <div key={s.dimension.key} className="flex items-center gap-3">
-                  <span className="w-32 text-sm font-medium text-right truncate">{s.dimension.labelAr}</span>
-                  <div className="flex-1 h-6 bg-secondary rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${s.percentage}%` }}
-                      transition={{ duration: 0.8, delay: 0.3 + i * 0.08 }}
-                      className="h-full rounded-full"
-                      style={{ backgroundColor: s.dimension.color }}
-                    />
+              {simAnalysis.traitScores.map((t, i) => {
+                const pct = (t.score / maxTraitScore) * 100;
+                return (
+                  <div key={t.key} className="flex items-center gap-3">
+                    <span className="w-32 text-sm font-medium text-right truncate">{t.label}</span>
+                    <div className="flex-1 h-6 bg-secondary rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.8, delay: 0.3 + i * 0.08 }}
+                        className="h-full rounded-full"
+                        style={{ backgroundColor: DIMENSION_COLORS[t.key] }}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -266,22 +273,22 @@ export default function ReportStep() {
               <Sparkles className="w-5 h-5 text-accent" />
               أبرز سماتك
             </h3>
-            {simAnalysis.scores
-              .filter((s: DimensionScore) => s.count > 0)
+            {simAnalysis.traitScores
+              .filter((t) => t.score > 0)
               .slice(0, 3)
-              .map((s: DimensionScore, i: number) => (
+              .map((t, i) => (
                 <motion.div
-                  key={s.dimension.key}
+                  key={t.key}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.6 + i * 0.15 }}
                   className="bg-card border border-border rounded-lg p-5"
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.dimension.color }} />
-                    <h4 className="font-bold text-base">{s.dimension.labelAr}</h4>
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: DIMENSION_COLORS[t.key] }} />
+                    <h4 className="font-bold text-base">{t.label}</h4>
                   </div>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{s.dimension.description}</p>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{DIMENSION_DESCRIPTIONS[t.key]}</p>
                 </motion.div>
               ))}
           </div>
@@ -291,7 +298,7 @@ export default function ReportStep() {
             <div className="bg-card border border-border rounded-lg p-6">
               <h3 className="text-lg font-bold mb-3">المسارات التي استكشفتها</h3>
               <div className="flex flex-wrap gap-2">
-                {simAnalysis.completedMajors.map((majorId: string) => (
+                {simAnalysis.completedMajors.map((majorId) => (
                   <span
                     key={majorId}
                     className="bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full text-sm font-medium"
