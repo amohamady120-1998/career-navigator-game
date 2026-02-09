@@ -13,6 +13,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [schoolName, setSchoolName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -32,12 +33,15 @@ const Auth = () => {
         if (error) throw error;
 
         if (data.user) {
-          // Create profile
-          await supabase.from("profiles").insert({
+          const profileData: any = {
             user_id: data.user.id,
             full_name: fullName,
             user_type: userType as "student" | "parent" | "institution",
-          });
+          };
+          if (userType === "institution" && schoolName.trim()) {
+            profileData.school_name = schoolName.trim();
+          }
+          await supabase.from("profiles").insert(profileData);
         }
 
         toast({
@@ -79,6 +83,18 @@ const Auth = () => {
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="أدخل اسمك الكامل"
                 required={!isLogin}
+              />
+            </div>
+          )}
+
+          {!isLogin && (localStorage.getItem("athar_user_type") === "institution") && (
+            <div className="space-y-2">
+              <Label htmlFor="schoolName">اسم المدرسة</Label>
+              <Input
+                id="schoolName"
+                value={schoolName}
+                onChange={(e) => setSchoolName(e.target.value)}
+                placeholder="مثال: مدرسة الملك فهد"
               />
             </div>
           )}
