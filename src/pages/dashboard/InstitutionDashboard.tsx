@@ -271,14 +271,14 @@ export default function InstitutionDashboard() {
                 {/* Journey Funnel Bar */}
                 <Card>
                   <CardHeader><CardTitle className="text-base">مسار إتمام الرحلة</CardTitle></CardHeader>
-                  <CardContent className="h-72">
+                  <CardContent className="h-72 text-foreground">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={journeyData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                         <YAxis allowDecimals={false} />
                         <Tooltip />
-                        <Bar dataKey="count" fill="#051730" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="count" fill="currentColor" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
