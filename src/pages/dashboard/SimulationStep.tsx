@@ -9,8 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Gamepad2, Clock, AlertTriangle, ArrowRight, CheckCircle2, FileText,
-  Stethoscope, SmilePlus, Pill, Wrench, Building, Factory,
+  Stethoscope, SmilePlus, Pill, Cpu, Building, Factory, Landmark,
   Scale, Briefcase, TrendingUp, Users, Languages, Radio, Palette,
+  Shield, BrainCircuit, Megaphone, Heart, PenTool,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -21,19 +22,24 @@ interface SimOption {
 }
 
 const MAJOR_META: Record<string, { name: string; icon: LucideIcon }> = {
-  MED_001:   { name: "طب بشري",          icon: Stethoscope },
-  DENT_001:  { name: "طب الأسنان",       icon: SmilePlus },
-  PHARM_001: { name: "الصيدلة",          icon: Pill },
-  ENG_001:   { name: "الهندسة",          icon: Wrench },
-  CIVIL_001: { name: "الهندسة المدنية",  icon: Building },
-  IND_001:   { name: "الهندسة الصناعية", icon: Factory },
-  LAW_001:   { name: "القانون",          icon: Scale },
-  BUS_001:   { name: "إدارة الأعمال",    icon: Briefcase },
-  FIN_001:   { name: "المالية",          icon: TrendingUp },
-  HR_001:    { name: "الموارد البشرية",  icon: Users },
-  TRANS_001: { name: "الترجمة",          icon: Languages },
-  MEDIA_001: { name: "الإعلام",          icon: Radio },
-  ART_001:   { name: "التصميم",          icon: Palette },
+  MED_001:   { name: "الطب والجراحة",          icon: Stethoscope },
+  DENT_001:  { name: "طب الأسنان",             icon: SmilePlus },
+  PHARM_001: { name: "الصيدلة",                icon: Pill },
+  ENG_001:   { name: "هندسة البرمجيات",        icon: Cpu },
+  CIVIL_001: { name: "الهندسة المدنية",        icon: Building },
+  IND_001:   { name: "الهندسة الصناعية",       icon: Factory },
+  ARCH_001:  { name: "الهندسة المعمارية",      icon: Landmark },
+  CYBER_001: { name: "الأمن السيبراني",        icon: Shield },
+  AI_001:    { name: "الذكاء الاصطناعي",       icon: BrainCircuit },
+  LAW_001:   { name: "القانون والمحاماة",      icon: Scale },
+  BUS_001:   { name: "إدارة الأعمال",          icon: Briefcase },
+  FIN_001:   { name: "المالية والاستثمار",     icon: TrendingUp },
+  HR_001:    { name: "الموارد البشرية",        icon: Users },
+  MKT_001:   { name: "التسويق الرقمي",        icon: Megaphone },
+  MEDIA_001: { name: "الإعلام والعلاقات العامة", icon: Radio },
+  PSY_001:   { name: "علم النفس",              icon: Heart },
+  TRANS_001: { name: "الترجمة واللغات",        icon: Languages },
+  ART_001:   { name: "التصميم الجرافيكي",     icon: PenTool },
 };
 
 export default function SimulationStep() {
@@ -47,7 +53,7 @@ export default function SimulationStep() {
   const [completedMajors, setCompletedMajors] = useState<Set<string>>(new Set());
   const [majorDone, setMajorDone] = useState(false);
 
-  // Fetch all scenarios once
+  // Fetch all scenarios
   const { data: allScenarios, isLoading } = useQuery({
     queryKey: ["simulation-scenarios"],
     queryFn: async () => {
@@ -61,7 +67,40 @@ export default function SimulationStep() {
     },
   });
 
-  // Build library data from scenarios
+  // Fetch completed majors from DB
+  const { data: existingResponses } = useQuery({
+    queryKey: ["simulation-responses-completed"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return [];
+      const { data, error } = await supabase
+        .from("simulation_responses")
+        .select("scenario_id")
+        .eq("user_id", session.user.id);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Determine which majors are fully completed
+  useEffect(() => {
+    if (!allScenarios || !existingResponses) return;
+    const respondedIds = new Set(existingResponses.map((r) => r.scenario_id));
+    const majorScenarios: Record<string, string[]> = {};
+    allScenarios.forEach((s) => {
+      if (!majorScenarios[s.major_id]) majorScenarios[s.major_id] = [];
+      majorScenarios[s.major_id].push(s.id);
+    });
+    const done = new Set<string>();
+    for (const [majorId, ids] of Object.entries(majorScenarios)) {
+      if (ids.every((id) => respondedIds.has(id))) {
+        done.add(majorId);
+      }
+    }
+    setCompletedMajors(done);
+  }, [allScenarios, existingResponses]);
+
+  // Build library
   const majorsInDb = allScenarios
     ? [...new Set(allScenarios.map((s) => s.major_id))]
     : [];
@@ -71,7 +110,7 @@ export default function SimulationStep() {
     majorCounts[s.major_id] = (majorCounts[s.major_id] || 0) + 1;
   });
 
-  // Filtered scenarios for selected major
+  // Filtered scenarios
   const scenarios = selectedMajor
     ? allScenarios?.filter((s) => s.major_id === selectedMajor)
     : [];
@@ -80,21 +119,27 @@ export default function SimulationStep() {
   const isStress = current?.level === "stress";
   const options: SimOption[] = (current?.options_json as unknown as SimOption[]) || [];
 
-  // Timer for stress levels
+  // Timer
   useEffect(() => {
     if (!isStress || !current?.timer_seconds) return;
     setTimeLeft(current.timer_seconds);
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev === null || prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
+        if (prev === null || prev <= 1) { clearInterval(interval); return 0; }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(interval);
   }, [currentIdx, isStress, current?.timer_seconds]);
+
+  const resetToLibrary = useCallback(() => {
+    setSelectedMajor(null);
+    setCurrentIdx(0);
+    setSelectedOption(null);
+    setRationale("");
+    setTimeLeft(null);
+    setMajorDone(false);
+  }, []);
 
   const handleSubmit = useCallback(async () => {
     if (!selectedOption || !current || !selectedMajor) return;
@@ -108,48 +153,38 @@ export default function SimulationStep() {
       rationale_text: isStress ? rationale : null,
     }, { onConflict: "user_id,scenario_id" });
 
-    toast({ title: "تم الحفظ ✓" });
-
     if (scenarios && currentIdx < scenarios.length - 1) {
       setCurrentIdx((prev) => prev + 1);
       setSelectedOption(null);
       setRationale("");
       setTimeLeft(null);
     } else {
-      // Major completed — go back to library
       setCompletedMajors((prev) => new Set(prev).add(selectedMajor));
       setMajorDone(true);
-      setTimeout(() => {
-        setSelectedMajor(null);
-        setCurrentIdx(0);
-        setSelectedOption(null);
-        setRationale("");
-        setTimeLeft(null);
-        setMajorDone(false);
-      }, 1800);
+      toast({ title: "أحسنت! 🎉", description: "أكملت هذا التخصص بنجاح" });
+      setTimeout(resetToLibrary, 2000);
     }
-  }, [selectedOption, current, currentIdx, scenarios, isStress, rationale, selectedMajor, toast]);
+  }, [selectedOption, current, currentIdx, scenarios, isStress, rationale, selectedMajor, toast, resetToLibrary]);
 
-  // Auto-submit when timer runs out
+  // Auto-submit on timer end
   useEffect(() => {
-    if (timeLeft === 0 && selectedOption) {
-      handleSubmit();
-    }
+    if (timeLeft === 0 && selectedOption) handleSubmit();
   }, [timeLeft, selectedOption, handleSubmit]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center py-20 text-muted-foreground">جاري التحميل...</div>;
   }
 
-  // --- Major completion splash ---
+  // --- Major done splash ---
   if (majorDone) {
+    const meta = MAJOR_META[selectedMajor || ""];
     return (
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-20">
-        <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="w-8 h-8 text-success" />
+        <div className="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-5">
+          <CheckCircle2 className="w-10 h-10 text-success" />
         </div>
-        <h2 className="text-2xl font-bold">تم إكمال التخصص!</h2>
-        <p className="text-muted-foreground mt-2">جاري العودة إلى المكتبة...</p>
+        <h2 className="text-2xl font-bold mb-1">أحسنت!</h2>
+        <p className="text-muted-foreground">أكملت محاكاة «{meta?.name || selectedMajor}» بنجاح</p>
       </motion.div>
     );
   }
@@ -157,14 +192,17 @@ export default function SimulationStep() {
   // --- LIBRARY VIEW ---
   if (!selectedMajor) {
     return (
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8 text-center">
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-10 text-center">
+          <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+            <Gamepad2 className="w-7 h-7 text-accent" />
+          </div>
           <h2 className="text-2xl font-bold mb-2">مكتبة المحاكاة المهنية</h2>
-          <p className="text-muted-foreground">اختر التخصص الذي تريد محاكاته</p>
+          <p className="text-muted-foreground">اختر التخصص الذي تريد تجربته — أجب على سيناريوهات واقعية واكتشف مدى توافقك</p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {majorsInDb.map((majorId) => {
+          {majorsInDb.map((majorId, i) => {
             const meta = MAJOR_META[majorId];
             const Icon = meta?.icon || Gamepad2;
             const name = meta?.name || majorId;
@@ -172,10 +210,19 @@ export default function SimulationStep() {
             const isDone = completedMajors.has(majorId);
 
             return (
-              <motion.div key={majorId} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <motion.div
+                key={majorId}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+                whileHover={{ y: -4 }}
+                whileTap={{ scale: 0.97 }}
+              >
                 <Card
-                  className={`cursor-pointer transition-all hover:shadow-md border-2 ${
-                    isDone ? "border-success/50 bg-success/5" : "border-border hover:border-accent/40"
+                  className={`cursor-pointer transition-all h-full border-2 group ${
+                    isDone
+                      ? "border-success/40 bg-success/5"
+                      : "border-border hover:border-primary hover:shadow-lg"
                   }`}
                   onClick={() => {
                     setSelectedMajor(majorId);
@@ -185,18 +232,29 @@ export default function SimulationStep() {
                     setTimeLeft(null);
                   }}
                 >
-                  <CardContent className="p-5 text-center space-y-3">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto ${
-                      isDone ? "bg-success/10" : "bg-accent/10"
+                  <CardContent className="p-5 flex flex-col items-center text-center gap-3">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                      isDone
+                        ? "bg-success/10"
+                        : "bg-primary/5 group-hover:bg-primary/10"
                     }`}>
                       {isDone ? (
                         <CheckCircle2 className="w-6 h-6 text-success" />
                       ) : (
-                        <Icon className="w-6 h-6 text-accent" />
+                        <Icon className="w-6 h-6 text-primary" />
                       )}
                     </div>
-                    <h3 className="font-bold text-sm">{name}</h3>
-                    <p className="text-xs text-muted-foreground">{count} سيناريو</p>
+                    <h3 className="font-bold text-sm leading-snug">{name}</h3>
+                    <span className="text-xs text-muted-foreground">{count} سيناريو</span>
+                    {isDone ? (
+                      <span className="text-xs font-medium text-success flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> مكتمل
+                      </span>
+                    ) : (
+                      <span className="text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        ابدأ المحاكاة ←
+                      </span>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -204,20 +262,20 @@ export default function SimulationStep() {
           })}
         </div>
 
-        {completedMajors.size > 0 && (
-          <div className="mt-8 text-center">
-            <p className="text-sm text-muted-foreground mb-3">
-              أكملت {completedMajors.size} من {majorsInDb.length} تخصص
-            </p>
-            <Button
-              onClick={() => navigate("/dashboard/report")}
-              className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold"
-            >
-              <FileText className="w-4 h-4 ml-2" />
-              عرض التقرير النهائي
-            </Button>
-          </div>
-        )}
+        {/* Go to report */}
+        <div className="mt-10 text-center space-y-3">
+          <p className="text-sm text-muted-foreground">
+            أكملت <span className="font-bold text-foreground">{completedMajors.size}</span> من {majorsInDb.length} تخصص
+          </p>
+          <Button
+            onClick={() => navigate("/dashboard/report")}
+            disabled={completedMajors.size === 0}
+            className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold px-8"
+          >
+            <FileText className="w-4 h-4 ml-2" />
+            الانتقال للتقرير النهائي
+          </Button>
+        </div>
       </div>
     );
   }
@@ -226,32 +284,36 @@ export default function SimulationStep() {
   if (!current) return null;
 
   const majorMeta = MAJOR_META[selectedMajor];
+  const MajorIcon = majorMeta?.icon || Gamepad2;
 
   return (
     <div className="max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
-        <div className="text-center flex-1">
-          <h2 className="text-2xl font-bold mb-1">{majorMeta?.name || selectedMajor}</h2>
-          <p className="text-muted-foreground text-sm">
-            السيناريو {currentIdx + 1} من {scenarios?.length || 0}
-          </p>
+        <div className="flex items-center gap-3 flex-1">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <MajorIcon className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold">{majorMeta?.name || selectedMajor}</h2>
+            <p className="text-muted-foreground text-xs">
+              السيناريو {currentIdx + 1} من {scenarios?.length || 0}
+            </p>
+          </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            setSelectedMajor(null);
-            setCurrentIdx(0);
-            setSelectedOption(null);
-            setRationale("");
-            setTimeLeft(null);
-          }}
-          className="text-muted-foreground"
-        >
+        <Button variant="ghost" size="sm" onClick={resetToLibrary} className="text-muted-foreground">
           <ArrowRight className="w-4 h-4 ml-1" />
-          العودة
+          العودة للمكتبة
         </Button>
+      </div>
+
+      {/* Progress bar */}
+      <div className="w-full h-1.5 bg-secondary rounded-full mb-6 overflow-hidden">
+        <motion.div
+          className="h-full bg-primary rounded-full"
+          initial={{ width: 0 }}
+          animate={{ width: `${((currentIdx + 1) / (scenarios?.length || 1)) * 100}%` }}
+        />
       </div>
 
       <AnimatePresence mode="wait">
@@ -262,9 +324,11 @@ export default function SimulationStep() {
           exit={{ opacity: 0, y: -20 }}
           className="space-y-6"
         >
-          {/* Timer for stress */}
+          {/* Timer */}
           {isStress && timeLeft !== null && (
-            <div className={`flex items-center justify-center gap-3 p-4 rounded-lg ${timeLeft <= 15 ? "bg-destructive/10 text-destructive" : "bg-accent/10 text-accent"}`}>
+            <div className={`flex items-center justify-center gap-3 p-4 rounded-lg ${
+              timeLeft <= 15 ? "bg-destructive/10 text-destructive" : "bg-accent/10 text-accent"
+            }`}>
               <AlertTriangle className="w-5 h-5" />
               <Clock className="w-5 h-5" />
               <span className="text-2xl font-bold font-mono">{timeLeft}s</span>
@@ -272,13 +336,13 @@ export default function SimulationStep() {
             </div>
           )}
 
-          {/* Scenario text */}
+          {/* Scenario */}
           <div className="bg-card border border-border rounded-lg p-6">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
               <span className="bg-primary/10 text-primary px-2 py-1 rounded-md font-medium">
                 {majorMeta?.name || selectedMajor}
               </span>
-              <span>المستوى: {current.level}</span>
+              <span>المستوى: {current.level === "stress" ? "ضغط" : current.level}</span>
             </div>
             <p className="text-xl font-medium leading-loose">{current.text_ar}</p>
           </div>
@@ -289,21 +353,19 @@ export default function SimulationStep() {
               <button
                 key={opt.id}
                 onClick={() => setSelectedOption(opt.id)}
-                className={`
-                  w-full text-right p-5 rounded-lg border-2 transition-all
-                  ${selectedOption === opt.id
-                    ? "border-accent bg-accent/10"
-                    : "border-border hover:border-accent/40"
-                  }
-                `}
+                className={`w-full text-right p-5 rounded-lg border-2 transition-all ${
+                  selectedOption === opt.id
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/40"
+                }`}
               >
-                <span className="font-bold text-accent ml-2">{opt.id}.</span>
+                <span className="font-bold text-primary ml-2">{opt.id}.</span>
                 {opt.text}
               </button>
             ))}
           </div>
 
-          {/* Rationale for stress level */}
+          {/* Rationale */}
           {isStress && (
             <div>
               <label className="block text-sm font-medium mb-2">اكتب مبررك للإجابة:</label>
