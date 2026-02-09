@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import atharLogoLight from "@/assets/athar-logo-light.png";
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -18,16 +18,39 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const redirectByRole = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("user_type")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (profile?.user_type === "parent") {
+      navigate("/parent", { replace: true });
+    } else if (profile?.user_type === "institution") {
+      navigate("/institution", { replace: true });
+    } else {
+      navigate("/dashboard", { replace: true });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        if (error) throw error;
+        toast({ title: "تم إرسال رابط إعادة التعيين", description: "تحقق من بريدك الإلكتروني" });
+        setMode("login");
+      } else if (mode === "login") {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast({ title: "مرحباً بعودتك 👋" });
-        navigate("/dashboard");
+        await redirectByRole(data.user.id);
       } else {
         const userType = localStorage.getItem("athar_user_type") || "student";
         const { data, error } = await supabase.auth.signUp({ email, password });
@@ -71,11 +94,11 @@ const Auth = () => {
       >
         <img src={atharLogoLight} alt="أثر البداية" className="h-16 mx-auto mb-2 object-contain" />
         <p className="text-muted-foreground text-center mb-8">
-          {isLogin ? "سجّل دخولك للمتابعة" : "أنشئ حسابك الجديد"}
+          {mode === "login" ? "سجّل دخولك للمتابعة" : mode === "signup" ? "أنشئ حسابك الجديد" : "أدخل بريدك لإعادة تعيين كلمة المرور"}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {!isLogin && (
+          {mode === "signup" && (
             <div className="space-y-2">
               <Label htmlFor="fullName">الاسم الكامل</Label>
               <Input
@@ -83,12 +106,12 @@ const Auth = () => {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="أدخل اسمك الكامل"
-                required={!isLogin}
+                required
               />
             </div>
           )}
 
-          {!isLogin && (localStorage.getItem("athar_user_type") === "institution") && (
+          {mode === "signup" && (localStorage.getItem("athar_user_type") === "institution") && (
             <div className="space-y-2">
               <Label htmlFor="schoolName">اسم المدرسة</Label>
               <Input
@@ -114,38 +137,69 @@ const Auth = () => {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">كلمة المرور</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              dir="ltr"
-              className="text-left"
-              required
-              minLength={6}
-            />
-          </div>
+          {mode !== "forgot" && (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="password">كلمة المرور</Label>
+                {mode === "login" && (
+                  <button
+                    type="button"
+                    onClick={() => setMode("forgot")}
+                    className="text-xs text-link hover:underline"
+                  >
+                    نسيت كلمة المرور؟
+                  </button>
+                )}
+              </div>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                dir="ltr"
+                className="text-left"
+                required
+                minLength={6}
+              />
+            </div>
+          )}
 
           <Button
             type="submit"
             disabled={loading}
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-lg h-12"
           >
-            {loading ? "جاري التحميل..." : isLogin ? "تسجيل الدخول" : "إنشاء حساب"}
+            {loading
+              ? "جاري التحميل..."
+              : mode === "login"
+              ? "تسجيل الدخول"
+              : mode === "signup"
+              ? "إنشاء حساب"
+              : "إرسال رابط إعادة التعيين"}
           </Button>
         </form>
 
         <p className="text-center mt-6 text-sm text-muted-foreground">
-          {isLogin ? "ليس لديك حساب؟" : "لديك حساب بالفعل؟"}{" "}
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-link font-medium hover:underline"
-          >
-            {isLogin ? "إنشاء حساب جديد" : "تسجيل الدخول"}
-          </button>
+          {mode === "forgot" ? (
+            <button onClick={() => setMode("login")} className="text-link font-medium hover:underline">
+              العودة لتسجيل الدخول
+            </button>
+          ) : mode === "login" ? (
+            <>
+              ليس لديك حساب؟{" "}
+              <button onClick={() => setMode("signup")} className="text-link font-medium hover:underline">
+                إنشاء حساب جديد
+              </button>
+            </>
+          ) : (
+            <>
+              لديك حساب بالفعل؟{" "}
+              <button onClick={() => setMode("login")} className="text-link font-medium hover:underline">
+                تسجيل الدخول
+              </button>
+            </>
+          )}
         </p>
       </motion.div>
     </div>

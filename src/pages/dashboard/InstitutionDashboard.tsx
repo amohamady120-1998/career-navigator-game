@@ -10,7 +10,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   Users, GraduationCap, FlaskConical, FileText, School, Loader2,
-  ChevronRight, ChevronLeft,
+  ChevronRight, ChevronLeft, Download,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -52,6 +52,19 @@ interface StudentRow {
   full_name: string | null;
   grade_level: string | null;
   progressPercent: number;
+}
+
+function exportCSV(students: StudentRow[]) {
+  const BOM = "\uFEFF";
+  const header = "الاسم,المرحلة الدراسية,نسبة الإتمام\n";
+  const rows = students.map((s) => `"${s.full_name ?? "—"}","${s.grade_level ?? "—"}",${s.progressPercent}%`).join("\n");
+  const blob = new Blob([BOM + header + rows], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `students_export_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 export default function InstitutionDashboard() {
@@ -274,7 +287,13 @@ export default function InstitutionDashboard() {
 
               {/* Student Table */}
               <Card>
-                <CardHeader><CardTitle className="text-base">قائمة الطلاب</CardTitle></CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-base">قائمة الطلاب</CardTitle>
+                  <Button variant="outline" size="sm" onClick={() => exportCSV(students)}>
+                    <Download className="w-4 h-4 ml-2" />
+                    تصدير CSV
+                  </Button>
+                </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
                     <Table>

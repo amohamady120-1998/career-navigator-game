@@ -19,7 +19,7 @@ export default function SuperAdminDashboard() {
   const [stats, setStats] = useState({ totalUsers: 0, totalSchools: 0, completedJourneys: 0 });
   const [schools, setSchools] = useState<{ name: string; count: number }[]>([]);
   const [searchEmail, setSearchEmail] = useState("");
-  const [searchResult, setSearchResult] = useState<any>(null);
+  const [searchResult, setSearchResult] = useState<any[] | null>(null);
   const [searching, setSearching] = useState(false);
 
   useEffect(() => {
@@ -27,7 +27,6 @@ export default function SuperAdminDashboard() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate("/auth"); return; }
 
-      // Check admin role
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
@@ -35,14 +34,9 @@ export default function SuperAdminDashboard() {
         .eq("role", "admin")
         .maybeSingle();
 
-      if (!roleData) {
-        navigate("/dashboard");
-        return;
-      }
-
+      if (!roleData) { navigate("/dashboard"); return; }
       setAuthorized(true);
 
-      // Fetch stats
       const [profilesRes, progressRes] = await Promise.all([
         supabase.from("profiles").select("user_id, school_name, user_type"),
         supabase.from("user_progress").select("user_id, status"),
@@ -51,7 +45,6 @@ export default function SuperAdminDashboard() {
       const profiles = profilesRes.data ?? [];
       const progress = progressRes.data ?? [];
 
-      const totalUsers = profiles.length;
       const schoolSet = new Set(
         profiles.filter(p => p.school_name).map(p => p.school_name!.trim())
       );
@@ -59,13 +52,8 @@ export default function SuperAdminDashboard() {
         progress.filter(p => p.status === "completed").map(p => p.user_id)
       );
 
-      setStats({
-        totalUsers,
-        totalSchools: schoolSet.size,
-        completedJourneys: completedUsers.size,
-      });
+      setStats({ totalUsers: profiles.length, totalSchools: schoolSet.size, completedJourneys: completedUsers.size });
 
-      // School breakdown
       const schoolCounts: Record<string, number> = {};
       profiles.forEach(p => {
         if (p.school_name?.trim()) {
@@ -73,12 +61,7 @@ export default function SuperAdminDashboard() {
           schoolCounts[name] = (schoolCounts[name] ?? 0) + 1;
         }
       });
-      setSchools(
-        Object.entries(schoolCounts)
-          .map(([name, count]) => ({ name, count }))
-          .sort((a, b) => b.count - a.count)
-      );
-
+      setSchools(Object.entries(schoolCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count));
       setLoading(false);
     })();
   }, [navigate]);
@@ -88,17 +71,19 @@ export default function SuperAdminDashboard() {
     setSearching(true);
     setSearchResult(null);
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("user_id, full_name, user_type, school_name, grade_level, created_at")
-      .ilike("user_id", `%${searchEmail.trim()}%`);
+    try {
+      const { data, error } = await supabase.functions.invoke("lookup-user-by-email", {
+        body: { email: searchEmail.trim() },
+      });
 
-    // Since we can't search auth.users by email from client, search profiles
-    // In practice, admin would use edge function. For now show all matches.
-    if (error || !data?.length) {
-      toast({ title: "لم يتم العثور على نتائج", variant: "destructive" });
-    } else {
-      setSearchResult(data);
+      if (error) throw error;
+      if (!data?.results?.length) {
+        toast({ title: "لم يتم العثور على نتائج", variant: "destructive" });
+      } else {
+        setSearchResult(data.results);
+      }
+    } catch (err: any) {
+      toast({ title: "خطأ في البحث", description: err.message, variant: "destructive" });
     }
     setSearching(false);
   };
@@ -112,38 +97,26 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto" dir="rtl">
+    <div className="space-y-8 max-w-5xl mx-auto p-6" dir="rtl">
       <h1 className="text-2xl font-bold">لوحة المشرف العام</h1>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary"><Users className="w-5 h-5" /></div>
-            <div>
-              <p className="text-sm text-muted-foreground">إجمالي المستخدمين</p>
-              <p className="text-2xl font-bold">{stats.totalUsers}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary"><School className="w-5 h-5" /></div>
-            <div>
-              <p className="text-sm text-muted-foreground">المدارس المسجلة</p>
-              <p className="text-2xl font-bold">{stats.totalSchools}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary"><Award className="w-5 h-5" /></div>
-            <div>
-              <p className="text-sm text-muted-foreground">رحلات مكتملة</p>
-              <p className="text-2xl font-bold">{stats.completedJourneys}</p>
-            </div>
-          </CardContent>
-        </Card>
+        {[
+          { icon: Users, label: "إجمالي المستخدمين", value: stats.totalUsers },
+          { icon: School, label: "المدارس المسجلة", value: stats.totalSchools },
+          { icon: Award, label: "رحلات مكتملة", value: stats.completedJourneys },
+        ].map((kpi, i) => (
+          <Card key={i}>
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary"><kpi.icon className="w-5 h-5" /></div>
+              <div>
+                <p className="text-sm text-muted-foreground">{kpi.label}</p>
+                <p className="text-2xl font-bold">{kpi.value}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Schools Table */}
@@ -167,9 +140,7 @@ export default function SuperAdminDashboard() {
                 ))}
                 {schools.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={2} className="text-center text-muted-foreground">
-                      لا توجد مدارس مسجلة
-                    </TableCell>
+                    <TableCell colSpan={2} className="text-center text-muted-foreground">لا توجد مدارس مسجلة</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -178,13 +149,13 @@ export default function SuperAdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* User Lookup */}
+      {/* User Lookup by Email */}
       <Card>
-        <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Search className="w-5 h-5" />بحث عن مستخدم</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Search className="w-5 h-5" />بحث عن مستخدم بالبريد</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-3">
             <Input
-              placeholder="أدخل معرّف المستخدم"
+              placeholder="أدخل البريد الإلكتروني"
               value={searchEmail}
               onChange={(e) => setSearchEmail(e.target.value)}
               dir="ltr"
@@ -200,6 +171,7 @@ export default function SuperAdminDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>البريد</TableHead>
                     <TableHead>الاسم</TableHead>
                     <TableHead>النوع</TableHead>
                     <TableHead>المدرسة</TableHead>
@@ -209,8 +181,9 @@ export default function SuperAdminDashboard() {
                 <TableBody>
                   {searchResult.map((u: any) => (
                     <TableRow key={u.user_id}>
+                      <TableCell dir="ltr" className="text-left">{u.email ?? "—"}</TableCell>
                       <TableCell>{u.full_name ?? "—"}</TableCell>
-                      <TableCell>{u.user_type}</TableCell>
+                      <TableCell>{u.user_type ?? "—"}</TableCell>
                       <TableCell>{u.school_name ?? "—"}</TableCell>
                       <TableCell>{u.grade_level ?? "—"}</TableCell>
                     </TableRow>
