@@ -4,33 +4,53 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Users, GraduationCap, FlaskConical, FileText, School, Loader2 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import {
+  Users, GraduationCap, FlaskConical, FileText, School, Loader2,
+  ChevronRight, ChevronLeft,
+} from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, PieChart, Pie, Cell, Legend,
+} from "recharts";
 
 const MILESTONE_SLUGS = ["pre-impact", "holland", "simulation", "report"];
-const MILESTONE_LABELS: Record<string, string> = {
-  "intro": "المقدمة",
+const STEP_LABELS: Record<string, string> = {
+  intro: "المقدمة",
   "pre-impact": "ما قبل الأثر",
-  "holland": "اختبار هولاند",
-  "simulation": "المحاكاة",
+  holland: "اختبار هولاند",
+  simulation: "المحاكاة",
   "post-impact": "ما بعد الأثر",
-  "report": "التقرير النهائي",
+  report: "التقرير النهائي",
+};
+
+const RIASEC_AR: Record<string, string> = {
+  R: "واقعي",
+  I: "بحثي",
+  A: "فني",
+  S: "اجتماعي",
+  E: "مقدام",
+  C: "تقليدي",
 };
 
 const PIE_COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--accent))",
-  "hsl(160, 60%, 40%)",
+  "hsl(210, 70%, 20%)",  // Prussian blue
+  "hsl(160, 55%, 38%)",  // Jungle green
   "hsl(30, 80%, 55%)",
   "hsl(270, 50%, 55%)",
   "hsl(0, 60%, 55%)",
+  "hsl(45, 85%, 50%)",
 ];
+
+const PAGE_SIZE = 10;
 
 interface StudentRow {
   user_id: string;
   full_name: string | null;
+  grade_level: string | null;
   progressPercent: number;
 }
 
@@ -39,18 +59,18 @@ export default function InstitutionDashboard() {
   const [schoolName, setSchoolName] = useState("");
   const [linking, setLinking] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
 
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [journeyData, setJourneyData] = useState<{ name: string; count: number }[]>([]);
   const [hollandData, setHollandData] = useState<{ name: string; value: number }[]>([]);
-  const [summaryCards, setSummaryCards] = useState({ total: 0, holland: 0, simulation: 0, report: 0 });
+  const [summary, setSummary] = useState({ total: 0, holland: 0, simulation: 0, report: 0 });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
-    // Get linked student IDs
     const { data: links } = await supabase
       .from("institution_student_links")
       .select("student_user_id")
@@ -58,56 +78,34 @@ export default function InstitutionDashboard() {
 
     const studentIds = links?.map((l) => l.student_user_id) ?? [];
 
-    if (studentIds.length === 0) {
+    if (!studentIds.length) {
       setStudents([]);
       setJourneyData([]);
       setHollandData([]);
-      setSummaryCards({ total: 0, holland: 0, simulation: 0, report: 0 });
+      setSummary({ total: 0, holland: 0, simulation: 0, report: 0 });
       setLoading(false);
       return;
     }
 
-    // Fetch profiles for names
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("user_id, full_name")
-      .in("user_id", studentIds);
+    // Parallel fetches
+    const [profilesRes, stepsRes, progressRes, hollandRes] = await Promise.all([
+      supabase.from("profiles").select("user_id, full_name, grade_level").in("user_id", studentIds),
+      supabase.from("journey_steps").select("id, slug, order_index").order("order_index"),
+      supabase.from("user_progress").select("user_id, step_id, status").in("user_id", studentIds),
+      supabase.from("holland_results").select("top_code").in("user_id", studentIds),
+    ]);
 
-    // Fetch all journey steps
-    const { data: steps } = await supabase
-      .from("journey_steps")
-      .select("id, slug, order_index")
-      .order("order_index");
+    const profiles = profilesRes.data ?? [];
+    const steps = stepsRes.data ?? [];
+    const progress = progressRes.data ?? [];
+    const hollandResults = hollandRes.data ?? [];
 
-    const totalSteps = steps?.length ?? 1;
-    const stepMap = new Map(steps?.map((s) => [s.id, s.slug]) ?? []);
-    const milestoneStepIds = steps?.filter((s) => MILESTONE_SLUGS.includes(s.slug)).map((s) => ({ id: s.id, slug: s.slug })) ?? [];
+    const totalSteps = steps.length || 1;
+    const stepMap = new Map(steps.map((s) => [s.id, s.slug]));
 
-    // Fetch user_progress for linked students
-    const { data: progress } = await supabase
-      .from("user_progress")
-      .select("user_id, step_id, status")
-      .in("user_id", studentIds);
-
-    // Journey completion chart data
-    const stepCounts: Record<string, number> = {};
-    steps?.forEach((s) => { stepCounts[s.slug] = 0; });
-    progress?.forEach((p) => {
-      if (p.status === "completed") {
-        const slug = stepMap.get(p.step_id);
-        if (slug && slug in stepCounts) stepCounts[slug]++;
-      }
-    });
-    setJourneyData(
-      steps?.map((s) => ({
-        name: MILESTONE_LABELS[s.slug] ?? s.slug,
-        count: stepCounts[s.slug] ?? 0,
-      })) ?? []
-    );
-
-    // Summary cards
+    // Completed steps per user
     const completedByUser: Record<string, Set<string>> = {};
-    progress?.forEach((p) => {
+    progress.forEach((p) => {
       if (p.status === "completed") {
         const slug = stepMap.get(p.step_id);
         if (slug) {
@@ -117,51 +115,60 @@ export default function InstitutionDashboard() {
       }
     });
 
-    const countWithSlug = (slug: string) =>
-      studentIds.filter((id) => completedByUser[id]?.has(slug)).length;
+    // Journey funnel chart
+    const stepCounts: Record<string, number> = {};
+    steps.forEach((s) => { stepCounts[s.slug] = 0; });
+    progress.forEach((p) => {
+      if (p.status === "completed") {
+        const slug = stepMap.get(p.step_id);
+        if (slug && slug in stepCounts) stepCounts[slug]++;
+      }
+    });
+    setJourneyData(
+      steps.map((s) => ({ name: STEP_LABELS[s.slug] ?? s.slug, count: stepCounts[s.slug] ?? 0 }))
+    );
 
-    setSummaryCards({
+    // Summary KPIs
+    const countWith = (slug: string) => studentIds.filter((id) => completedByUser[id]?.has(slug)).length;
+    setSummary({
       total: studentIds.length,
-      holland: countWithSlug("holland"),
-      simulation: countWithSlug("simulation"),
-      report: countWithSlug("report"),
+      holland: countWith("holland"),
+      simulation: countWith("simulation"),
+      report: countWith("report"),
     });
 
-    // Student list with progress %
-    const studentRows: StudentRow[] = studentIds.map((id) => {
-      const profile = profiles?.find((p) => p.user_id === id);
-      const completed = completedByUser[id]?.size ?? 0;
-      return {
-        user_id: id,
-        full_name: profile?.full_name ?? "—",
-        progressPercent: Math.round((completed / totalSteps) * 100),
-      };
-    });
-    setStudents(studentRows);
+    // Student table
+    setStudents(
+      studentIds.map((id) => {
+        const p = profiles.find((pr) => pr.user_id === id);
+        return {
+          user_id: id,
+          full_name: p?.full_name ?? "—",
+          grade_level: p?.grade_level ?? "—",
+          progressPercent: Math.round(((completedByUser[id]?.size ?? 0) / totalSteps) * 100),
+        };
+      })
+    );
 
-    // Holland distribution (aggregated)
-    const { data: hollandResults } = await supabase
-      .from("holland_results")
-      .select("top_code")
-      .in("user_id", studentIds);
-
+    // RIASEC pie chart with Arabic labels
     const codeCounts: Record<string, number> = {};
-    hollandResults?.forEach((r) => {
+    hollandResults.forEach((r) => {
       if (r.top_code) {
-        const topLetter = r.top_code.charAt(0).toUpperCase();
-        codeCounts[topLetter] = (codeCounts[topLetter] ?? 0) + 1;
+        const letter = r.top_code.charAt(0).toUpperCase();
+        codeCounts[letter] = (codeCounts[letter] ?? 0) + 1;
       }
     });
     setHollandData(
-      Object.entries(codeCounts).map(([name, value]) => ({ name, value }))
+      Object.entries(codeCounts).map(([code, value]) => ({
+        name: RIASEC_AR[code] ?? code,
+        value,
+      }))
     );
 
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleLink = async () => {
     if (!schoolName.trim()) return;
@@ -170,7 +177,6 @@ export default function InstitutionDashboard() {
       school_name: schoolName.trim(),
     });
     setLinking(false);
-
     if (error) {
       toast({ title: "خطأ", description: error.message, variant: "destructive" });
       return;
@@ -179,14 +185,18 @@ export default function InstitutionDashboard() {
     fetchData();
   };
 
+  const pct = (n: number) => (summary.total ? Math.round((n / summary.total) * 100) : 0);
+  const totalPages = Math.ceil(students.length / PAGE_SIZE);
+  const pagedStudents = students.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
   return (
     <div className="space-y-8">
-      {/* Link Students Section */}
+      {/* Connection Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <School className="w-5 h-5 text-primary" />
-            ربط الطلاب حسب المدرسة
+            جلب بيانات الطلاب
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -198,8 +208,8 @@ export default function InstitutionDashboard() {
               className="max-w-sm"
             />
             <Button onClick={handleLink} disabled={linking || !schoolName.trim()}>
-              {linking ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}
-              ربط الطلاب
+              {linking && <Loader2 className="w-4 h-4 animate-spin ml-2" />}
+              جلب بيانات الطلاب
             </Button>
           </div>
         </CardContent>
@@ -211,87 +221,78 @@ export default function InstitutionDashboard() {
         </div>
       ) : (
         <>
-          {/* Summary Cards */}
+          {/* KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <SummaryCard icon={<Users className="w-5 h-5" />} label="إجمالي الطلاب" value={summaryCards.total} />
-            <SummaryCard icon={<GraduationCap className="w-5 h-5" />} label="أنهوا هولاند" value={`${summaryCards.total ? Math.round((summaryCards.holland / summaryCards.total) * 100) : 0}%`} />
-            <SummaryCard icon={<FlaskConical className="w-5 h-5" />} label="أنهوا المحاكاة" value={`${summaryCards.total ? Math.round((summaryCards.simulation / summaryCards.total) * 100) : 0}%`} />
-            <SummaryCard icon={<FileText className="w-5 h-5" />} label="وصلوا التقرير" value={`${summaryCards.total ? Math.round((summaryCards.report / summaryCards.total) * 100) : 0}%`} />
+            <KpiCard icon={<Users className="w-5 h-5" />} label="إجمالي الطلاب" value={summary.total} />
+            <KpiCard icon={<GraduationCap className="w-5 h-5" />} label="أنهوا هولاند" value={`${pct(summary.holland)}%`} />
+            <KpiCard icon={<FlaskConical className="w-5 h-5" />} label="أنهوا المحاكاة" value={`${pct(summary.simulation)}%`} />
+            <KpiCard icon={<FileText className="w-5 h-5" />} label="معتمدون" value={`${pct(summary.report)}%`} />
           </div>
 
-          {/* Charts */}
-          {summaryCards.total > 0 && (
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Journey Completion Bar Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">إتمام مراحل الرحلة</CardTitle>
-                </CardHeader>
-                <CardContent className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={journeyData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" allowDecimals={false} />
-                      <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+          {summary.total > 0 && (
+            <>
+              {/* Charts Row */}
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* RIASEC Pie */}
+                <Card>
+                  <CardHeader><CardTitle className="text-base">توزيع أنماط RIASEC</CardTitle></CardHeader>
+                  <CardContent className="h-72">
+                    {hollandData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={hollandData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>
+                            {hollandData.map((_, i) => (
+                              <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Legend />
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <p className="text-muted-foreground text-sm text-center pt-12">لا توجد بيانات هولاند بعد</p>
+                    )}
+                  </CardContent>
+                </Card>
 
-              {/* Holland Distribution Pie Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">توزيع أنماط هولاند</CardTitle>
-                </CardHeader>
-                <CardContent className="h-72">
-                  {hollandData.length > 0 ? (
+                {/* Journey Funnel Bar */}
+                <Card>
+                  <CardHeader><CardTitle className="text-base">مسار إتمام الرحلة</CardTitle></CardHeader>
+                  <CardContent className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie data={hollandData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>
-                          {hollandData.map((_, i) => (
-                            <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Legend />
+                      <BarChart data={journeyData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                        <YAxis allowDecimals={false} />
                         <Tooltip />
-                      </PieChart>
+                        <Bar dataKey="count" fill="#051730" radius={[4, 4, 0, 0]} />
+                      </BarChart>
                     </ResponsiveContainer>
-                  ) : (
-                    <p className="text-muted-foreground text-sm text-center pt-12">لا توجد بيانات هولاند بعد</p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                  </CardContent>
+                </Card>
+              </div>
 
-          {/* Student List Table */}
-          {summaryCards.total > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">قائمة الطلاب</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="max-h-96">
+              {/* Student Table */}
+              <Card>
+                <CardHeader><CardTitle className="text-base">قائمة الطلاب</CardTitle></CardHeader>
+                <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>الاسم</TableHead>
+                        <TableHead>المرحلة الدراسية</TableHead>
                         <TableHead>نسبة الإتمام</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {students.map((s) => (
+                      {pagedStudents.map((s) => (
                         <TableRow key={s.user_id}>
                           <TableCell>{s.full_name}</TableCell>
+                          <TableCell>{s.grade_level}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-primary rounded-full transition-all"
-                                  style={{ width: `${s.progressPercent}%` }}
-                                />
+                                <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${s.progressPercent}%` }} />
                               </div>
                               <span className="text-xs text-muted-foreground">{s.progressPercent}%</span>
                             </div>
@@ -300,9 +301,20 @@ export default function InstitutionDashboard() {
                       ))}
                     </TableBody>
                   </Table>
-                </ScrollArea>
-              </CardContent>
-            </Card>
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-4 mt-4">
+                      <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                      <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
+                      <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </>
           )}
         </>
       )}
@@ -310,7 +322,7 @@ export default function InstitutionDashboard() {
   );
 }
 
-function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
+function KpiCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
   return (
     <Card>
       <CardContent className="p-5 flex items-center gap-4">
