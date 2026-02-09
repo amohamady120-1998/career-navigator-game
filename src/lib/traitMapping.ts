@@ -1,5 +1,3 @@
-// src/lib/traitMapping.ts
-
 export type TraitDimension = 
   | 'ethics' 
   | 'leadership' 
@@ -21,7 +19,7 @@ export const TRAIT_LABELS: Record<TraitDimension, string> = {
   commercial: 'الوعي التجاري والعملي'
 };
 
-// Map the raw AI tags from our scenarios to these dimensions
+// COMPLETE MAPPING: Maps ~160 Database AI Tags to 8 Dimensions
 export const TAG_MAP: Record<string, TraitDimension> = {
   // --- Ethics & Integrity (النزاهة) ---
   'ethical_strictness': 'ethics', 'patient_safety_first': 'ethics', 'security_first': 'ethics',
@@ -94,10 +92,16 @@ export function analyzeSimulationTraits(responses: any[], scenarios: any[]) {
     const scenario = scenarios.find(s => s.id === res.scenario_id);
     if (!scenario || !scenario.options_json) return;
     
-    // Parse options if string, or use directly if array
-    const options = typeof scenario.options_json === 'string' 
-      ? JSON.parse(scenario.options_json) 
-      : scenario.options_json;
+    // Handle both stringified JSON and direct object
+    let options = scenario.options_json;
+    if (typeof options === 'string') {
+      try {
+        options = JSON.parse(options);
+      } catch (e) {
+        console.error('Error parsing options_json:', e);
+        return;
+      }
+    }
       
     const selectedOption = options.find((o: any) => o.id === res.selected_option_id);
     
@@ -105,6 +109,8 @@ export function analyzeSimulationTraits(responses: any[], scenarios: any[]) {
       const dimension = TAG_MAP[selectedOption.ai_tag];
       if (dimension) {
         scores[dimension]++;
+      } else {
+        console.warn(`Unmapped AI Tag found: ${selectedOption.ai_tag}`);
       }
     }
   });
