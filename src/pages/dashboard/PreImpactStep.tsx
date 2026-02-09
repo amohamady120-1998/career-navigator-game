@@ -41,6 +41,22 @@ export default function PreImpactStep() {
       return;
     }
 
+    // Mark step as completed
+    const { data: step } = await supabase
+      .from("journey_steps")
+      .select("id")
+      .eq("slug", "pre-impact")
+      .single();
+
+    if (step) {
+      await supabase.from("user_progress").upsert({
+        user_id: session.user.id,
+        step_id: step.id,
+        status: "completed",
+        completed_at: new Date().toISOString(),
+      }, { onConflict: "user_id,step_id" });
+    }
+
     toast({ title: "تم الحفظ ✓", description: "تم حفظ إجاباتك بنجاح" });
     setCompleted(true);
     setTimeout(() => navigate("/dashboard/holland"), 1500);
