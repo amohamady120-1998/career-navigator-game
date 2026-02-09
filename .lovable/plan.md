@@ -1,48 +1,60 @@
 
 
-# Phase 10: Final Polish & Quality of Life
+# Phase 9 Refinements: Remaining Polish Items
 
-The application is feature-complete. This phase focuses on small but impactful improvements to user experience and code quality.
+Most of Phase 9 was already implemented in previous iterations. Here are the small remaining improvements to fully satisfy the requirements.
 
-## 1. Add ThemeToggle to Parent and Institution Layouts
+## Already Done (No Changes Needed)
+- ThemeToggle component with Sun/Moon icons and aria-label
+- ThemeProvider wrapping the app with `attribute="class"`
+- ThemeToggle in DashboardLayout, ParentLayout, InstitutionLayout, and Index.tsx headers
+- ErrorBoundary wrapping all routes in App.tsx
+- Print styles hiding sidebar, header, and data-sidebar elements
+- RIASEC and simulation progress bars have `role="progressbar"` and `aria-valuenow`
+- Institution Dashboard charts already use `h-72` height and `grid-cols-1 md:grid-cols-2`
+- Student table already wrapped in `overflow-x-auto`
+- Dark/light CSS variables fully defined
 
-Currently only the Dashboard and Landing page have the dark mode toggle. The Parent and Institution layouts are missing it, creating an inconsistent experience.
+## Remaining Changes
 
-- Add `ThemeToggle` to the header of `ParentLayout.tsx`
-- Add `ThemeToggle` to the header of `InstitutionLayout.tsx`
+### 1. Enhanced Print Styles (`src/index.css`)
+Add missing print rules:
+- Hide `nav`, `.no-print`, `.theme-toggle` elements
+- Add `@page { margin: 0.5in; }` for cleaner page margins
+- Force text to dark colors for readability on paper
 
-## 2. Redirect Authenticated Users Away from Auth/Landing
+### 2. Simulation Grid Mobile Fix (`src/pages/dashboard/SimulationStep.tsx`)
+Change library grid from `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4` to `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` so cards display properly on small phones.
 
-If a logged-in user visits `/` or `/auth`, they currently see the landing/login page instead of being redirected to their dashboard. Add session checks:
+### 3. Aria Labels on Icon-Only Buttons
+Add `aria-label` to the Settings and Logout buttons in:
+- `src/layouts/ParentLayout.tsx`
+- `src/layouts/InstitutionLayout.tsx`
+- `src/layouts/DashboardLayout.tsx` (SidebarTrigger already has it)
 
-- In `Index.tsx`: Check for active session on mount. If found, redirect to dashboard based on role.
-- In `Auth.tsx`: Check for active session on mount. If found, redirect by role.
-
-## 3. Add Loading State to Auth Page
-
-The Auth page submits but shows no visual loading indicator beyond the button text changing. Add a `Loader2` spinner icon to the submit button while `loading` is true.
-
-## 4. Invalidate Progress Queries After Step Completion
-
-Several step pages (IntroStep, PreImpactStep, PostImpactStep) mark their step as complete but don't invalidate the `user-progress-slugs` and `step-guard-progress` queries. This means the sidebar and StepGuard may show stale data until a page refresh.
-
-- Add `useQueryClient()` and call `invalidateQueries` after upsert in IntroStep, PreImpactStep, and PostImpactStep.
-
-## 5. ProfileStep Should Use Dashboard Layout Styles
-
-The ProfileStep renders its own full-screen layout with `min-h-screen bg-primary`, which looks out of place when rendered inside the DashboardLayout (it already has a sidebar and header). Adjust it to render as a standard content card within the existing layout.
+### 4. Bar Chart Dark Mode Color
+In `InstitutionDashboard.tsx`, change the hardcoded bar fill `#051730` to `hsl(var(--primary))` so it adapts to dark mode via CSS variables. Since Recharts doesn't support CSS variables directly, use `"currentColor"` and set the container's text color, or use `var(--foreground)` via a computed style.
 
 ---
 
 ## Technical Details
 
+### Print Styles Addition (index.css)
+Extend the existing `@media print` block:
+- Add `nav, .no-print, .theme-toggle { display: none !important; }`
+- Add `@page { margin: 0.5in; }` at the top level
+- Add `a { color: black !important; text-decoration: none !important; }`
+
+### SimulationStep Grid (line 270)
+Change: `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4` to `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
+
+### Aria Labels
+Add `aria-label="الإعدادات"` to Settings buttons and `aria-label="تسجيل الخروج"` to Logout buttons in ParentLayout and InstitutionLayout.
+
 ### Files Modified
-- `src/layouts/ParentLayout.tsx` -- import and add ThemeToggle to header
-- `src/layouts/InstitutionLayout.tsx` -- import and add ThemeToggle to header
-- `src/pages/Index.tsx` -- add useEffect to check session and redirect
-- `src/pages/Auth.tsx` -- add useEffect to check session and redirect; add Loader2 to button
-- `src/pages/dashboard/IntroStep.tsx` -- add query invalidation after completing step
-- `src/pages/dashboard/PreImpactStep.tsx` -- add query invalidation after completing step
-- `src/pages/dashboard/PostImpactStep.tsx` -- add query invalidation after completing step
-- `src/pages/dashboard/ProfileStep.tsx` -- remove full-screen wrapper, use card-style layout within DashboardLayout
+- `src/index.css` -- enhanced print styles
+- `src/pages/dashboard/SimulationStep.tsx` -- mobile grid fix
+- `src/layouts/ParentLayout.tsx` -- aria labels on buttons
+- `src/layouts/InstitutionLayout.tsx` -- aria labels on buttons
+- `src/pages/dashboard/InstitutionDashboard.tsx` -- dark-mode-friendly chart color
 
