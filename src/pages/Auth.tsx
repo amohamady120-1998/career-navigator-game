@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 import atharLogoLight from "@/assets/athar-logo-light.png";
 
 const Auth = () => {
@@ -17,6 +18,13 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      await redirectByRole(session.user.id);
+    });
+  }, []);
 
   const redirectByRole = async (userId: string) => {
     const { data: profile } = await supabase
@@ -170,6 +178,7 @@ const Auth = () => {
             disabled={loading}
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-lg h-12"
           >
+            {loading && <Loader2 className="w-5 h-5 animate-spin ml-2" />}
             {loading
               ? "جاري التحميل..."
               : mode === "login"

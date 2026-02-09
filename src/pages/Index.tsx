@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import atharLogoDark from "@/assets/athar-logo-dark.png";
 import { GraduationCap, Users, Building2, ClipboardList, FlaskConical, FileText, Award } from "lucide-react";
@@ -62,6 +63,20 @@ const item = {
 const Index = () => {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<UserType | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      if (profile?.user_type === "parent") navigate("/parent", { replace: true });
+      else if (profile?.user_type === "institution") navigate("/institution", { replace: true });
+      else navigate("/dashboard", { replace: true });
+    });
+  }, [navigate]);
 
   const handleSelect = (type: UserType) => {
     setSelected(type);

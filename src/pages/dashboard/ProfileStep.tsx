@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import atharLogoLight from "@/assets/athar-logo-light.png";
+
 
 const GRADE_OPTIONS = [
   { value: "الصف الأول ثانوي", label: "الصف الأول ثانوي" },
@@ -66,14 +66,12 @@ export default function ProfileStep() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-primary px-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-md bg-card rounded-xl p-8 shadow-2xl"
-      >
-        <img src={atharLogoLight} alt="أثر البداية" className="h-16 mx-auto mb-2 object-contain" />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="max-w-md mx-auto py-8"
+    >
+      <div className="bg-card rounded-xl p-8 shadow-lg border border-border">
         <h2 className="text-xl font-bold text-center mb-1">أهلاً بك في أثر! 🚀</h2>
         <p className="text-muted-foreground text-center mb-6 text-sm">
           لنبني تجربتك بشكل صحيح، نحتاج لبعض المعلومات الدراسية.
@@ -127,7 +125,7 @@ export default function ProfileStep() {
             {loading ? "جاري الحفظ..." : "حفظ وبدء الرحلة"}
           </Button>
         </form>
-      </motion.div>
-    </div>
+      </div>
+    </motion.div>
   );
 }

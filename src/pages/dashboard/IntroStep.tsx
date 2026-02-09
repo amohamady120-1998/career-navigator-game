@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function IntroStep() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
 
   const handleStart = async () => {
@@ -33,6 +35,8 @@ export default function IntroStep() {
         }, { onConflict: "user_id,step_id" });
       }
 
+      await queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
+      await queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
       navigate("/dashboard/pre-impact");
     } catch (err) {
       toast({ title: "خطأ", description: "حدث خطأ غير متوقع", variant: "destructive" });
