@@ -15,6 +15,7 @@ import HollandStep from "./pages/dashboard/HollandStep";
 import SimulationStep from "./pages/dashboard/SimulationStep";
 import ReportStep from "./pages/dashboard/ReportStep";
 import PostImpactStep from "./pages/dashboard/PostImpactStep";
+import ProfileStep from "./pages/dashboard/ProfileStep";
 import ParentDashboard from "./pages/dashboard/ParentDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="simulation" element={<SimulationStep />} />
             <Route path="post-impact" element={<PostImpactStep />} />
             <Route path="report" element={<ReportStep />} />
+            <Route path="profile" element={<ProfileStep />} />
           </Route>
           <Route path="/parent" element={<ParentLayout />}>
             <Route index element={<ParentDashboard />} />

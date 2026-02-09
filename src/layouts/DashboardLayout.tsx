@@ -21,7 +21,7 @@ export default function DashboardLayout() {
       // Check if user is a parent — redirect to parent dashboard
       const { data: profile } = await supabase
         .from("profiles")
-        .select("user_type")
+        .select("user_type, school_name")
         .eq("user_id", session.user.id)
         .maybeSingle();
 
@@ -33,6 +33,11 @@ export default function DashboardLayout() {
       if (profile?.user_type === "institution") {
         navigate("/institution", { replace: true });
         return;
+      }
+
+      // Student profile completeness check
+      if (!profile?.school_name) {
+        navigate("/dashboard/profile", { replace: true });
       }
 
       setAuthChecked(true);
