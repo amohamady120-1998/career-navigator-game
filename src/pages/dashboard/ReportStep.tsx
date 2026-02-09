@@ -174,7 +174,7 @@ export default function ReportStep() {
             return (
               <div key={code} className="flex items-center gap-3">
                 <span className="w-16 text-sm font-medium">{riasecLabels[code]}</span>
-                <div className="flex-1 h-6 bg-secondary rounded-full overflow-hidden">
+                <div className="flex-1 h-6 bg-secondary rounded-full overflow-hidden" role="progressbar" aria-valuenow={score} aria-valuemin={0} aria-valuemax={7} aria-label={`${riasecLabels[code]}: ${score} من 7`}>
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${pct}%` }}
@@ -276,7 +276,7 @@ export default function ReportStep() {
                 return (
                   <div key={t.key} className="flex items-center gap-3">
                     <span className="w-32 text-sm font-medium text-right truncate">{t.label}</span>
-                    <div className="flex-1 h-6 bg-secondary rounded-full overflow-hidden">
+                    <div className="flex-1 h-6 bg-secondary rounded-full overflow-hidden" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label={`${t.label}: ${Math.round(pct)}%`}>
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}

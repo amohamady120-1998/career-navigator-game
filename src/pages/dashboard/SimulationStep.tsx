@@ -390,7 +390,7 @@ export default function SimulationStep() {
       </div>
 
       {/* Progress bar */}
-      <div className="w-full h-1.5 bg-secondary rounded-full mb-6 overflow-hidden">
+      <div className="w-full h-1.5 bg-secondary rounded-full mb-6 overflow-hidden" role="progressbar" aria-valuenow={currentIdx + 1} aria-valuemin={1} aria-valuemax={scenarios?.length || 1} aria-label={`السيناريو ${currentIdx + 1} من ${scenarios?.length || 1}`}>
         <motion.div
           className="h-full bg-primary rounded-full"
           initial={{ width: 0 }}

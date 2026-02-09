@@ -9,6 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 type UserType = "student" | "parent" | "institution";
 
@@ -70,6 +71,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-primary" dir="rtl">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 left-4">
+        <ThemeToggle />
+      </div>
+
       {/* Hero */}
       <section className="flex flex-col items-center justify-center px-4 pt-20 pb-16">
         <motion.div

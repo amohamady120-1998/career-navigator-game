@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { PledgeModal } from "@/components/PledgeModal";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Menu } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const STEP_ORDER = ["intro", "pre-impact", "holland", "simulation", "post-impact", "report"];
 
@@ -88,11 +89,14 @@ export default function DashboardLayout() {
         <div className="min-h-screen flex w-full">
           <AppSidebar />
           <div className="flex-1 flex flex-col">
-            <header className="h-14 flex items-center border-b border-border px-4 bg-card">
-              <SidebarTrigger>
-                <Menu className="w-5 h-5" />
-              </SidebarTrigger>
-              <h1 className="mr-4 font-bold text-lg">أثر البداية</h1>
+            <header className="h-14 flex items-center justify-between border-b border-border px-4 bg-card">
+              <div className="flex items-center">
+                <SidebarTrigger aria-label="فتح/إغلاق القائمة">
+                  <Menu className="w-5 h-5" />
+                </SidebarTrigger>
+                <h1 className="mr-4 font-bold text-lg">أثر البداية</h1>
+              </div>
+              <ThemeToggle />
             </header>
             <main className="flex-1 p-6">
               <Outlet />

@@ -173,6 +173,7 @@ export function AppSidebar() {
           variant="ghost"
           className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive"
           onClick={handleLogout}
+          aria-label="تسجيل الخروج"
         >
           <LogOut className="w-4 h-4" />
           تسجيل الخروج

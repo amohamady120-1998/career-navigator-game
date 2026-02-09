@@ -245,7 +245,7 @@ export default function InstitutionDashboard() {
           {summary.total > 0 && (
             <>
               {/* Charts Row */}
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* RIASEC Pie */}
                 <Card>
                   <CardHeader><CardTitle className="text-base">توزيع أنماط RIASEC</CardTitle></CardHeader>
