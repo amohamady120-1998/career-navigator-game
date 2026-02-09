@@ -76,6 +76,7 @@ export function AppSidebar() {
   const reportCompleted = completedSlugs?.includes("report") ?? false;
 
   const handleLogout = async () => {
+    localStorage.removeItem("athar_pledge_accepted");
     await supabase.auth.signOut();
     navigate("/");
   };

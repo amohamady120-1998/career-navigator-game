@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Trophy, Briefcase, GraduationCap, TrendingUp, TrendingDown, Brain, Sparkles } from "lucide-react";
@@ -33,6 +33,8 @@ const DIMENSION_DESCRIPTIONS: Record<TraitDimension, string> = {
 };
 
 export default function ReportStep() {
+  const queryClient = useQueryClient();
+
   const { data: result, isLoading } = useQuery({
     queryKey: ["holland-result"],
     queryFn: async () => {
@@ -91,8 +93,29 @@ export default function ReportStep() {
         particleCount: 150, spread: 100, origin: { y: 0.6 },
         colors: ["#faaa25", "#00a870", "#6966f2", "#051730"],
       });
+
+      // Mark report step as completed
+      (async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const { data: step } = await supabase
+          .from("journey_steps")
+          .select("id")
+          .eq("slug", "report")
+          .maybeSingle();
+
+        if (step) {
+          await supabase.from("user_progress").upsert(
+            { user_id: session.user.id, step_id: step.id, status: "completed", completed_at: new Date().toISOString() },
+            { onConflict: "user_id,step_id" }
+          );
+          queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
+          queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
+        }
+      })();
     }
-  }, [result]);
+  }, [result, queryClient]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center py-20 text-muted-foreground">جاري تحضير التقرير...</div>;
