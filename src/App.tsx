@@ -6,12 +6,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import DashboardLayout from "./layouts/DashboardLayout";
+import ParentLayout from "./layouts/ParentLayout";
 import IntroStep from "./pages/dashboard/IntroStep";
 import PreImpactStep from "./pages/dashboard/PreImpactStep";
 import HollandStep from "./pages/dashboard/HollandStep";
 import SimulationStep from "./pages/dashboard/SimulationStep";
 import ReportStep from "./pages/dashboard/ReportStep";
 import PostImpactStep from "./pages/dashboard/PostImpactStep";
+import ParentDashboard from "./pages/dashboard/ParentDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +35,9 @@ const App = () => (
             <Route path="simulation" element={<SimulationStep />} />
             <Route path="post-impact" element={<PostImpactStep />} />
             <Route path="report" element={<ReportStep />} />
+          </Route>
+          <Route path="/parent" element={<ParentLayout />}>
+            <Route index element={<ParentDashboard />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
