@@ -41,6 +41,36 @@ export type Database = {
         }
         Relationships: []
       }
+      simulation_scenarios: {
+        Row: {
+          created_at: string
+          id: string
+          level: string
+          major_id: string
+          options_json: Json
+          text_ar: string
+          timer_seconds: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level: string
+          major_id: string
+          options_json?: Json
+          text_ar: string
+          timer_seconds?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: string
+          major_id?: string
+          options_json?: Json
+          text_ar?: string
+          timer_seconds?: number | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
