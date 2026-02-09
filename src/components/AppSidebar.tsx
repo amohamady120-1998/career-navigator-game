@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 import { BookOpen, BarChart3, Compass, Gamepad2, FileText, Lock, CheckCircle2 } from "lucide-react";
+import atharLogoDark from "@/assets/athar-logo-dark.png";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -43,9 +44,8 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-l-0">
       <SidebarContent>
-        <div className="p-6 border-b border-sidebar-border">
-          <h2 className="text-xl font-black text-sidebar-primary">أثر ستارت</h2>
-          <p className="text-xs text-sidebar-foreground/60 mt-1">رحلة اكتشاف المسار المهني</p>
+        <div className="p-4 border-b border-sidebar-border flex items-center justify-center">
+          <img src={atharLogoDark} alt="أثر البداية" className="h-14 object-contain" />
         </div>
 
         <SidebarGroup>

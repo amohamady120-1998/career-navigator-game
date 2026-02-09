@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import atharLogoLight from "@/assets/athar-logo-light.png";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -63,7 +64,7 @@ const Auth = () => {
         transition={{ duration: 0.4 }}
         className="w-full max-w-md bg-card rounded-xl p-8 shadow-2xl"
       >
-        <h1 className="text-3xl font-bold text-center mb-2">أثر ستارت</h1>
+        <img src={atharLogoLight} alt="أثر البداية" className="h-16 mx-auto mb-2 object-contain" />
         <p className="text-muted-foreground text-center mb-8">
           {isLogin ? "سجّل دخولك للمتابعة" : "أنشئ حسابك الجديد"}
         </p>

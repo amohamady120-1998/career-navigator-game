@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import atharLogoDark from "@/assets/athar-logo-dark.png";
 import { GraduationCap, Users, Building2 } from "lucide-react";
 
 type UserType = "student" | "parent" | "institution";
@@ -58,9 +59,7 @@ const Index = () => {
         transition={{ duration: 0.6 }}
         className="text-center mb-12"
       >
-        <h1 className="text-5xl font-black text-primary-foreground mb-3 tracking-tight">
-          أثر ستارت
-        </h1>
+        <img src={atharLogoDark} alt="أثر البداية" className="h-24 mx-auto mb-4 object-contain" />
         <p className="text-xl text-primary-foreground/70 max-w-md mx-auto">
           رحلتك لاكتشاف المسار المهني الأنسب لك تبدأ من هنا
         </p>
