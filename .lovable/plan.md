@@ -1,76 +1,58 @@
 
 
-# Phase 5: Institution Dashboard
+# Phase 6: Student Profile Completion
 
-## Overview
-Build an Institution dashboard that lets school administrators view aggregated analytics across all students in their institution -- without seeing individual student answers (privacy-first). Institutions link to students by shared `school_name` in their profiles.
+## Problem
+Currently, the signup form only collects `full_name` and `user_type`. The `school_name` and `grade_level` fields in the `profiles` table are never populated. This means:
+- The Institution Dashboard's "link by school name" feature cannot find any students
+- The student table shows "---" for grade level
+- Parent dashboard doesn't show grade info
+
+## Solution
+Add a profile completion step that collects `school_name`, `grade_level`, and `phone` immediately after signup, before the student enters the journey.
 
 ## What Changes
 
-### 1. Database Migration
-- Create `institution_student_links` table:
-  - `id` (uuid, PK)
-  - `institution_user_id` (uuid, NOT NULL)
-  - `student_user_id` (uuid, NOT NULL)
-  - `created_at` (timestamptz, default now())
-  - Unique constraint on `(institution_user_id, student_user_id)`
-- RLS: institution users can read/insert their own links
-- Add RLS policy on `user_progress` so institution users can read progress of linked students
-- Create RPC `link_students_by_school(school_name text)` (SECURITY DEFINER):
-  - Verifies caller is `institution` type
-  - Finds all students with matching `school_name` in profiles
-  - Bulk-inserts links into `institution_student_links`
-  - Returns count of linked students
+### 1. New File: `src/pages/dashboard/ProfileStep.tsx`
+A form that appears right after first login for students, collecting:
+- **School Name** (text input, required) -- e.g. "مدرسة الملك فهد"
+- **Grade Level** (select dropdown, required) -- options like "الصف الأول ثانوي", "الصف الثاني ثانوي", "الصف الثالث ثانوي"
+- **Phone** (optional text input)
 
-### 2. New Files
+On submit:
+- Updates the `profiles` table with these fields
+- Redirects to `/dashboard/intro`
 
-**`src/layouts/InstitutionLayout.tsx`**
-- Clean layout similar to ParentLayout
-- Header: Athar logo + "لوحة المؤسسة" title + logout button
-- No sidebar, wide content area for data tables/charts
+### 2. Modified: `src/layouts/DashboardLayout.tsx`
+After auth check and role redirect, add a profile completeness check:
+- Query the student's profile for `school_name`
+- If `school_name` is null/empty, redirect to `/dashboard/profile` instead of showing the journey
 
-**`src/pages/dashboard/InstitutionDashboard.tsx`**
-- **Link Students Section**: Input for school name + "ربط الطلاب" button (calls RPC)
-- **Summary Cards Row** (4 cards):
-  - Total linked students count
-  - Students who completed Holland test (%)
-  - Students who completed Simulation (%)
-  - Students who reached Final Report (%)
-- **Journey Completion Chart**: Bar chart (using Recharts, already installed) showing how many students completed each step
-- **Holland Distribution Chart**: Pie chart showing distribution of top Holland codes across all linked students (aggregated, no individual data)
-- **Student List Table**: Name + overall progress % only (no scores/answers)
+### 3. Modified: `src/App.tsx`
+- Add route `/dashboard/profile` pointing to `ProfileStep`
 
-### 3. Modified Files
-
-**`src/layouts/DashboardLayout.tsx`**
-- Add check: if `user_type === 'institution'`, redirect to `/institution`
-
-**`src/App.tsx`**
-- Add `/institution` route with `InstitutionLayout` containing `InstitutionDashboard`
-
-### 4. Privacy Rules
-- Institution sees: aggregated counts, percentages, distributions
-- Institution does NOT see: individual Holland scores, simulation answers, trait analysis
-- Student list shows only name + completion percentage
+### 4. Modified: `src/pages/Auth.tsx`
+- During signup for `institution` type, add a `school_name` input field so institutions know which school they represent
+- Store it in the profile on creation
 
 ## Technical Details
 
-### Data Flow
+### Profile Step Flow
 ```text
-Institution signs up (type=institution) --> /institution dashboard
-  --> Enters school name --> RPC links all matching students
-  --> Dashboard queries aggregated data from linked students
-  --> Charts render using Recharts (already installed)
+Student signs up --> Login --> DashboardLayout checks profile
+  --> school_name is null --> redirect to /dashboard/profile
+  --> Student fills school_name + grade_level --> profile updated
+  --> Redirect to /dashboard/intro (normal journey begins)
 ```
 
-### Aggregation Queries
-- Journey completion: COUNT of user_progress entries grouped by step, filtered to linked student IDs
-- Holland distribution: GROUP BY top_code from holland_results for linked students
-- Progress percentage: COUNT completed steps / total steps per student
+### Grade Level Options (Saudi system)
+- الصف الأول ثانوي
+- الصف الثاني ثانوي  
+- الصف الثالث ثانوي
 
-### UI Layout
-- Summary cards in a 2x2 or 4-column grid
-- Charts side by side on desktop, stacked on mobile
-- Student table with scroll area for large lists
-- All text in Arabic (RTL)
+### Auth Signup Enhancement
+For institution accounts, an additional "اسم المدرسة" field appears during registration so it is stored in their profile immediately.
+
+### No Database Migration Needed
+All columns (`school_name`, `grade_level`, `phone`) already exist in the `profiles` table. Only frontend changes are required.
 
