@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      answers: {
+        Row: {
+          answer_value: string
+          created_at: string
+          id: string
+          question_id: string
+          user_id: string
+        }
+        Insert: {
+          answer_value: string
+          created_at?: string
+          id?: string
+          question_id: string
+          user_id: string
+        }
+        Update: {
+          answer_value?: string
+          created_at?: string
+          id?: string
+          question_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       holland_codes: {
         Row: {
           career_paths: Json | null
@@ -40,6 +72,128 @@ export type Database = {
           weaknesses?: Json | null
         }
         Relationships: []
+      }
+      journey_steps: {
+        Row: {
+          id: string
+          is_locked: boolean
+          name_ar: string
+          order_index: number
+          slug: string
+        }
+        Insert: {
+          id?: string
+          is_locked?: boolean
+          name_ar: string
+          order_index: number
+          slug: string
+        }
+        Update: {
+          id?: string
+          is_locked?: boolean
+          name_ar?: string
+          order_index?: number
+          slug?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          grade_level: string | null
+          id: string
+          phone: string | null
+          school_name: string | null
+          updated_at: string
+          user_id: string
+          user_type: Database["public"]["Enums"]["user_type"]
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          grade_level?: string | null
+          id?: string
+          phone?: string | null
+          school_name?: string | null
+          updated_at?: string
+          user_id: string
+          user_type?: Database["public"]["Enums"]["user_type"]
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          grade_level?: string | null
+          id?: string
+          phone?: string | null
+          school_name?: string | null
+          updated_at?: string
+          user_id?: string
+          user_type?: Database["public"]["Enums"]["user_type"]
+        }
+        Relationships: []
+      }
+      questions: {
+        Row: {
+          category: string
+          id: string
+          options_json: Json
+          order_index: number
+          riasec_code: string | null
+          text_ar: string
+        }
+        Insert: {
+          category: string
+          id?: string
+          options_json?: Json
+          order_index?: number
+          riasec_code?: string | null
+          text_ar: string
+        }
+        Update: {
+          category?: string
+          id?: string
+          options_json?: Json
+          order_index?: number
+          riasec_code?: string | null
+          text_ar?: string
+        }
+        Relationships: []
+      }
+      simulation_responses: {
+        Row: {
+          created_at: string
+          id: string
+          rationale_text: string | null
+          scenario_id: string
+          selected_option_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rationale_text?: string | null
+          scenario_id: string
+          selected_option_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rationale_text?: string | null
+          scenario_id?: string
+          selected_option_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_responses_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       simulation_scenarios: {
         Row: {
@@ -70,6 +224,38 @@ export type Database = {
           timer_seconds?: number | null
         }
         Relationships: []
+      }
+      user_progress: {
+        Row: {
+          completed_at: string | null
+          id: string
+          status: string
+          step_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          status?: string
+          step_id: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          status?: string
+          step_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "journey_steps"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -104,6 +290,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      user_type: "student" | "parent" | "institution"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -232,6 +419,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      user_type: ["student", "parent", "institution"],
     },
   },
 } as const
