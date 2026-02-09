@@ -1,54 +1,76 @@
 
 
-# Phase 4: Parent Dashboard
+# Phase 5: Institution Dashboard
 
 ## Overview
-Create a Parent dashboard that lets parents view their child's journey progress without seeing specific answers or scores (privacy-first). Parents link to their child via email lookup.
+Build an Institution dashboard that lets school administrators view aggregated analytics across all students in their institution -- without seeing individual student answers (privacy-first). Institutions link to students by shared `school_name` in their profiles.
 
 ## What Changes
 
 ### 1. Database Migration
-- Create a `parent_child_links` table:
+- Create `institution_student_links` table:
   - `id` (uuid, PK)
-  - `parent_user_id` (uuid, NOT NULL) -- references the parent's auth user
-  - `child_user_id` (uuid, NOT NULL) -- references the student's auth user
-  - `created_at` (timestamptz)
-  - Unique constraint on `(parent_user_id, child_user_id)`
-- RLS policies: parents can only read/insert their own links
+  - `institution_user_id` (uuid, NOT NULL)
+  - `student_user_id` (uuid, NOT NULL)
+  - `created_at` (timestamptz, default now())
+  - Unique constraint on `(institution_user_id, student_user_id)`
+- RLS: institution users can read/insert their own links
+- Add RLS policy on `user_progress` so institution users can read progress of linked students
+- Create RPC `link_students_by_school(school_name text)` (SECURITY DEFINER):
+  - Verifies caller is `institution` type
+  - Finds all students with matching `school_name` in profiles
+  - Bulk-inserts links into `institution_student_links`
+  - Returns count of linked students
 
 ### 2. New Files
-- **`src/pages/dashboard/ParentDashboard.tsx`** -- The main parent view with:
-  - A "link child" form (enter child's email to look up their user ID)
-  - A progress overview showing which journey steps the child has completed (checkmarks) vs. pending (locked icons)
-  - No scores, no answers, no detailed data -- privacy first
-- **`src/layouts/ParentLayout.tsx`** -- Simpler layout for parents (header + content, no student sidebar/steps)
+
+**`src/layouts/InstitutionLayout.tsx`**
+- Clean layout similar to ParentLayout
+- Header: Athar logo + "لوحة المؤسسة" title + logout button
+- No sidebar, wide content area for data tables/charts
+
+**`src/pages/dashboard/InstitutionDashboard.tsx`**
+- **Link Students Section**: Input for school name + "ربط الطلاب" button (calls RPC)
+- **Summary Cards Row** (4 cards):
+  - Total linked students count
+  - Students who completed Holland test (%)
+  - Students who completed Simulation (%)
+  - Students who reached Final Report (%)
+- **Journey Completion Chart**: Bar chart (using Recharts, already installed) showing how many students completed each step
+- **Holland Distribution Chart**: Pie chart showing distribution of top Holland codes across all linked students (aggregated, no individual data)
+- **Student List Table**: Name + overall progress % only (no scores/answers)
 
 ### 3. Modified Files
-- **`src/layouts/DashboardLayout.tsx`** -- After auth check, query the user's `profiles.user_type`. If `parent`, redirect to `/parent` dashboard instead of showing student sidebar.
-- **`src/App.tsx`** -- Add routes:
-  - `/parent` with `ParentLayout` containing `ParentDashboard`
-- **`src/pages/Auth.tsx`** -- No changes needed (already stores `user_type` in profile on signup)
 
-### 4. Edge Function: `lookup-child`
-- Accepts a child email, looks up their `auth.users` id, verifies they are a `student` in profiles, and returns the `child_user_id`
-- This avoids exposing the `auth.users` table to the client
+**`src/layouts/DashboardLayout.tsx`**
+- Add check: if `user_type === 'institution'`, redirect to `/institution`
+
+**`src/App.tsx`**
+- Add `/institution` route with `InstitutionLayout` containing `InstitutionDashboard`
+
+### 4. Privacy Rules
+- Institution sees: aggregated counts, percentages, distributions
+- Institution does NOT see: individual Holland scores, simulation answers, trait analysis
+- Student list shows only name + completion percentage
 
 ## Technical Details
 
-### Parent Dashboard UI
-- Card with input field for child email + "ربط" (Link) button
-- Once linked, shows a list of journey steps with completion status icons
-- Queries `parent_child_links` to get child ID, then `user_progress` joined with `journey_steps` for that child
-- Shows child's name from `profiles.full_name`
-
-### Privacy Rules
-- Parent sees: step name + completed/pending status only
-- Parent does NOT see: Holland scores, simulation answers, rationale text, trait analysis
-
-### Flow
+### Data Flow
 ```text
-Parent signs up (type=parent) --> /parent dashboard
-  --> Enters child email --> Edge function looks up child
-  --> Link saved to parent_child_links
-  --> Dashboard shows child's step completion progress
+Institution signs up (type=institution) --> /institution dashboard
+  --> Enters school name --> RPC links all matching students
+  --> Dashboard queries aggregated data from linked students
+  --> Charts render using Recharts (already installed)
 ```
+
+### Aggregation Queries
+- Journey completion: COUNT of user_progress entries grouped by step, filtered to linked student IDs
+- Holland distribution: GROUP BY top_code from holland_results for linked students
+- Progress percentage: COUNT completed steps / total steps per student
+
+### UI Layout
+- Summary cards in a 2x2 or 4-column grid
+- Charts side by side on desktop, stacked on mobile
+- Student table with scroll area for large lists
+- All text in Arabic (RTL)
+
