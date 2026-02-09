@@ -2,8 +2,9 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { Trophy, Briefcase, GraduationCap, TrendingUp, TrendingDown } from "lucide-react";
+import { Trophy, Briefcase, GraduationCap, TrendingUp, TrendingDown, Brain, Sparkles } from "lucide-react";
 import confetti from "canvas-confetti";
+import { computeDimensionScores, MAJOR_LABELS, type DimensionScore } from "@/lib/traitMapping";
 
 export default function ReportStep() {
   const { data: result, isLoading } = useQuery({
@@ -12,7 +13,6 @@ export default function ReportStep() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
-      // Get holland result
       const { data: hr } = await supabase
         .from("holland_results")
         .select("*")
@@ -21,7 +21,6 @@ export default function ReportStep() {
 
       if (!hr) return null;
 
-      // Fetch matching holland code description
       const { data: codeData } = await supabase
         .from("holland_codes")
         .select("*")
@@ -29,6 +28,55 @@ export default function ReportStep() {
         .maybeSingle();
 
       return { ...hr, codeInfo: codeData };
+    },
+  });
+
+  const { data: simAnalysis } = useQuery({
+    queryKey: ["simulation-analysis"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+
+      // Get user's simulation responses
+      const { data: responses } = await supabase
+        .from("simulation_responses")
+        .select("selected_option_id, scenario_id")
+        .eq("user_id", session.user.id);
+
+      if (!responses?.length) return null;
+
+      // Get the scenarios to extract ai_tags from options_json
+      const scenarioIds = [...new Set(responses.map((r) => r.scenario_id))];
+      const { data: scenarios } = await supabase
+        .from("simulation_scenarios")
+        .select("id, major_id, options_json")
+        .in("id", scenarioIds);
+
+      if (!scenarios?.length) return null;
+
+      // Build a lookup: scenarioId -> { optionId -> ai_tag }
+      const scenarioMap = new Map<string, { majorId: string; optionTags: Record<string, string> }>();
+      scenarios.forEach((s) => {
+        const opts = s.options_json as Array<{ id: string; ai_tag: string }>;
+        const optionTags: Record<string, string> = {};
+        opts.forEach((o) => { optionTags[o.id] = o.ai_tag; });
+        scenarioMap.set(s.id, { majorId: s.major_id, optionTags });
+      });
+
+      // Collect selected ai_tags and completed majors
+      const selectedTags: string[] = [];
+      const completedMajors = new Set<string>();
+
+      responses.forEach((r) => {
+        const scenario = scenarioMap.get(r.scenario_id);
+        if (!scenario) return;
+        completedMajors.add(scenario.majorId);
+        const tag = scenario.optionTags[r.selected_option_id];
+        if (tag) selectedTags.push(tag);
+      });
+
+      const scores = computeDimensionScores(selectedTags);
+      return { scores, completedMajors: Array.from(completedMajors), totalResponses: selectedTags.length };
     },
   });
 
@@ -59,14 +107,8 @@ export default function ReportStep() {
 
   const scores = result.scores as Record<string, number>;
   const riasecLabels: Record<string, string> = {
-    R: "واقعي",
-    I: "بحثي",
-    A: "فني",
-    S: "اجتماعي",
-    E: "مبادر",
-    C: "تقليدي",
+    R: "واقعي", I: "بحثي", A: "فني", S: "اجتماعي", E: "مبادر", C: "تقليدي",
   };
-
   const maxScore = Math.max(...Object.values(scores).map(Number), 1);
 
   return (
@@ -178,6 +220,89 @@ export default function ReportStep() {
             </ul>
           </div>
         </div>
+      )}
+
+      {/* ============ SIMULATION ANALYSIS ============ */}
+      {simAnalysis && simAnalysis.scores.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="space-y-6"
+        >
+          {/* Section Header */}
+          <div className="text-center pt-4">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+              <Brain className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold">تحليل المحاكاة المهنية</h2>
+            <p className="text-muted-foreground mt-1">بناءً على قراراتك في {simAnalysis.totalResponses} موقف مهني</p>
+          </div>
+
+          {/* Dimension Bars */}
+          <div className="bg-card border border-border rounded-lg p-6">
+            <h3 className="text-lg font-bold mb-4">ملامح شخصيتك المهنية</h3>
+            <div className="space-y-3">
+              {simAnalysis.scores.map((s: DimensionScore, i: number) => (
+                <div key={s.dimension.key} className="flex items-center gap-3">
+                  <span className="w-32 text-sm font-medium text-right truncate">{s.dimension.labelAr}</span>
+                  <div className="flex-1 h-6 bg-secondary rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${s.percentage}%` }}
+                      transition={{ duration: 0.8, delay: 0.3 + i * 0.08 }}
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: s.dimension.color }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Top 3 Traits */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-bold flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-accent" />
+              أبرز سماتك
+            </h3>
+            {simAnalysis.scores
+              .filter((s: DimensionScore) => s.count > 0)
+              .slice(0, 3)
+              .map((s: DimensionScore, i: number) => (
+                <motion.div
+                  key={s.dimension.key}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.6 + i * 0.15 }}
+                  className="bg-card border border-border rounded-lg p-5"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.dimension.color }} />
+                    <h4 className="font-bold text-base">{s.dimension.labelAr}</h4>
+                  </div>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{s.dimension.description}</p>
+                </motion.div>
+              ))}
+          </div>
+
+          {/* Completed Majors */}
+          {simAnalysis.completedMajors.length > 0 && (
+            <div className="bg-card border border-border rounded-lg p-6">
+              <h3 className="text-lg font-bold mb-3">المسارات التي استكشفتها</h3>
+              <div className="flex flex-wrap gap-2">
+                {simAnalysis.completedMajors.map((majorId: string) => (
+                  <span
+                    key={majorId}
+                    className="bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full text-sm font-medium"
+                  >
+                    {MAJOR_LABELS[majorId] || majorId}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
       )}
     </motion.div>
   );
