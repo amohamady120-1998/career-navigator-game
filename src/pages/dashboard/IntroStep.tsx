@@ -1,7 +1,46 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Rocket } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function IntroStep() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const handleStart = async () => {
+    setLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // Get the intro step ID
+      const { data: step } = await supabase
+        .from("journey_steps")
+        .select("id")
+        .eq("slug", "intro")
+        .single();
+
+      if (step) {
+        await supabase.from("user_progress").upsert({
+          user_id: session.user.id,
+          step_id: step.id,
+          status: "completed",
+          completed_at: new Date().toISOString(),
+        }, { onConflict: "user_id,step_id" });
+      }
+
+      navigate("/dashboard/pre-impact");
+    } catch (err) {
+      toast({ title: "خطأ", description: "حدث خطأ غير متوقع", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -12,10 +51,17 @@ export default function IntroStep() {
         <Rocket className="w-10 h-10 text-accent" />
       </div>
       <h2 className="text-3xl font-bold mb-4">مرحباً بك في رحلة أثر البداية</h2>
-      <p className="text-lg text-muted-foreground leading-loose">
+      <p className="text-lg text-muted-foreground leading-loose mb-8">
         ستمرّ خلال هذه الرحلة بعدة مراحل مصمّمة بعناية لمساعدتك على اكتشاف ميولك المهنية وتحديد
         التخصص الجامعي الأنسب لشخصيتك. كل مرحلة ستُفتح تلقائياً بعد إكمال المرحلة السابقة.
       </p>
+      <Button
+        onClick={handleStart}
+        disabled={loading}
+        className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-lg px-10 h-12"
+      >
+        {loading ? "جاري البدء..." : "ابدأ الرحلة 🚀"}
+      </Button>
     </motion.div>
   );
 }

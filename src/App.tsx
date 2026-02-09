@@ -11,6 +11,7 @@ import PreImpactStep from "./pages/dashboard/PreImpactStep";
 import HollandStep from "./pages/dashboard/HollandStep";
 import SimulationStep from "./pages/dashboard/SimulationStep";
 import ReportStep from "./pages/dashboard/ReportStep";
+import PostImpactStep from "./pages/dashboard/PostImpactStep";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="pre-impact" element={<PreImpactStep />} />
             <Route path="holland" element={<HollandStep />} />
             <Route path="simulation" element={<SimulationStep />} />
+            <Route path="post-impact" element={<PostImpactStep />} />
             <Route path="report" element={<ReportStep />} />
           </Route>
           <Route path="*" element={<NotFound />} />

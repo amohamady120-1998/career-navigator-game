@@ -5,20 +5,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { QuestionWizard } from "@/components/QuestionWizard";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { Compass } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 
-export default function HollandStep() {
+export default function PostImpactStep() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [completed, setCompleted] = useState(false);
 
   const { data: questions, isLoading } = useQuery({
-    queryKey: ["questions", "holland"],
+    queryKey: ["questions", "post_impact"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("questions")
         .select("*")
-        .eq("category", "holland")
+        .eq("category", "post_impact")
         .order("order_index");
       if (error) throw error;
       return data;
@@ -41,20 +41,11 @@ export default function HollandStep() {
       return;
     }
 
-    const { data: scores } = await supabase.rpc("calculate_holland_scores", { _user_id: session.user.id });
-    const { data: topCode } = await supabase.rpc("get_holland_code", { _user_id: session.user.id });
-
-    await supabase.from("holland_results").upsert({
-      user_id: session.user.id,
-      scores: scores || {},
-      top_code: topCode || "",
-    }, { onConflict: "user_id" });
-
     // Mark step as completed
     const { data: step } = await supabase
       .from("journey_steps")
       .select("id")
-      .eq("slug", "holland")
+      .eq("slug", "post-impact")
       .single();
 
     if (step) {
@@ -66,9 +57,9 @@ export default function HollandStep() {
       }, { onConflict: "user_id,step_id" });
     }
 
-    toast({ title: "تم الحفظ ✓", description: "تم حساب نتائجك بنجاح" });
+    toast({ title: "تم الحفظ ✓", description: "تم حفظ إجاباتك بنجاح" });
     setCompleted(true);
-    setTimeout(() => navigate("/dashboard/simulation"), 1500);
+    setTimeout(() => navigate("/dashboard/report"), 1500);
   };
 
   if (isLoading) {
@@ -79,10 +70,10 @@ export default function HollandStep() {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
         <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
-          <Compass className="w-8 h-8 text-success" />
+          <BarChart3 className="w-8 h-8 text-success" />
         </div>
-        <h2 className="text-2xl font-bold">تم إكمال اختبار هولاند!</h2>
-        <p className="text-muted-foreground mt-2">جاري الانتقال للمحاكاة المهنية...</p>
+        <h2 className="text-2xl font-bold">تم إكمال قياس الأثر البعدي!</h2>
+        <p className="text-muted-foreground mt-2">جاري الانتقال للتقرير النهائي...</p>
       </motion.div>
     );
   }
@@ -90,8 +81,8 @@ export default function HollandStep() {
   return (
     <div>
       <div className="mb-8 text-center">
-        <h2 className="text-2xl font-bold mb-2">اختبار هولاند للميول المهنية</h2>
-        <p className="text-muted-foreground">أجب بـ "نعم" أو "لا" على كل سؤال — 42 سؤالاً في 7 مجموعات</p>
+        <h2 className="text-2xl font-bold mb-2">قياس الأثر البعدي</h2>
+        <p className="text-muted-foreground">أجب عن الأسئلة التالية لقياس مدى تأثير التجربة على رؤيتك المهنية</p>
       </div>
       {questions && questions.length > 0 && (
         <QuestionWizard questions={questions} onComplete={handleComplete} batchSize={6} />

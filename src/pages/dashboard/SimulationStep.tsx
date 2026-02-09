@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,7 @@ import {
   Gamepad2, Clock, AlertTriangle, ArrowRight, CheckCircle2, FileText,
   Stethoscope, SmilePlus, Pill, Cpu, Building, Factory, Landmark,
   Scale, Briefcase, TrendingUp, Users, Languages, Radio, Palette,
-  Shield, BrainCircuit, Megaphone, Heart, PenTool,
+  Shield, BrainCircuit, Megaphone, Heart, PenTool, Save,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -42,9 +42,12 @@ const MAJOR_META: Record<string, { name: string; icon: LucideIcon }> = {
   ART_001:   { name: "التصميم الجرافيكي",     icon: PenTool },
 };
 
+const MIN_RATIONALE_LENGTH = 20;
+
 export default function SimulationStep() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedMajor, setSelectedMajor] = useState<string | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -52,6 +55,19 @@ export default function SimulationStep() {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [completedMajors, setCompletedMajors] = useState<Set<string>>(new Set());
   const [majorDone, setMajorDone] = useState(false);
+  const [autoSaved, setAutoSaved] = useState(false);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // beforeunload guard
+  useEffect(() => {
+    if (!selectedMajor) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [selectedMajor]);
 
   // Fetch all scenarios
   const { data: allScenarios, isLoading } = useQuery({
@@ -132,6 +148,32 @@ export default function SimulationStep() {
     return () => clearInterval(interval);
   }, [currentIdx, isStress, current?.timer_seconds]);
 
+  // Debounced autosave
+  useEffect(() => {
+    if (!selectedOption || !current) return;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    setAutoSaved(false);
+
+    autoSaveTimer.current = setTimeout(async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      await supabase.from("simulation_responses").upsert({
+        user_id: session.user.id,
+        scenario_id: current.id,
+        selected_option_id: selectedOption,
+        rationale_text: rationale || null,
+      }, { onConflict: "user_id,scenario_id" });
+
+      setAutoSaved(true);
+      setTimeout(() => setAutoSaved(false), 2000);
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  }, [selectedOption, rationale, current]);
+
   const resetToLibrary = useCallback(() => {
     setSelectedMajor(null);
     setCurrentIdx(0);
@@ -143,6 +185,13 @@ export default function SimulationStep() {
 
   const handleSubmit = useCallback(async () => {
     if (!selectedOption || !current || !selectedMajor) return;
+    
+    // Validate rationale for all levels
+    if (rationale.trim().length < MIN_RATIONALE_LENGTH) {
+      toast({ title: "مبرر قصير", description: `يرجى كتابة مبرر لا يقل عن ${MIN_RATIONALE_LENGTH} حرفاً`, variant: "destructive" });
+      return;
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
@@ -150,7 +199,7 @@ export default function SimulationStep() {
       user_id: session.user.id,
       scenario_id: current.id,
       selected_option_id: selectedOption,
-      rationale_text: isStress ? rationale : null,
+      rationale_text: rationale,
     }, { onConflict: "user_id,scenario_id" });
 
     if (scenarios && currentIdx < scenarios.length - 1) {
@@ -159,17 +208,34 @@ export default function SimulationStep() {
       setRationale("");
       setTimeLeft(null);
     } else {
+      // Mark simulation step as completed
+      const { data: step } = await supabase
+        .from("journey_steps")
+        .select("id")
+        .eq("slug", "simulation")
+        .single();
+
+      if (step) {
+        await supabase.from("user_progress").upsert({
+          user_id: session.user.id,
+          step_id: step.id,
+          status: "completed",
+          completed_at: new Date().toISOString(),
+        }, { onConflict: "user_id,step_id" });
+      }
+
       setCompletedMajors((prev) => new Set(prev).add(selectedMajor));
       setMajorDone(true);
+      queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
       toast({ title: "أحسنت! 🎉", description: "أكملت هذا التخصص بنجاح" });
       setTimeout(resetToLibrary, 2000);
     }
-  }, [selectedOption, current, currentIdx, scenarios, isStress, rationale, selectedMajor, toast, resetToLibrary]);
+  }, [selectedOption, current, currentIdx, scenarios, rationale, selectedMajor, toast, resetToLibrary, queryClient]);
 
   // Auto-submit on timer end
   useEffect(() => {
-    if (timeLeft === 0 && selectedOption) handleSubmit();
-  }, [timeLeft, selectedOption, handleSubmit]);
+    if (timeLeft === 0 && selectedOption && rationale.trim().length >= MIN_RATIONALE_LENGTH) handleSubmit();
+  }, [timeLeft, selectedOption, rationale, handleSubmit]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center py-20 text-muted-foreground">جاري التحميل...</div>;
@@ -262,18 +328,18 @@ export default function SimulationStep() {
           })}
         </div>
 
-        {/* Go to report */}
+        {/* Go to post-impact */}
         <div className="mt-10 text-center space-y-3">
           <p className="text-sm text-muted-foreground">
             أكملت <span className="font-bold text-foreground">{completedMajors.size}</span> من {majorsInDb.length} تخصص
           </p>
           <Button
-            onClick={() => navigate("/dashboard/report")}
+            onClick={() => navigate("/dashboard/post-impact")}
             disabled={completedMajors.size === 0}
             className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold px-8"
           >
             <FileText className="w-4 h-4 ml-2" />
-            الانتقال للتقرير النهائي
+            الانتقال لقياس الأثر البعدي
           </Button>
         </div>
       </div>
@@ -285,9 +351,25 @@ export default function SimulationStep() {
 
   const majorMeta = MAJOR_META[selectedMajor];
   const MajorIcon = majorMeta?.icon || Gamepad2;
+  const rationaleValid = rationale.trim().length >= MIN_RATIONALE_LENGTH;
 
   return (
     <div className="max-w-3xl mx-auto">
+      {/* Autosave indicator */}
+      <AnimatePresence>
+        {autoSaved && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-success/90 text-white px-4 py-2 rounded-full text-sm flex items-center gap-2 shadow-lg"
+          >
+            <Save className="w-4 h-4" />
+            تم الحفظ التلقائي
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-3 flex-1">
@@ -365,22 +447,25 @@ export default function SimulationStep() {
             ))}
           </div>
 
-          {/* Rationale */}
-          {isStress && (
-            <div>
-              <label className="block text-sm font-medium mb-2">اكتب مبررك للإجابة:</label>
-              <Textarea
-                value={rationale}
-                onChange={(e) => setRationale(e.target.value)}
-                placeholder="لماذا اخترت هذا الخيار؟"
-                rows={3}
-              />
-            </div>
-          )}
+          {/* Rationale - shown for ALL levels */}
+          <div>
+            <label className="block text-sm font-medium mb-2">اكتب مبررك للإجابة (لا يقل عن {MIN_RATIONALE_LENGTH} حرفاً):</label>
+            <Textarea
+              value={rationale}
+              onChange={(e) => setRationale(e.target.value)}
+              placeholder="لماذا اخترت هذا الخيار؟"
+              rows={3}
+            />
+            {rationale.length > 0 && !rationaleValid && (
+              <p className="text-xs text-destructive mt-1">
+                {rationale.trim().length}/{MIN_RATIONALE_LENGTH} حرف — يرجى كتابة المزيد
+              </p>
+            )}
+          </div>
 
           <Button
             onClick={handleSubmit}
-            disabled={!selectedOption || (isStress && !rationale.trim())}
+            disabled={!selectedOption || !rationaleValid}
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold h-12 text-lg"
           >
             {scenarios && currentIdx === scenarios.length - 1 ? "إنهاء التخصص" : "التالي"}
