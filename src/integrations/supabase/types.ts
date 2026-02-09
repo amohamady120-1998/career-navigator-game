@@ -73,6 +73,30 @@ export type Database = {
         }
         Relationships: []
       }
+      holland_results: {
+        Row: {
+          created_at: string
+          id: string
+          scores: Json
+          top_code: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          scores?: Json
+          top_code?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          scores?: Json
+          top_code?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       journey_steps: {
         Row: {
           id: string
@@ -280,6 +304,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_holland_scores: { Args: { _user_id: string }; Returns: Json }
+      get_holland_code: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
