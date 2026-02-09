@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { QuestionWizard } from "@/components/QuestionWizard";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,7 @@ import { BarChart3 } from "lucide-react";
 export default function PostImpactStep() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [completed, setCompleted] = useState(false);
 
   const { data: questions, isLoading } = useQuery({
@@ -57,6 +58,8 @@ export default function PostImpactStep() {
       }, { onConflict: "user_id,step_id" });
     }
 
+    await queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
+    await queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
     toast({ title: "تم الحفظ ✓", description: "تم حفظ إجاباتك بنجاح" });
     setCompleted(true);
     setTimeout(() => navigate("/dashboard/report"), 1500);

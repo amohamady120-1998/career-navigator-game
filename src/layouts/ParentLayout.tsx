@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LogOut, Settings } from "lucide-react";
 import atharLogoDark from "@/assets/athar-logo-dark.png";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function ParentLayout() {
   const navigate = useNavigate();
@@ -49,6 +50,7 @@ export default function ParentLayout() {
           <h1 className="font-bold text-lg">لوحة ولي الأمر</h1>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <Button
             variant="ghost"
             size="sm"
