@@ -47,9 +47,11 @@ const App = () => (
           </Route>
           <Route path="/parent" element={<ParentLayout />}>
             <Route index element={<ParentDashboard />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
           <Route path="/institution" element={<InstitutionLayout />}>
             <Route index element={<InstitutionDashboard />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
           <Route path="/admin" element={<SuperAdminDashboard />} />
           <Route path="*" element={<NotFound />} />
