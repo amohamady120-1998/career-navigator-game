@@ -23,45 +23,65 @@ export const TRAIT_LABELS: Record<TraitDimension, string> = {
 
 // Map the raw AI tags from our scenarios to these dimensions
 export const TAG_MAP: Record<string, TraitDimension> = {
-  // Ethics
+  // --- Ethics & Integrity (النزاهة) ---
   'ethical_strictness': 'ethics', 'patient_safety_first': 'ethics', 'security_first': 'ethics',
   'whistleblower': 'ethics', 'ethical_ai': 'ethics', 'honesty': 'ethics', 'integrity': 'ethics',
-  'moral_stance': 'ethics', 'fiduciary_duty': 'ethics',
-  
-  // Leadership & Pressure
-  'coordination_leadership': 'leadership', 'leadership_under_fire': 'leadership', 
-  'decisive_leadership': 'leadership', 'calm_authority': 'leadership', 
+  'moral_stance': 'ethics', 'fiduciary_duty': 'ethics', 'academic_honesty': 'ethics',
+  'medical_integrity': 'ethics', 'journalistic_verification': 'ethics', 'moral_absolutism': 'ethics',
+  'truthfulness': 'ethics', 'brand_protection': 'ethics', 'industry_integrity': 'ethics',
+  'legal_ethics': 'ethics', 'safety_priority': 'ethics', 'safety_first': 'ethics',
+
+  // --- Leadership & Pressure (القيادة) ---
+  'coordination_leadership': 'leadership', 'leadership_under_fire': 'leadership',
+  'decisive_leadership': 'leadership', 'calm_authority': 'leadership',
   'clinical_composure': 'leadership', 'crisis_management': 'leadership',
-  
-  // Analytical
-  'data_driven_decision': 'analytical', 'root_cause_analysis': 'analytical', 
-  'verification_seeking': 'analytical', 'investigative_check': 'analytical', 
+  'emotional_control': 'leadership', 'heroic_action': 'leadership', 'heroic_instinct': 'leadership',
+  'protective_control': 'leadership', 'team_pressure': 'leadership', 'management_style': 'leadership',
+  'protective_presence': 'leadership',
+
+  // --- Analytical (التحليل) ---
+  'data_driven_decision': 'analytical', 'root_cause_analysis': 'analytical',
+  'verification_seeking': 'analytical', 'investigative_check': 'analytical',
   'strategic_planning': 'analytical', 'accuracy_first': 'analytical',
-  
-  // Empathy
-  'patient_trust': 'empathy', 'emotional_empathy': 'empathy', 
-  'collaborative_approach': 'empathy', 'mediation_skills': 'empathy', 
+  'diagnostic_calm': 'analytical', 'inference_risk': 'analytical', 'logic_check': 'analytical',
+  'research_deep': 'analytical', 'technical_integrity': 'analytical', 'measured_crisis': 'analytical',
+  'backup_planning': 'analytical', 'contingency_planning': 'analytical',
+
+  // --- Empathy (التعاطف) ---
+  'patient_trust': 'empathy', 'emotional_empathy': 'empathy',
+  'collaborative_approach': 'empathy', 'mediation_skills': 'empathy',
   'sympathy_over_science': 'empathy', 'team_harmony': 'empathy',
-  
-  // Risk & Action
-  'heroic_action': 'risk_action', 'risk_action': 'risk_action', 
-  'rapid_response': 'risk_action', 'heroic_instinct': 'risk_action', 
+  'active_listening': 'empathy', 'human_priority': 'empathy', 'patient_autonomy': 'empathy',
+  'culture_loyalty': 'empathy', 'diplomatic_save': 'empathy', 'deescalation': 'empathy',
+  'social_responsibility': 'empathy',
+
+  // --- Risk & Action (المبادرة) ---
+  'risk_action': 'risk_action', 'rapid_response': 'risk_action',
   'opportunistic': 'risk_action', 'scoop_hunter': 'risk_action',
-  
-  // Creativity
-  'creative_adaptation': 'creativity', 'problem_solving': 'creativity', 
-  'innovative_design': 'creativity', 'creative_honesty': 'creativity', 
+  'full_stop': 'risk_action', 'panic_selling': 'risk_action', 'panic_retreat': 'risk_action',
+  'execution_only': 'risk_action', 'immediate_action': 'risk_action',
+  'high_stakes_skill': 'risk_action', 'risk_management': 'risk_action',
+
+  // --- Creativity (الإبداع) ---
+  'creative_adaptation': 'creativity', 'problem_solving': 'creativity',
+  'innovative_design': 'creativity', 'creative_honesty': 'creativity',
   'improvisation_skill': 'creativity', 'solution_architecture': 'creativity',
-  
-  // Compliance
-  'regulatory_compliance': 'compliance', 'procedure_compliance': 'compliance', 
-  'safety_protocol': 'compliance', 'security_protocol': 'compliance', 
-  'rule_adherence': 'compliance',
-  
-  // Commercial
-  'commercial_focus': 'commercial', 'cost_focus': 'commercial', 
-  'client_service': 'commercial', 'money_focus': 'commercial', 
-  'execution_only': 'commercial'
+  'disruptive_modern': 'creativity', 'strategic_maneuver': 'creativity',
+  'resourceful_helper': 'creativity', 'adaptive_sales': 'creativity',
+
+  // --- Compliance (الامتثال) ---
+  'regulatory_compliance': 'compliance', 'procedure_compliance': 'compliance',
+  'safety_protocol': 'compliance', 'security_protocol': 'compliance',
+  'rule_adherence': 'compliance', 'strict_legal_adherence': 'compliance',
+  'censorship_safety': 'compliance', 'literal_accuracy': 'compliance',
+  'formal_response': 'compliance', 'protocol_safety': 'compliance',
+
+  // --- Commercial (التجاري) ---
+  'commercial_focus': 'commercial', 'cost_focus': 'commercial',
+  'client_service': 'commercial', 'money_focus': 'commercial',
+  'commercial_compliance': 'commercial', 'commercial_submission': 'commercial',
+  'profit_focus': 'commercial', 'efficiency_focus': 'commercial',
+  'client_servant': 'commercial', 'service_focus': 'commercial'
 };
 
 export function analyzeSimulationTraits(responses: any[], scenarios: any[]) {
