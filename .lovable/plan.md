@@ -1,78 +1,59 @@
 
 
-# Next Step: Simulation Library + Major Selection
+# Add Missing Level 2 and Stress Scenarios
 
-## What We're Building
+## Current Gap
 
-Right now, the simulation step loads **all 22 scenarios** from every major and presents them one after another. This doesn't make sense -- a student interested in Medicine shouldn't have to answer Graphic Design scenarios.
+Most majors only have 1 or 2 scenarios. For a consistent experience, each major should have 3 scenarios: Level 1, Level 2, and Stress. Here's what's missing:
 
-We'll create a **Major Selection Library** page where students choose which career path to simulate, then experience only that major's scenarios.
+| Major | Has L1 | Has L2 | Has Stress | Needs |
+|-------|--------|--------|------------|-------|
+| MED_001 | Yes | Yes | Yes | Nothing |
+| DENT_001 | Yes | No | Yes | L2 |
+| PHARM_001 | Yes | No | Yes | L2 |
+| ENG_001 | Yes | No | Yes | L2 |
+| CIVIL_001 | Yes | No | Yes | L2 |
+| IND_001 | Yes | No | No | L2 + Stress |
+| LAW_001 | Yes | No | Yes | L2 |
+| BUS_001 | Yes | No | Yes | L2 |
+| FIN_001 | Yes | No | No | L2 + Stress |
+| HR_001 | Yes | No | No | L2 + Stress |
+| MEDIA_001 | Yes | No | No | L2 + Stress |
+| TRANS_001 | Yes | No | No | L2 + Stress |
+| ART_001 | Yes | No | Yes | L2 |
 
-## Changes Overview
+## What We'll Do
 
-### 1. New Component: Major Selection Grid (`SimulationLibrary.tsx`)
-- A visual grid showing all available majors (Medicine, Engineering, Law, etc.)
-- Each card shows the major name in Arabic, an icon, and how many scenarios it has
-- Clicking a major stores the selection and transitions to the scenarios
+Insert ~18 new scenarios into `simulation_scenarios` to bring every major to the full 3-scenario set. Each new scenario will follow the same structure: Arabic text, 3 options with `ai_tag`, and 60-second timers for stress levels.
 
-### 2. Update `SimulationStep.tsx`
-- Add a state for `selectedMajor` (initially `null`)
-- When no major is selected, show the library grid
-- When a major is selected, filter scenarios by `major_id` and run only those
-- Add a "back to library" button so students can try multiple majors
-- After completing one major's scenarios, return to the library (not jump to report)
+## Scenario Content (Arabic)
 
-### 3. Update Navigation Flow
-- After finishing all chosen simulations, a "Go to Report" button appears in the library view
-- The sidebar step still points to `/dashboard/simulation`
+### Level 2 Scenarios (intermediate difficulty)
 
-### 4. Major Metadata Map
-A local mapping of `major_id` to Arabic name and icon:
+- **DENT_001**: Patient needs braces but can't afford full treatment -- prioritize or compromise?
+- **PHARM_001**: Two drugs prescribed together have a dangerous interaction
+- **ENG_001**: Client wants a feature that will create technical debt and security risk
+- **CIVIL_001**: Project deadline conflict with safety inspection schedule
+- **IND_001**: Quality defect found in a batch already shipped to client
+- **LAW_001**: Client asks you to hide evidence that could change the case
+- **BUS_001**: Two partners disagree on company direction -- you must mediate
+- **FIN_001**: Client wants to invest retirement savings in a high-risk crypto fund
+- **HR_001**: Two equally qualified candidates -- one is internal, one external
+- **MEDIA_001**: Source leaks explosive story but demands full anonymity
+- **TRANS_001**: Legal document has an ambiguous clause that could mean two things
+- **ART_001**: Client rejects your design and wants something you consider ugly
 
-```text
-MED_001    -> طب بشري      (Stethoscope)
-DENT_001   -> طب الأسنان    (SmilePlus)
-PHARM_001  -> الصيدلة       (Pill)
-ENG_001    -> الهندسة       (Wrench)
-CIVIL_001  -> الهندسة المدنية (Building)
-IND_001    -> الهندسة الصناعية (Factory)
-LAW_001    -> القانون        (Scale)
-BUS_001    -> إدارة الأعمال   (Briefcase)
-FIN_001    -> المالية        (TrendingUp)
-HR_001     -> الموارد البشرية (Users)
-TRANS_001  -> الترجمة        (Languages)
-MEDIA_001  -> الإعلام        (Radio)
-ART_001    -> التصميم        (Palette)
-```
+### Stress Scenarios (timed, 60 seconds)
+
+- **IND_001**: Machine malfunction during production -- sparks flying near workers
+- **FIN_001**: Market crash during live trading session with client watching
+- **HR_001**: Employee threatens lawsuit during a termination meeting
+- **MEDIA_001**: Live broadcast and the teleprompter fails mid-sentence
+- **TRANS_001**: Simultaneous interpretation and the speaker says something culturally offensive
 
 ## Technical Details
 
-### File Changes
-
-| File | Action |
-|------|--------|
-| `src/pages/dashboard/SimulationStep.tsx` | Major refactor: add library view + major filtering |
-
-### Key Logic
-- Query `simulation_scenarios` grouped by `major_id` using `SELECT DISTINCT major_id` to build the library
-- When a major is selected, filter query: `.eq("major_id", selectedMajor)`
-- Track completed majors in local state; show checkmarks on completed cards
-- Save `simulation_responses` per scenario as before (no change to DB)
-
-### UX Flow
-
-```text
-Student arrives at /dashboard/simulation
-        |
-   [Major Library Grid]
-   Select a career to simulate
-        |
-   Click "طب بشري" (Medicine)
-        |
-   [Scenario 1 of 3] -> [Scenario 2] -> [Stress scenario with timer]
-        |
-   "Completed!" -> Back to Library (Medicine card now has checkmark)
-        |
-   Student can try more majors or click "View Report"
-```
+- Single database migration inserting all ~18 rows into `simulation_scenarios`
+- No frontend code changes needed -- the library grid automatically picks up new majors/scenarios
+- Each option includes an `ai_tag` for future AI-driven personality analysis
 
