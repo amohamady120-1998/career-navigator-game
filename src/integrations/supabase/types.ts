@@ -121,6 +121,27 @@ export type Database = {
         }
         Relationships: []
       }
+      parent_child_links: {
+        Row: {
+          child_user_id: string
+          created_at: string
+          id: string
+          parent_user_id: string
+        }
+        Insert: {
+          child_user_id: string
+          created_at?: string
+          id?: string
+          parent_user_id: string
+        }
+        Update: {
+          child_user_id?: string
+          created_at?: string
+          id?: string
+          parent_user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

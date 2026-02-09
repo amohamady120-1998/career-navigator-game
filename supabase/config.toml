@@ -1,1 +1,4 @@
 project_id = "zyapduzvdobixzmcmhoj"
+
+[functions.lookup-child]
+verify_jwt = false

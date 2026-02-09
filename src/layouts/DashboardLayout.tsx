@@ -12,14 +12,27 @@ export default function DashboardLayout() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         navigate("/auth");
-      } else {
-        setAuthChecked(true);
-        const pledgeAccepted = localStorage.getItem("athar_pledge_accepted");
-        if (!pledgeAccepted) setShowPledge(true);
+        return;
       }
+
+      // Check if user is a parent — redirect to parent dashboard
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (profile?.user_type === "parent") {
+        navigate("/parent", { replace: true });
+        return;
+      }
+
+      setAuthChecked(true);
+      const pledgeAccepted = localStorage.getItem("athar_pledge_accepted");
+      if (!pledgeAccepted) setShowPledge(true);
     });
   }, [navigate]);
 
