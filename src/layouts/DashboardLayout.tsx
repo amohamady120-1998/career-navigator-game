@@ -30,6 +30,11 @@ export default function DashboardLayout() {
         return;
       }
 
+      if (profile?.user_type === "institution") {
+        navigate("/institution", { replace: true });
+        return;
+      }
+
       setAuthChecked(true);
       const pledgeAccepted = localStorage.getItem("athar_pledge_accepted");
       if (!pledgeAccepted) setShowPledge(true);

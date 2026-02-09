@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ParentLayout from "./layouts/ParentLayout";
+import InstitutionLayout from "./layouts/InstitutionLayout";
+import InstitutionDashboard from "./pages/dashboard/InstitutionDashboard";
 import IntroStep from "./pages/dashboard/IntroStep";
 import PreImpactStep from "./pages/dashboard/PreImpactStep";
 import HollandStep from "./pages/dashboard/HollandStep";
@@ -38,6 +40,9 @@ const App = () => (
           </Route>
           <Route path="/parent" element={<ParentLayout />}>
             <Route index element={<ParentDashboard />} />
+          </Route>
+          <Route path="/institution" element={<InstitutionLayout />}>
+            <Route index element={<InstitutionDashboard />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
