@@ -53,7 +53,7 @@ export default function ProfileStep() {
       if (error) throw error;
 
       toast({ title: "تم حفظ البيانات بنجاح" });
-      navigate("/dashboard/intro", { replace: true });
+      navigate("/dashboard/payment", { replace: true });
     } catch (error: any) {
       toast({
         title: "خطأ",

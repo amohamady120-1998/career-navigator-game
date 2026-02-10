@@ -26,7 +26,7 @@ export default function DashboardLayout() {
         if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("user_type, school_name")
+            .select("user_type, school_name, has_paid")
             .eq("user_id", session.user.id)
             .maybeSingle();
 
@@ -40,6 +40,8 @@ export default function DashboardLayout() {
           }
           if (!profile?.school_name) {
             navigate("/dashboard/profile", { replace: true });
+          } else if (profile?.user_type === "student" && !(profile as any).has_paid && !location.pathname.startsWith("/dashboard/payment")) {
+            navigate("/dashboard/payment", { replace: true });
           }
 
           // Smart resume: if on exact /dashboard, redirect to first incomplete step
