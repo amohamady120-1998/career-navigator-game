@@ -82,7 +82,11 @@ export default function DashboardLayout() {
     setShowPledge(false);
   };
 
-  if (!authChecked) return null;
+  if (!authChecked) return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-8 h-8 border-3 border-accent border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
 
   return (
     <>
@@ -91,16 +95,16 @@ export default function DashboardLayout() {
         <div className="min-h-screen flex w-full">
           <AppSidebar />
           <div className="flex-1 flex flex-col">
-            <header className="h-14 flex items-center justify-between border-b border-border px-4 bg-card">
+            <header className="h-14 flex items-center justify-between border-b border-border/60 px-4 bg-card/80 backdrop-blur-sm sticky top-0 z-30">
               <div className="flex items-center">
                 <SidebarTrigger aria-label="فتح/إغلاق القائمة">
                   <Menu className="w-5 h-5" />
                 </SidebarTrigger>
-                <h1 className="mr-4 font-bold text-lg">أثر البداية</h1>
+                <h1 className="mr-4 font-extrabold text-lg">أثر البداية</h1>
               </div>
               <ThemeToggle />
             </header>
-            <main className="flex-1 p-6">
+            <main className="flex-1 p-6 animate-fade-in">
               <Outlet />
             </main>
           </div>

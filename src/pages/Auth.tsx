@@ -93,21 +93,31 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-primary px-4">
+    <div className="min-h-screen flex items-center justify-center bg-primary px-4 relative overflow-hidden">
+      <div className="absolute top-20 right-20 w-80 h-80 bg-accent/8 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-20 left-20 w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
+      
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-md bg-card rounded-xl p-8 shadow-2xl"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md bg-card rounded-2xl p-8 shadow-2xl border border-border/50 relative z-10"
       >
-        <img src={atharLogoLight} alt="أثر البداية" className="h-16 mx-auto mb-2 object-contain" />
-        <p className="text-muted-foreground text-center mb-8">
+        <motion.img
+          src={atharLogoLight}
+          alt="أثر البداية"
+          className="h-16 mx-auto mb-3 object-contain"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        />
+        <p className="text-muted-foreground text-center mb-8 text-sm">
           {mode === "login" ? "سجّل دخولك للمتابعة" : mode === "signup" ? "أنشئ حسابك الجديد" : "أدخل بريدك لإعادة تعيين كلمة المرور"}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {mode === "signup" && (
-            <div className="space-y-2">
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2">
               <Label htmlFor="fullName">الاسم الكامل</Label>
               <Input
                 id="fullName"
@@ -115,20 +125,22 @@ const Auth = () => {
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="أدخل اسمك الكامل"
                 required
+                className="h-11"
               />
-            </div>
+            </motion.div>
           )}
 
           {mode === "signup" && (localStorage.getItem("athar_user_type") === "institution") && (
-            <div className="space-y-2">
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2">
               <Label htmlFor="schoolName">اسم المدرسة</Label>
               <Input
                 id="schoolName"
                 value={schoolName}
                 onChange={(e) => setSchoolName(e.target.value)}
                 placeholder="مثال: مدرسة الملك فهد"
+                className="h-11"
               />
-            </div>
+            </motion.div>
           )}
 
           <div className="space-y-2">
@@ -140,7 +152,7 @@ const Auth = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="example@email.com"
               dir="ltr"
-              className="text-left"
+              className="text-left h-11"
               required
             />
           </div>
@@ -153,7 +165,7 @@ const Auth = () => {
                   <button
                     type="button"
                     onClick={() => setMode("forgot")}
-                    className="text-xs text-link hover:underline"
+                    className="text-xs text-link hover:underline hover-underline"
                   >
                     نسيت كلمة المرور؟
                   </button>
@@ -166,7 +178,7 @@ const Auth = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 dir="ltr"
-                className="text-left"
+                className="text-left h-11"
                 required
                 minLength={6}
               />
@@ -176,7 +188,7 @@ const Auth = () => {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-lg h-12"
+            className="w-full btn-gradient text-lg h-12 rounded-xl"
           >
             {loading && <Loader2 className="w-5 h-5 animate-spin ml-2" />}
             {loading
@@ -189,7 +201,13 @@ const Auth = () => {
           </Button>
         </form>
 
-        <p className="text-center mt-6 text-sm text-muted-foreground">
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border/60" />
+          </div>
+        </div>
+
+        <p className="text-center text-sm text-muted-foreground">
           {mode === "forgot" ? (
             <button onClick={() => setMode("login")} className="text-link font-medium hover:underline">
               العودة لتسجيل الدخول
@@ -197,14 +215,14 @@ const Auth = () => {
           ) : mode === "login" ? (
             <>
               ليس لديك حساب؟{" "}
-              <button onClick={() => setMode("signup")} className="text-link font-medium hover:underline">
+              <button onClick={() => setMode("signup")} className="text-link font-semibold hover:underline">
                 إنشاء حساب جديد
               </button>
             </>
           ) : (
             <>
               لديك حساب بالفعل؟{" "}
-              <button onClick={() => setMode("login")} className="text-link font-medium hover:underline">
+              <button onClick={() => setMode("login")} className="text-link font-semibold hover:underline">
                 تسجيل الدخول
               </button>
             </>

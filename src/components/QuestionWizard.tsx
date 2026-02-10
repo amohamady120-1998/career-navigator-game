@@ -51,12 +51,11 @@ export function QuestionWizard({ questions, onComplete, batchSize = 6 }: Questio
       {/* Progress */}
       <div className="mb-8">
         <div className="flex justify-between text-sm text-muted-foreground mb-2">
-          <span>المجموعة {currentBatch + 1} من {totalBatches}</span>
-          <span>{Math.round(((start + batch.length) / questions.length) * 100)}%</span>
+          <span className="font-medium">المجموعة {currentBatch + 1} من {totalBatches}</span>
+          <span className="font-bold text-accent">{Math.round(((start + batch.length) / questions.length) * 100)}%</span>
         </div>
-        <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
+        <div className="progress-premium">
           <motion.div
-            className="h-full bg-accent rounded-full"
             initial={false}
             animate={{ width: `${((start + batch.length) / questions.length) * 100}%` }}
             transition={{ duration: 0.4 }}
@@ -72,15 +71,18 @@ export function QuestionWizard({ questions, onComplete, batchSize = 6 }: Questio
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -40 }}
           transition={{ duration: 0.3 }}
-          className="space-y-6"
+          className="space-y-5"
         >
           {batch.map((q, idx) => (
-            <div
+            <motion.div
               key={q.id}
-              className="bg-card border border-border rounded-lg p-6"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 }}
+              className="card-premium p-6"
             >
               <p className="text-lg font-medium mb-4">
-                <span className="text-accent font-bold ml-2">{start + idx + 1}.</span>
+                <span className="text-gradient font-extrabold ml-2">{start + idx + 1}.</span>
                 {q.text_ar}
               </p>
 
@@ -95,10 +97,10 @@ export function QuestionWizard({ questions, onComplete, batchSize = 6 }: Questio
                         key={val}
                         onClick={() => handleAnswer(q.id, val)}
                         className={`
-                          flex-1 py-3 rounded-lg border-2 font-medium text-lg transition-all
+                          flex-1 py-3.5 rounded-xl border-2 font-bold text-lg transition-all duration-200
                           ${isSelected
-                            ? "border-accent bg-accent/10 text-accent"
-                            : "border-border hover:border-accent/40"
+                            ? "border-accent bg-accent/10 text-accent shadow-sm"
+                            : "border-border hover:border-accent/40 hover:bg-secondary/50"
                           }
                         `}
                       >
@@ -118,11 +120,11 @@ export function QuestionWizard({ questions, onComplete, batchSize = 6 }: Questio
                         key={val}
                         onClick={() => handleAnswer(q.id, val)}
                         className={`
-                          flex-1 py-3 px-1 rounded-lg border-2 text-xs sm:text-sm font-medium
-                          transition-all leading-tight
+                          flex-1 py-3 px-1 rounded-xl border-2 text-xs sm:text-sm font-medium
+                          transition-all duration-200 leading-tight
                           ${isSelected
-                            ? "border-accent bg-accent/10 text-accent"
-                            : "border-border hover:border-accent/40"
+                            ? "border-accent bg-accent/10 text-accent shadow-sm"
+                            : "border-border hover:border-accent/40 hover:bg-secondary/50"
                           }
                         `}
                       >
@@ -132,7 +134,7 @@ export function QuestionWizard({ questions, onComplete, batchSize = 6 }: Questio
                   })}
                 </div>
               )}
-            </div>
+            </motion.div>
           ))}
         </motion.div>
       </AnimatePresence>
@@ -143,7 +145,7 @@ export function QuestionWizard({ questions, onComplete, batchSize = 6 }: Questio
           variant="outline"
           onClick={handlePrev}
           disabled={currentBatch === 0}
-          className="gap-2"
+          className="gap-2 rounded-xl h-11"
         >
           <ChevronRight className="w-4 h-4" />
           السابق
@@ -151,9 +153,9 @@ export function QuestionWizard({ questions, onComplete, batchSize = 6 }: Questio
         <Button
           onClick={handleNext}
           disabled={!allBatchAnswered}
-          className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
+          className="gap-2 btn-gradient rounded-xl h-11 px-8"
         >
-          {currentBatch === totalBatches - 1 ? "إنهاء" : "التالي"}
+          {currentBatch === totalBatches - 1 ? "إنهاء ✓" : "التالي"}
           <ChevronLeft className="w-4 h-4" />
         </Button>
       </div>

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import atharLogoDark from "@/assets/athar-logo-dark.png";
-import { GraduationCap, Users, Building2, ClipboardList, FlaskConical, FileText, Award } from "lucide-react";
+import { GraduationCap, Users, Building2, ClipboardList, FlaskConical, FileText, Award, ChevronDown } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -52,7 +52,7 @@ const faqs = [
 
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.15 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.12 } },
 };
 
 const item = {
@@ -87,35 +87,57 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col bg-primary" dir="rtl">
       {/* Theme Toggle */}
-      <div className="absolute top-4 left-4">
+      <div className="absolute top-4 left-4 z-10">
         <ThemeToggle />
       </div>
 
       {/* Hero */}
-      <section className="flex flex-col items-center justify-center px-4 pt-20 pb-16">
+      <section className="relative flex flex-col items-center justify-center px-4 pt-24 pb-20 overflow-hidden">
+        {/* Decorative blurred circles */}
+        <div className="absolute top-10 right-10 w-72 h-72 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
+        
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center"
+          transition={{ duration: 0.7 }}
+          className="text-center relative z-10"
         >
-          <img src={atharLogoDark} alt="أثر البداية" className="h-24 mx-auto mb-4 object-contain" />
-          <h1 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-3">
-            اكتشف مسارك المهني بثقة
+          <motion.img
+            src={atharLogoDark}
+            alt="أثر البداية"
+            className="h-28 mx-auto mb-6 object-contain drop-shadow-lg"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          />
+          <h1 className="text-4xl md:text-5xl font-extrabold text-primary-foreground mb-4 leading-tight">
+            اكتشف مسارك المهني
+            <span className="block text-gradient mt-1">بثقة وعلم</span>
           </h1>
-          <p className="text-lg text-primary-foreground/70 max-w-lg mx-auto">
+          <p className="text-lg md:text-xl text-primary-foreground/70 max-w-xl mx-auto leading-relaxed">
             منصة ذكية مبنية على أسس علمية تساعدك في اختيار التخصص الجامعي المناسب لميولك وقدراتك
           </p>
+        </motion.div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          className="mt-12"
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <ChevronDown className="w-6 h-6 text-primary-foreground/40" />
         </motion.div>
       </section>
 
       {/* How It Works */}
-      <section className="bg-card py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center mb-10">
-          <h2 className="text-2xl font-bold text-foreground mb-2">كيف تعمل المنصة؟</h2>
-          <p className="text-muted-foreground">أربع خطوات بسيطة نحو اكتشاف مستقبلك</p>
+      <section className="bg-card py-20 px-4 relative">
+        <div className="max-w-4xl mx-auto text-center mb-12">
+          <h2 className="text-3xl font-extrabold text-foreground mb-3">كيف تعمل المنصة؟</h2>
+          <div className="section-divider mb-4" />
+          <p className="text-muted-foreground text-lg">أربع خطوات بسيطة نحو اكتشاف مستقبلك</p>
         </div>
-        <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {steps.map((step, i) => {
             const Icon = step.icon;
             return (
@@ -124,13 +146,16 @@ const Index = () => {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="flex flex-col items-center text-center gap-3 p-6"
+                transition={{ delay: i * 0.12 }}
+                className="flex flex-col items-center text-center gap-4 p-6 rounded-xl hover:bg-secondary/50 transition-colors duration-300"
               >
-                <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center">
-                  <Icon className="w-7 h-7 text-accent" />
+                <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center icon-circle">
+                  <Icon className="w-8 h-8 text-accent" />
                 </div>
-                <h3 className="font-bold text-foreground">{step.title}</h3>
+                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                  {i + 1}
+                </div>
+                <h3 className="font-bold text-lg text-foreground">{step.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
               </motion.div>
             );
@@ -139,17 +164,19 @@ const Index = () => {
       </section>
 
       {/* Get Started - Role Cards */}
-      <section className="py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center mb-10">
-          <h2 className="text-2xl font-bold text-primary-foreground mb-2">ابدأ رحلتك الآن</h2>
-          <p className="text-primary-foreground/70">اختر دورك للمتابعة</p>
+      <section className="py-20 px-4 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="max-w-4xl mx-auto text-center mb-12 relative z-10">
+          <h2 className="text-3xl font-extrabold text-primary-foreground mb-3">ابدأ رحلتك الآن</h2>
+          <div className="section-divider mb-4" />
+          <p className="text-primary-foreground/70 text-lg">اختر دورك للمتابعة</p>
         </div>
         <motion.div
           variants={container}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto relative z-10"
         >
           {roles.map((role) => {
             const Icon = role.icon;
@@ -158,21 +185,31 @@ const Index = () => {
               <motion.button
                 key={role.type}
                 variants={item}
-                whileHover={{ scale: 1.04 }}
+                whileHover={{ scale: 1.04, y: -4 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => handleSelect(role.type)}
                 className={`
-                  relative flex flex-col items-center gap-4 p-8 rounded-xl
-                  bg-card text-card-foreground border-2 transition-colors duration-200
+                  relative flex flex-col items-center gap-5 p-8 rounded-2xl
+                  bg-card text-card-foreground border-2 transition-all duration-300
                   cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent
-                  ${isSelected ? "border-accent shadow-lg shadow-accent/20" : "border-transparent hover:border-accent/40"}
+                  shadow-lg hover:shadow-premium-lg
+                  ${isSelected ? "border-accent shadow-glow" : "border-transparent hover:border-accent/40"}
                 `}
               >
-                <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center">
-                  <Icon className="w-8 h-8 text-accent" />
+                <div className={`w-18 h-18 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+                  isSelected ? "bg-accent/20 scale-110" : "bg-accent/10"
+                }`}
+                  style={{ width: '4.5rem', height: '4.5rem' }}
+                >
+                  <Icon className={`w-9 h-9 transition-colors duration-300 ${isSelected ? "text-accent" : "text-accent"}`} />
                 </div>
-                <h2 className="text-2xl font-bold">{role.label}</h2>
+                <h2 className="text-2xl font-extrabold">{role.label}</h2>
                 <p className="text-muted-foreground text-sm leading-relaxed">{role.description}</p>
+                <span className={`text-xs font-bold transition-all duration-300 ${
+                  isSelected ? "text-accent" : "text-muted-foreground/0 group-hover:text-accent"
+                }`}>
+                  ابدأ الآن ←
+                </span>
               </motion.button>
             );
           })}
@@ -180,14 +217,15 @@ const Index = () => {
       </section>
 
       {/* FAQ */}
-      <section className="bg-card py-16 px-4">
+      <section className="bg-card py-20 px-4">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-2xl font-bold text-foreground text-center mb-8">الأسئلة الشائعة</h2>
-          <Accordion type="single" collapsible className="space-y-2">
+          <h2 className="text-3xl font-extrabold text-foreground text-center mb-3">الأسئلة الشائعة</h2>
+          <div className="section-divider mb-10" />
+          <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, i) => (
-              <AccordionItem key={i} value={`faq-${i}`} className="bg-background rounded-lg border px-4">
-                <AccordionTrigger className="text-right font-medium">{faq.q}</AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">{faq.a}</AccordionContent>
+              <AccordionItem key={i} value={`faq-${i}`} className="bg-background rounded-xl border border-border/60 px-5 shadow-sm hover:shadow-md transition-shadow duration-300">
+                <AccordionTrigger className="text-right font-semibold text-base py-5">{faq.q}</AccordionTrigger>
+                <AccordionContent className="text-muted-foreground leading-relaxed pb-5">{faq.a}</AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
@@ -195,8 +233,8 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 text-center text-primary-foreground/50 text-sm">
-        <p>© {new Date().getFullYear()} أثر البداية. جميع الحقوق محفوظة.</p>
+      <footer className="py-10 px-4 text-center border-t border-primary-foreground/10">
+        <p className="text-primary-foreground/40 text-sm">© {new Date().getFullYear()} أثر البداية. جميع الحقوق محفوظة.</p>
       </footer>
     </div>
   );
