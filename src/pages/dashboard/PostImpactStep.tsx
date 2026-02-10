@@ -6,6 +6,7 @@ import { QuestionWizard } from "@/components/QuestionWizard";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { BarChart3 } from "lucide-react";
+import { CourseVideo } from "@/components/CourseVideo";
 
 export default function PostImpactStep() {
   const navigate = useNavigate();
@@ -83,6 +84,12 @@ export default function PostImpactStep() {
 
   return (
     <div>
+      <CourseVideo
+        title="نصائح ذهبية لاختيار مسارك"
+        description="قبل أن ترى نتيجتك، تذكر هذه القواعد السريعة. والآن، دعنا نقيس مدى تطور وعيك."
+        videoUrl=""
+        className="mb-8 max-w-2xl mx-auto"
+      />
       <div className="mb-8 text-center">
         <h2 className="text-2xl font-bold mb-2">قياس الأثر البعدي</h2>
         <p className="text-muted-foreground">أجب عن الأسئلة التالية لقياس مدى تأثير التجربة على رؤيتك المهنية</p>
