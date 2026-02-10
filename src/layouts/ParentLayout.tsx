@@ -18,13 +18,12 @@ export default function ParentLayout() {
           return;
         }
         if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("user_type")
-            .eq("user_id", session.user.id)
-            .maybeSingle();
+          const [{ data: profile }, { data: adminRole }] = await Promise.all([
+            supabase.from("profiles").select("user_type").eq("user_id", session.user.id).maybeSingle(),
+            supabase.from("user_roles").select("role").eq("user_id", session.user.id).eq("role", "admin").maybeSingle(),
+          ]);
 
-          if (profile?.user_type !== "parent") {
+          if (profile?.user_type !== "parent" && !adminRole) {
             navigate("/dashboard", { replace: true });
             return;
           }
