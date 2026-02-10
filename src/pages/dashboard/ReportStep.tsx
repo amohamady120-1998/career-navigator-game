@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Trophy, Briefcase, GraduationCap, TrendingUp, TrendingDown, Brain, Sparkles } from "lucide-react";
 import confetti from "canvas-confetti";
+import { VideoPlayer } from "@/components/VideoPlayer";
 import { analyzeSimulationTraits, TRAIT_LABELS, type TraitDimension } from "@/lib/traitMapping";
 
 const MAJOR_LABELS: Record<string, string> = {
@@ -156,6 +157,9 @@ export default function ReportStep() {
           {result.top_code}
         </div>
       </div>
+
+      {/* Explainer Video */}
+      <VideoPlayer src="" title="دليلك لفهم تقريرك الشخصي" className="mb-2" />
 
       {/* Code description */}
       {result.codeInfo && (
