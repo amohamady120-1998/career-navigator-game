@@ -31,6 +31,22 @@ const STEP_ORDER = ["intro", "pre-impact", "holland", "simulation", "post-impact
 export function AppSidebar() {
   const navigate = useNavigate();
 
+  const { data: profile } = useQuery({
+    queryKey: ["sidebar-profile"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("has_paid")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const hasPaid = (profile as any)?.has_paid ?? false;
+
   const { data: steps } = useQuery({
     queryKey: ["journey-steps"],
     queryFn: async () => {
@@ -96,7 +112,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {steps?.map((step) => {
                 const Icon = stepIcons[step.slug] || BookOpen;
-                const unlocked = isStepUnlocked(step.slug);
+                const unlocked = hasPaid && isStepUnlocked(step.slug);
                 const completed = isStepCompleted(step.slug);
                 const path = `/dashboard/${step.slug}`;
 
@@ -135,9 +151,9 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  className={!reportCompleted ? "opacity-50 pointer-events-none" : ""}
+                  className={!hasPaid || !reportCompleted ? "opacity-50 pointer-events-none" : ""}
                 >
-                  {!reportCompleted ? (
+                  {!hasPaid || !reportCompleted ? (
                     <div className="flex items-center gap-3 px-3 py-2">
                       <Lock className="w-4 h-4" />
                       <span>الشهادة</span>

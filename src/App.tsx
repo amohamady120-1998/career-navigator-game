@@ -20,6 +20,7 @@ import PostImpactStep from "./pages/dashboard/PostImpactStep";
 import ProfileStep from "./pages/dashboard/ProfileStep";
 import SettingsPage from "./pages/dashboard/Settings";
 import Certificate from "./pages/dashboard/Certificate";
+import PaymentStep from "./pages/dashboard/PaymentStep";
 import ParentDashboard from "./pages/dashboard/ParentDashboard";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import { StepGuard } from "./components/StepGuard";
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<IntroStep />} />
+                <Route path="payment" element={<PaymentStep />} />
                 <Route path="intro" element={<IntroStep />} />
                 <Route path="pre-impact" element={<StepGuard requiredStep="intro"><PreImpactStep /></StepGuard>} />
                 <Route path="holland" element={<StepGuard requiredStep="pre-impact"><HollandStep /></StepGuard>} />

@@ -168,6 +168,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           grade_level: string | null
+          has_paid: boolean
           id: string
           phone: string | null
           school_name: string | null
@@ -179,6 +180,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           grade_level?: string | null
+          has_paid?: boolean
           id?: string
           phone?: string | null
           school_name?: string | null
@@ -190,6 +192,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           grade_level?: string | null
+          has_paid?: boolean
           id?: string
           phone?: string | null
           school_name?: string | null

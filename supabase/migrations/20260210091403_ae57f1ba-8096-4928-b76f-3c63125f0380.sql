@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN has_paid boolean NOT NULL DEFAULT false;
