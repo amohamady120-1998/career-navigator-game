@@ -1,60 +1,50 @@
 
 
-# Phase 9 Refinements: Remaining Polish Items
+# Set Up Test Account for All Roles
 
-Most of Phase 9 was already implemented in previous iterations. Here are the small remaining improvements to fully satisfy the requirements.
+Create a single test account (`uniex@admin.com` / `123456`) with access to all dashboards: Admin, Institution, Parent, and Student.
 
-## Already Done (No Changes Needed)
-- ThemeToggle component with Sun/Moon icons and aria-label
-- ThemeProvider wrapping the app with `attribute="class"`
-- ThemeToggle in DashboardLayout, ParentLayout, InstitutionLayout, and Index.tsx headers
-- ErrorBoundary wrapping all routes in App.tsx
-- Print styles hiding sidebar, header, and data-sidebar elements
-- RIASEC and simulation progress bars have `role="progressbar"` and `aria-valuenow`
-- Institution Dashboard charts already use `h-72` height and `grid-cols-1 md:grid-cols-2`
-- Student table already wrapped in `overflow-x-auto`
-- Dark/light CSS variables fully defined
+## What Will Be Done
 
-## Remaining Changes
+1. **Create the Auth User** -- Sign up `uniex@admin.com` with password `123456` via the authentication system.
 
-### 1. Enhanced Print Styles (`src/index.css`)
-Add missing print rules:
-- Hide `nav`, `.no-print`, `.theme-toggle` elements
-- Add `@page { margin: 0.5in; }` for cleaner page margins
-- Force text to dark colors for readability on paper
+2. **Create a Profile** -- Insert a profile row with `user_type = 'student'` (the default landing). The admin role check happens separately via the `user_roles` table.
 
-### 2. Simulation Grid Mobile Fix (`src/pages/dashboard/SimulationStep.tsx`)
-Change library grid from `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4` to `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` so cards display properly on small phones.
+3. **Grant Admin Role** -- Insert a row in `user_roles` with `role = 'admin'` so the account can access `/admin`.
 
-### 3. Aria Labels on Icon-Only Buttons
-Add `aria-label` to the Settings and Logout buttons in:
-- `src/layouts/ParentLayout.tsx`
-- `src/layouts/InstitutionLayout.tsx`
-- `src/layouts/DashboardLayout.tsx` (SidebarTrigger already has it)
+4. **Add a Role Switcher** -- Update `Auth.tsx` redirect logic so this account can navigate to any dashboard. Add a simple role-switcher UI or direct links on the admin dashboard to `/parent`, `/institution`, and `/dashboard`.
 
-### 4. Bar Chart Dark Mode Color
-In `InstitutionDashboard.tsx`, change the hardcoded bar fill `#051730` to `hsl(var(--primary))` so it adapts to dark mode via CSS variables. Since Recharts doesn't support CSS variables directly, use `"currentColor"` and set the container's text color, or use `var(--foreground)` via a computed style.
-
----
+5. **Bypass Layout Guards for Admin** -- Update `ParentLayout.tsx` and `InstitutionLayout.tsx` to also allow users with the `admin` role to access those dashboards (currently they check `user_type` strictly).
 
 ## Technical Details
 
-### Print Styles Addition (index.css)
-Extend the existing `@media print` block:
-- Add `nav, .no-print, .theme-toggle { display: none !important; }`
-- Add `@page { margin: 0.5in; }` at the top level
-- Add `a { color: black !important; text-decoration: none !important; }`
+### Database Operations (no migrations needed, data only)
+- After signing up via the app or edge function, insert into `user_roles`:
+  ```sql
+  INSERT INTO user_roles (user_id, role) VALUES ('<user_id>', 'admin');
+  ```
 
-### SimulationStep Grid (line 270)
-Change: `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4` to `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
+### Code Changes
 
-### Aria Labels
-Add `aria-label="الإعدادات"` to Settings buttons and `aria-label="تسجيل الخروج"` to Logout buttons in ParentLayout and InstitutionLayout.
+| File | Change |
+|------|--------|
+| `src/pages/Auth.tsx` | After login, check `user_roles` for admin -- if admin, redirect to `/admin` instead of role-based redirect |
+| `src/layouts/ParentLayout.tsx` | Allow admin users to bypass the `user_type = 'parent'` check |
+| `src/layouts/InstitutionLayout.tsx` | Allow admin users to bypass the `user_type = 'institution'` check |
+| `src/pages/admin/SuperAdminDashboard.tsx` | Add quick-nav links to `/parent`, `/institution`, `/dashboard` for testing all views |
 
-### Files Modified
-- `src/index.css` -- enhanced print styles
-- `src/pages/dashboard/SimulationStep.tsx` -- mobile grid fix
-- `src/layouts/ParentLayout.tsx` -- aria labels on buttons
-- `src/layouts/InstitutionLayout.tsx` -- aria labels on buttons
-- `src/pages/dashboard/InstitutionDashboard.tsx` -- dark-mode-friendly chart color
+### Auth Redirect Logic Update
+```text
+Login -> Check user_roles for 'admin'
+  -> If admin: redirect to /admin
+  -> Else: redirect by profile.user_type (existing logic)
+```
+
+### Layout Guard Update
+```text
+ParentLayout / InstitutionLayout:
+  -> If user_type matches: allow
+  -> Else if has_role('admin'): allow (for testing)
+  -> Else: redirect away
+```
 
