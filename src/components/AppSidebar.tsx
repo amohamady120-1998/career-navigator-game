@@ -97,15 +97,39 @@ export function AppSidebar() {
     navigate("/");
   };
 
+  // Calculate progress
+  const completedCount = completedSlugs?.length ?? 0;
+  const totalSteps = STEP_ORDER.length;
+  const progressPct = (completedCount / totalSteps) * 100;
+
   return (
     <Sidebar className="border-l-0">
       <SidebarContent>
-        <div className="p-4 border-b border-sidebar-border flex items-center justify-center">
+        <div className="p-5 border-b border-sidebar-border flex items-center justify-center">
           <img src={atharLogoDark} alt="أثر البداية" className="h-14 object-contain" />
         </div>
 
+        {/* Progress indicator */}
+        {hasPaid && (
+          <div className="px-4 pt-4 pb-2">
+            <div className="flex justify-between text-xs text-sidebar-foreground/50 mb-1.5">
+              <span>التقدم</span>
+              <span className="font-bold text-sidebar-primary">{completedCount}/{totalSteps}</span>
+            </div>
+            <div className="h-1.5 bg-sidebar-accent/30 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${progressPct}%`,
+                  background: `linear-gradient(90deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)))`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs">
+          <SidebarGroupLabel className="text-sidebar-foreground/40 text-xs font-semibold tracking-wide">
             مراحل الرحلة
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -120,26 +144,26 @@ export function AppSidebar() {
                   <SidebarMenuItem key={step.id}>
                     <SidebarMenuButton
                       asChild
-                      className={!unlocked ? "opacity-50 pointer-events-none" : ""}
+                      className={!unlocked ? "opacity-40 pointer-events-none" : "transition-all duration-200"}
                     >
                       {!unlocked ? (
-                        <div className="flex items-center gap-3 px-3 py-2">
+                        <div className="flex items-center gap-3 px-3 py-2.5">
                           <Lock className="w-4 h-4" />
-                          <span>{step.name_ar}</span>
+                          <span className="text-sm">{step.name_ar}</span>
                         </div>
                       ) : (
                         <NavLink
                           to={path}
                           end
-                          className="hover:bg-sidebar-accent/50"
-                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          className="hover:bg-sidebar-accent/50 rounded-lg transition-colors duration-200"
+                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
                         >
                           {completed ? (
                             <CheckCircle2 className="w-4 h-4 ml-3 text-success" />
                           ) : (
                             <Icon className="w-4 h-4 ml-3" />
                           )}
-                          <span>{step.name_ar}</span>
+                          <span className="text-sm">{step.name_ar}</span>
                         </NavLink>
                       )}
                     </SidebarMenuButton>
@@ -151,22 +175,22 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  className={!hasPaid || !reportCompleted ? "opacity-50 pointer-events-none" : ""}
+                  className={!hasPaid || !reportCompleted ? "opacity-40 pointer-events-none" : "transition-all duration-200"}
                 >
                   {!hasPaid || !reportCompleted ? (
-                    <div className="flex items-center gap-3 px-3 py-2">
+                    <div className="flex items-center gap-3 px-3 py-2.5">
                       <Lock className="w-4 h-4" />
-                      <span>الشهادة</span>
+                      <span className="text-sm">الشهادة</span>
                     </div>
                   ) : (
                     <NavLink
                       to="/dashboard/certificate"
                       end
-                      className="hover:bg-sidebar-accent/50"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      className="hover:bg-sidebar-accent/50 rounded-lg transition-colors duration-200"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
                     >
                       <Award className="w-4 h-4 ml-3 text-accent" />
-                      <span>الشهادة</span>
+                      <span className="text-sm">الشهادة</span>
                     </NavLink>
                   )}
                 </SidebarMenuButton>
@@ -179,7 +203,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-3 border-t border-sidebar-border space-y-1">
         <Button
           variant="ghost"
-          className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+          className="w-full justify-start gap-2 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 rounded-lg text-sm"
           onClick={() => navigate("/dashboard/settings")}
         >
           <Settings className="w-4 h-4" />
@@ -187,7 +211,7 @@ export function AppSidebar() {
         </Button>
         <Button
           variant="ghost"
-          className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive"
+          className="w-full justify-start gap-2 text-sidebar-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded-lg text-sm"
           onClick={handleLogout}
           aria-label="تسجيل الخروج"
         >

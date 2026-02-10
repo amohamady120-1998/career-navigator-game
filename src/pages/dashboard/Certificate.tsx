@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, Printer, Award } from "lucide-react";
+import { motion } from "framer-motion";
 import atharLogoLight from "@/assets/athar-logo-light.png";
 
 export default function Certificate() {
@@ -20,7 +21,6 @@ export default function Certificate() {
 
       setUserId(session.user.id.slice(0, 8).toUpperCase());
 
-      // Check if report step is completed
       const { data: steps } = await supabase
         .from("journey_steps")
         .select("id")
@@ -71,54 +71,67 @@ export default function Certificate() {
 
   if (!eligible) {
     return (
-      <div className="text-center py-20 space-y-4">
-        <Award className="w-16 h-16 mx-auto text-muted-foreground" />
-        <h2 className="text-xl font-bold">لم تكتمل الرحلة بعد</h2>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center py-20 space-y-4"
+      >
+        <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+          <Award className="w-10 h-10 text-muted-foreground" />
+        </div>
+        <h2 className="text-xl font-extrabold">لم تكتمل الرحلة بعد</h2>
         <p className="text-muted-foreground">أكمل جميع مراحل الرحلة للحصول على الشهادة</p>
-        <Button onClick={() => navigate("/dashboard")}>العودة للرحلة</Button>
-      </div>
+        <Button onClick={() => navigate("/dashboard")} className="btn-gradient rounded-xl px-8">العودة للرحلة</Button>
+      </motion.div>
     );
   }
 
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex justify-end print:hidden">
-        <Button onClick={() => window.print()} className="gap-2">
+        <Button onClick={() => window.print()} className="gap-2 rounded-xl">
           <Printer className="w-4 h-4" />
           طباعة / تحميل PDF
         </Button>
       </div>
 
-      <div
-        id="certificate"
-        className="max-w-2xl mx-auto bg-card border-4 border-accent rounded-2xl p-12 text-center shadow-xl print:shadow-none print:border-2"
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
       >
-        <img src={atharLogoLight} alt="أثر" className="h-16 mx-auto mb-6" />
+        <div
+          id="certificate"
+          className="max-w-2xl mx-auto bg-card border-4 border-accent rounded-2xl p-12 text-center shadow-premium-lg print:shadow-none print:border-2"
+        >
+          <img src={atharLogoLight} alt="أثر" className="h-16 mx-auto mb-6" />
 
-        <div className="border-b-2 border-accent/30 pb-4 mb-6">
-          <h1 className="text-3xl font-bold text-primary">شهادة إتمام</h1>
-          <p className="text-muted-foreground mt-1">رحلة أثر للتوجيه المهني</p>
-        </div>
-
-        <p className="text-lg text-muted-foreground mb-2">يُشهد بأن</p>
-        <h2 className="text-4xl font-bold text-primary mb-6">{studentName}</h2>
-
-        <p className="text-lg text-foreground leading-relaxed max-w-md mx-auto mb-8">
-          قد أتمّ بنجاح جميع مراحل رحلة أثر البداية للتوجيه المهني،
-          شاملةً الاختبارات والمحاكاة والتقرير النهائي.
-        </p>
-
-        <div className="flex justify-between items-end text-sm text-muted-foreground border-t border-border pt-4">
-          <div>
-            <p className="font-medium">تاريخ الإتمام</p>
-            <p>{completionDate}</p>
+          <div className="pb-4 mb-6">
+            <div className="section-divider mb-4" />
+            <h1 className="text-3xl font-extrabold text-primary">شهادة إتمام</h1>
+            <p className="text-muted-foreground mt-1">رحلة أثر للتوجيه المهني</p>
           </div>
-          <div>
-            <p className="font-medium">رمز التحقق</p>
-            <p className="font-mono">{userId}</p>
+
+          <p className="text-lg text-muted-foreground mb-2">يُشهد بأن</p>
+          <h2 className="text-4xl font-extrabold text-gradient mb-6">{studentName}</h2>
+
+          <p className="text-lg text-foreground leading-relaxed max-w-md mx-auto mb-8">
+            قد أتمّ بنجاح جميع مراحل رحلة أثر البداية للتوجيه المهني،
+            شاملةً الاختبارات والمحاكاة والتقرير النهائي.
+          </p>
+
+          <div className="flex justify-between items-end text-sm text-muted-foreground border-t border-border/60 pt-4">
+            <div>
+              <p className="font-semibold">تاريخ الإتمام</p>
+              <p>{completionDate}</p>
+            </div>
+            <div>
+              <p className="font-semibold">رمز التحقق</p>
+              <p className="font-mono">{userId}</p>
+            </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

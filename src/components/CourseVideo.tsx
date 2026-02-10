@@ -13,7 +13,7 @@ export function CourseVideo({ title, description, videoUrl, className }: CourseV
   const hasSource = !!videoUrl;
 
   return (
-    <Card className={cn("overflow-hidden border-primary/20 bg-[hsl(var(--primary))]/[0.03]", className)}>
+    <Card className={cn("overflow-hidden border-border/60 bg-card shadow-sm hover:shadow-md transition-shadow duration-300", className)}>
       <div className="relative w-full bg-muted" style={{ aspectRatio: "16/9" }}>
         {hasSource ? (
           <video
@@ -23,15 +23,15 @@ export function CourseVideo({ title, description, videoUrl, className }: CourseV
             poster=""
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-primary/5 gap-3">
-            <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5 gap-3">
+            <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center animate-pulse-soft">
               <Film className="w-8 h-8 text-accent" />
             </div>
             <span className="text-sm text-muted-foreground font-medium">سيتم إضافة الفيديو قريباً</span>
           </div>
         )}
       </div>
-      <CardContent className="p-4 text-center space-y-1">
+      <CardContent className="p-4 text-center space-y-1.5">
         <h3 className="font-bold text-base text-foreground">{title}</h3>
         <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
       </CardContent>

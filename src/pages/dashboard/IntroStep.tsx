@@ -20,7 +20,6 @@ export default function IntroStep() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // Get the intro step ID
       const { data: step } = await supabase
         .from("journey_steps")
         .select("id")
@@ -50,13 +49,22 @@ export default function IntroStep() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
       className="max-w-2xl mx-auto text-center py-12"
     >
-      <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6">
+      <motion.div
+        className="w-20 h-20 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6"
+        initial={{ scale: 0.8, rotate: -10 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+      >
         <Rocket className="w-10 h-10 text-accent" />
-      </div>
-      <h2 className="text-3xl font-bold mb-4">مرحباً بك في رحلة أثر البداية</h2>
-      <p className="text-lg text-muted-foreground leading-loose mb-8">
+      </motion.div>
+      <h2 className="text-3xl md:text-4xl font-extrabold mb-4 leading-tight">
+        مرحباً بك في رحلة
+        <span className="text-gradient block mt-1">أثر البداية</span>
+      </h2>
+      <p className="text-lg text-muted-foreground leading-loose mb-8 max-w-lg mx-auto">
         ستمرّ خلال هذه الرحلة بعدة مراحل مصمّمة بعناية لمساعدتك على اكتشاف ميولك المهنية وتحديد
         التخصص الجامعي الأنسب لشخصيتك. كل مرحلة ستُفتح تلقائياً بعد إكمال المرحلة السابقة.
       </p>
@@ -69,7 +77,8 @@ export default function IntroStep() {
       <Button
         onClick={handleStart}
         disabled={loading}
-        className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-lg px-10 h-12"
+        className="btn-gradient text-lg px-12 h-13 rounded-xl shadow-premium hover:shadow-premium-lg transition-all duration-300"
+        style={{ height: '3.25rem' }}
       >
         {loading ? "جاري البدء..." : "ابدأ الرحلة 🚀"}
       </Button>

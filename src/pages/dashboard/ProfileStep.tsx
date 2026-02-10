@@ -69,10 +69,14 @@ export default function ProfileStep() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
       className="max-w-md mx-auto py-8"
     >
-      <div className="bg-card rounded-xl p-8 shadow-lg border border-border">
-        <h2 className="text-xl font-bold text-center mb-1">أهلاً بك في أثر! 🚀</h2>
+      <div className="bg-card rounded-2xl p-8 shadow-xl border border-border/50">
+        <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
+          <span className="text-3xl">🚀</span>
+        </div>
+        <h2 className="text-xl font-extrabold text-center mb-1">أهلاً بك في أثر!</h2>
         <p className="text-muted-foreground text-center mb-6 text-sm">
           لنبني تجربتك بشكل صحيح، نحتاج لبعض المعلومات الدراسية.
         </p>
@@ -86,13 +90,14 @@ export default function ProfileStep() {
               onChange={(e) => setSchoolName(e.target.value)}
               placeholder="مثال: مدارس الرياض الأهلية"
               required
+              className="h-11"
             />
           </div>
 
           <div className="space-y-2">
             <Label>المرحلة الدراسية *</Label>
             <Select value={gradeLevel} onValueChange={setGradeLevel} required>
-              <SelectTrigger>
+              <SelectTrigger className="h-11">
                 <SelectValue placeholder="اختر المرحلة" />
               </SelectTrigger>
               <SelectContent>
@@ -113,14 +118,14 @@ export default function ProfileStep() {
               onChange={(e) => setPhone(e.target.value)}
               placeholder="05XXXXXXXX"
               dir="ltr"
-              className="text-left"
+              className="text-left h-11"
             />
           </div>
 
           <Button
             type="submit"
             disabled={loading || !schoolName.trim() || !gradeLevel}
-            className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-lg h-12"
+            className="w-full btn-gradient text-lg h-12 rounded-xl"
           >
             {loading ? "جاري الحفظ..." : "حفظ وبدء الرحلة"}
           </Button>
