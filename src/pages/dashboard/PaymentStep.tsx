@@ -6,16 +6,48 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { CreditCard, MessageCircle, Shield, Star, Zap, CheckCircle2 } from "lucide-react";
+import { CreditCard, MessageCircle, Shield, Star, Zap, CheckCircle2, Tag } from "lucide-react";
 
 const STRIPE_LINK = "https://buy.stripe.com/test_placeholder";
 const WHATSAPP_MESSAGE = "يا أبي، أحتاج دعمك للاشتراك في منصة 'أثر' لاكتشاف تخصصي الجامعي. هذا رابط الدفع:";
+const BASE_PRICE = 19.99;
 
 export default function PaymentStep() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [parentPhone, setParentPhone] = useState("");
   const [simulating, setSimulating] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoApplied, setPromoApplied] = useState(false);
+  const [discount, setDiscount] = useState(0);
+  const [checkingPromo, setCheckingPromo] = useState(false);
+
+  const finalPrice = promoApplied ? +(BASE_PRICE * (1 - discount / 100)).toFixed(2) : BASE_PRICE;
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setCheckingPromo(true);
+    const { data, error } = await supabase
+      .from("promo_codes")
+      .select("discount_percentage, is_active")
+      .eq("code", promoCode.trim().toUpperCase())
+      .maybeSingle();
+
+    if (error || !data) {
+      toast({ title: "كود الخصم غير صالح", variant: "destructive" });
+      setPromoApplied(false);
+      setDiscount(0);
+    } else if (!(data as any).is_active) {
+      toast({ title: "كود الخصم منتهي الصلاحية", variant: "destructive" });
+      setPromoApplied(false);
+      setDiscount(0);
+    } else {
+      setDiscount((data as any).discount_percentage);
+      setPromoApplied(true);
+      toast({ title: `تم تطبيق خصم ${(data as any).discount_percentage}% 🎉` });
+    }
+    setCheckingPromo(false);
+  };
 
   const handlePay = () => {
     window.open(STRIPE_LINK, "_blank");
@@ -84,9 +116,45 @@ export default function PaymentStep() {
           <div className="p-6 space-y-6">
             {/* Price */}
             <div className="text-center">
-              <span className="text-5xl font-extrabold text-foreground">19.99</span>
+              {promoApplied && (
+                <div className="mb-1">
+                  <span className="text-lg text-muted-foreground line-through">{BASE_PRICE}</span>
+                  <span className="text-xs text-muted-foreground mr-1">USD</span>
+                </div>
+              )}
+              <span className="text-5xl font-extrabold text-foreground">{finalPrice}</span>
               <span className="text-lg text-muted-foreground mr-1">USD</span>
-              <p className="text-xs text-muted-foreground mt-1">≈ 75 ريال سعودي</p>
+              <p className="text-xs text-muted-foreground mt-1">≈ {Math.round(finalPrice * 3.75)} ريال سعودي</p>
+              {promoApplied && (
+                <p className="text-xs text-[hsl(var(--success))] font-bold mt-1">خصم {discount}% مطبّق ✓</p>
+              )}
+            </div>
+
+            {/* Promo Code */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1 text-sm">
+                <Tag className="w-3.5 h-3.5" />
+                هل لديك كود خصم؟
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="مثال: ATHAR50"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  dir="ltr"
+                  className="text-left flex-1"
+                  disabled={promoApplied}
+                />
+                <Button
+                  variant="outline"
+                  onClick={handleApplyPromo}
+                  disabled={checkingPromo || promoApplied || !promoCode.trim()}
+                  size="sm"
+                  className="shrink-0"
+                >
+                  {checkingPromo ? "..." : promoApplied ? "✓" : "تطبيق"}
+                </Button>
+              </div>
             </div>
 
             {/* Features */}
