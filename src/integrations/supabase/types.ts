@@ -202,6 +202,30 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_codes: {
+        Row: {
+          code: string
+          created_at: string
+          discount_percentage: number
+          id: string
+          is_active: boolean
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          discount_percentage: number
+          id?: string
+          is_active?: boolean
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          discount_percentage?: number
+          id?: string
+          is_active?: boolean
+        }
+        Relationships: []
+      }
       questions: {
         Row: {
           category: string
@@ -291,6 +315,21 @@ export type Database = {
           options_json?: Json
           text_ar?: string
           timer_seconds?: number | null
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          is_enabled: boolean
+          setting_key: string
+        }
+        Insert: {
+          is_enabled?: boolean
+          setting_key: string
+        }
+        Update: {
+          is_enabled?: boolean
+          setting_key?: string
         }
         Relationships: []
       }

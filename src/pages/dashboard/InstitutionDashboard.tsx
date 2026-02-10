@@ -3,14 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
   Users, GraduationCap, FlaskConical, FileText, School, Loader2,
-  ChevronRight, ChevronLeft, Download,
+  ChevronRight, ChevronLeft, Download, Eye,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -28,21 +30,12 @@ const STEP_LABELS: Record<string, string> = {
 };
 
 const RIASEC_AR: Record<string, string> = {
-  R: "واقعي",
-  I: "بحثي",
-  A: "فني",
-  S: "اجتماعي",
-  E: "مقدام",
-  C: "تقليدي",
+  R: "واقعي", I: "بحثي", A: "فني", S: "اجتماعي", E: "مقدام", C: "تقليدي",
 };
 
 const PIE_COLORS = [
-  "hsl(210, 70%, 20%)",  // Prussian blue
-  "hsl(160, 55%, 38%)",  // Jungle green
-  "hsl(30, 80%, 55%)",
-  "hsl(270, 50%, 55%)",
-  "hsl(0, 60%, 55%)",
-  "hsl(45, 85%, 50%)",
+  "hsl(210, 70%, 20%)", "hsl(160, 55%, 38%)", "hsl(30, 80%, 55%)",
+  "hsl(270, 50%, 55%)", "hsl(0, 60%, 55%)", "hsl(45, 85%, 50%)",
 ];
 
 const PAGE_SIZE = 10;
@@ -51,13 +44,17 @@ interface StudentRow {
   user_id: string;
   full_name: string | null;
   grade_level: string | null;
+  phone: string | null;
   progressPercent: number;
+  hollandTopCode: string | null;
 }
 
 function exportCSV(students: StudentRow[]) {
   const BOM = "\uFEFF";
-  const header = "الاسم,المرحلة الدراسية,نسبة الإتمام\n";
-  const rows = students.map((s) => `"${s.full_name ?? "—"}","${s.grade_level ?? "—"}",${s.progressPercent}%`).join("\n");
+  const header = "الاسم,البريد الإلكتروني,الجوال,المرحلة الدراسية,نسبة الإتمام,كود هولاند\n";
+  const rows = students.map((s) =>
+    `"${s.full_name ?? "—"}","—","${s.phone ?? "—"}","${s.grade_level ?? "—"}",${s.progressPercent}%,"${s.hollandTopCode ?? "—"}"`
+  ).join("\n");
   const blob = new Blob([BOM + header + rows], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -78,6 +75,12 @@ export default function InstitutionDashboard() {
   const [journeyData, setJourneyData] = useState<{ name: string; count: number }[]>([]);
   const [hollandData, setHollandData] = useState<{ name: string; value: number }[]>([]);
   const [summary, setSummary] = useState({ total: 0, holland: 0, simulation: 0, report: 0 });
+
+  // Student detail dialog
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailStudent, setDetailStudent] = useState<StudentRow | null>(null);
+  const [detailHolland, setDetailHolland] = useState<any>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -100,12 +103,11 @@ export default function InstitutionDashboard() {
       return;
     }
 
-    // Parallel fetches
     const [profilesRes, stepsRes, progressRes, hollandRes] = await Promise.all([
-      supabase.from("profiles").select("user_id, full_name, grade_level").in("user_id", studentIds),
+      supabase.from("profiles").select("user_id, full_name, grade_level, phone").in("user_id", studentIds),
       supabase.from("journey_steps").select("id, slug, order_index").order("order_index"),
       supabase.from("user_progress").select("user_id, step_id, status").in("user_id", studentIds),
-      supabase.from("holland_results").select("top_code").in("user_id", studentIds),
+      supabase.from("holland_results").select("user_id, top_code").in("user_id", studentIds),
     ]);
 
     const profiles = profilesRes.data ?? [];
@@ -116,7 +118,6 @@ export default function InstitutionDashboard() {
     const totalSteps = steps.length || 1;
     const stepMap = new Map(steps.map((s) => [s.id, s.slug]));
 
-    // Completed steps per user
     const completedByUser: Record<string, Set<string>> = {};
     progress.forEach((p) => {
       if (p.status === "completed") {
@@ -128,7 +129,6 @@ export default function InstitutionDashboard() {
       }
     });
 
-    // Journey funnel chart
     const stepCounts: Record<string, number> = {};
     steps.forEach((s) => { stepCounts[s.slug] = 0; });
     progress.forEach((p) => {
@@ -141,7 +141,6 @@ export default function InstitutionDashboard() {
       steps.map((s) => ({ name: STEP_LABELS[s.slug] ?? s.slug, count: stepCounts[s.slug] ?? 0 }))
     );
 
-    // Summary KPIs
     const countWith = (slug: string) => studentIds.filter((id) => completedByUser[id]?.has(slug)).length;
     setSummary({
       total: studentIds.length,
@@ -150,7 +149,9 @@ export default function InstitutionDashboard() {
       report: countWith("report"),
     });
 
-    // Student table
+    // Holland code map for student rows
+    const hollandMap = new Map(hollandResults.map(r => [r.user_id, r.top_code]));
+
     setStudents(
       studentIds.map((id) => {
         const p = profiles.find((pr) => pr.user_id === id);
@@ -158,12 +159,13 @@ export default function InstitutionDashboard() {
           user_id: id,
           full_name: p?.full_name ?? "—",
           grade_level: p?.grade_level ?? "—",
+          phone: p?.phone ?? null,
           progressPercent: Math.round(((completedByUser[id]?.size ?? 0) / totalSteps) * 100),
+          hollandTopCode: hollandMap.get(id) ?? null,
         };
       })
     );
 
-    // RIASEC pie chart with Arabic labels
     const codeCounts: Record<string, number> = {};
     hollandResults.forEach((r) => {
       if (r.top_code) {
@@ -196,6 +198,22 @@ export default function InstitutionDashboard() {
     }
     toast({ title: "تم الربط", description: `تم ربط ${data} طالب/ة بنجاح` });
     fetchData();
+  };
+
+  const handleViewStudent = async (student: StudentRow) => {
+    setDetailStudent(student);
+    setDetailOpen(true);
+    setDetailLoading(true);
+    setDetailHolland(null);
+
+    if (student.hollandTopCode) {
+      const [hollandRes, codeRes] = await Promise.all([
+        supabase.from("holland_results").select("scores, top_code").eq("user_id", student.user_id).maybeSingle(),
+        supabase.from("holland_codes").select("description, strengths, weaknesses, recommended_majors").eq("code", student.hollandTopCode).maybeSingle(),
+      ]);
+      setDetailHolland({ ...(hollandRes.data ?? {}), codeInfo: codeRes.data });
+    }
+    setDetailLoading(false);
   };
 
   const pct = (n: number) => (summary.total ? Math.round((n / summary.total) * 100) : 0);
@@ -246,7 +264,6 @@ export default function InstitutionDashboard() {
             <>
               {/* Charts Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* RIASEC Pie */}
                 <Card>
                   <CardHeader><CardTitle className="text-base">توزيع أنماط RIASEC</CardTitle></CardHeader>
                   <CardContent className="h-72">
@@ -268,7 +285,6 @@ export default function InstitutionDashboard() {
                   </CardContent>
                 </Card>
 
-                {/* Journey Funnel Bar */}
                 <Card>
                   <CardHeader><CardTitle className="text-base">مسار إتمام الرحلة</CardTitle></CardHeader>
                   <CardContent className="h-72 text-foreground">
@@ -300,8 +316,10 @@ export default function InstitutionDashboard() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>الاسم</TableHead>
-                          <TableHead>المرحلة الدراسية</TableHead>
+                          <TableHead>المرحلة</TableHead>
+                          <TableHead>كود هولاند</TableHead>
                           <TableHead>نسبة الإتمام</TableHead>
+                          <TableHead>عرض</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -310,12 +328,22 @@ export default function InstitutionDashboard() {
                             <TableCell>{s.full_name}</TableCell>
                             <TableCell>{s.grade_level}</TableCell>
                             <TableCell>
+                              {s.hollandTopCode ? (
+                                <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-xs font-mono">{s.hollandTopCode}</span>
+                              ) : "—"}
+                            </TableCell>
+                            <TableCell>
                               <div className="flex items-center gap-2">
                                 <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
                                   <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${s.progressPercent}%` }} />
                                 </div>
                                 <span className="text-xs text-muted-foreground">{s.progressPercent}%</span>
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="ghost" size="sm" onClick={() => handleViewStudent(s)}>
+                                <Eye className="w-4 h-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -339,6 +367,65 @@ export default function InstitutionDashboard() {
           )}
         </>
       )}
+
+      {/* Student Detail Dialog */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>بيانات الطالب</DialogTitle>
+          </DialogHeader>
+          {detailStudent && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-muted-foreground text-xs">الاسم</p>
+                  <p className="font-medium">{detailStudent.full_name}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">المرحلة الدراسية</p>
+                  <p className="font-medium">{detailStudent.grade_level ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">الجوال</p>
+                  <p className="font-medium" dir="ltr">{detailStudent.phone ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">نسبة الإتمام</p>
+                  <p className="font-medium">{detailStudent.progressPercent}%</p>
+                </div>
+              </div>
+
+              {detailLoading ? (
+                <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+              ) : detailHolland ? (
+                <div className="space-y-3">
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground mb-1">كود هولاند</p>
+                    <span className="bg-primary text-primary-foreground px-4 py-1.5 rounded-lg font-bold text-lg">
+                      {detailHolland.top_code}
+                    </span>
+                  </div>
+                  {detailHolland.codeInfo?.description && (
+                    <p className="text-sm text-muted-foreground text-center">{detailHolland.codeInfo.description}</p>
+                  )}
+                  {detailHolland.codeInfo?.recommended_majors && (
+                    <div>
+                      <p className="text-xs font-bold mb-2">تخصصات موصى بها</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(detailHolland.codeInfo.recommended_majors as string[]).map((m: string, i: number) => (
+                          <span key={i} className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full text-xs">{m}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground text-sm py-4">لم يكمل اختبار هولاند بعد</p>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
