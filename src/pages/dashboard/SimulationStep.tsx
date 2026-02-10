@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { CourseVideo } from "@/components/CourseVideo";
 import {
   Gamepad2, Clock, AlertTriangle, ArrowRight, CheckCircle2, FileText,
   Stethoscope, SmilePlus, Pill, Cpu, Building, Factory, Landmark,
@@ -259,6 +260,12 @@ export default function SimulationStep() {
   if (!selectedMajor) {
     return (
       <div className="max-w-5xl mx-auto">
+        <CourseVideo
+          title="الأخطاء الشائعة.. وعش التجربة قبل أن تختارها!"
+          description="لا تنخدع بأسماء التخصصات. جرب الآن أن تعيش مواقف حقيقية من صميم العمل لتعرف هل يناسبك أم لا."
+          videoUrl=""
+          className="mb-8 max-w-2xl mx-auto"
+        />
         <div className="mb-10 text-center">
           <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
             <Gamepad2 className="w-7 h-7 text-accent" />

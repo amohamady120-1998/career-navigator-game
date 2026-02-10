@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { VideoPlayer } from "@/components/VideoPlayer";
+import { CourseVideo } from "@/components/CourseVideo";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -60,7 +60,12 @@ export default function IntroStep() {
         ستمرّ خلال هذه الرحلة بعدة مراحل مصمّمة بعناية لمساعدتك على اكتشاف ميولك المهنية وتحديد
         التخصص الجامعي الأنسب لشخصيتك. كل مرحلة ستُفتح تلقائياً بعد إكمال المرحلة السابقة.
       </p>
-      <VideoPlayer src="" title="شاهد: كيف تبدأ رحلة اكتشاف ذاتك؟" className="mb-8" />
+      <CourseVideo
+        title="مرحباً بك في أثر.. لماذا نحتار في اختيار التخصص؟"
+        description="شاهد هذا المقطع التمهيدي قبل أن تبدأ رحلتك لاكتشاف ذاتك."
+        videoUrl=""
+        className="mb-8"
+      />
       <Button
         onClick={handleStart}
         disabled={loading}
