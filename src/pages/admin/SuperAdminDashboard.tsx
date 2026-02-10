@@ -8,7 +8,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Users, School, Award, Search } from "lucide-react";
+import { Loader2, Users, School, Award, Search, GraduationCap, Building2, UserCheck } from "lucide-react";
 
 export default function SuperAdminDashboard() {
   const navigate = useNavigate();
@@ -99,6 +99,27 @@ export default function SuperAdminDashboard() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto p-6" dir="rtl">
       <h1 className="text-2xl font-bold">لوحة المشرف العام</h1>
+
+      {/* Quick Nav for Testing All Dashboards */}
+      <Card>
+        <CardHeader><CardTitle className="text-lg">التنقل السريع بين لوحات التحكم</CardTitle></CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" onClick={() => navigate("/dashboard")} className="gap-2">
+              <GraduationCap className="w-4 h-4" />
+              لوحة الطالب
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/parent")} className="gap-2">
+              <UserCheck className="w-4 h-4" />
+              لوحة ولي الأمر
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/institution")} className="gap-2">
+              <Building2 className="w-4 h-4" />
+              لوحة المؤسسة
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

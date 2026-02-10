@@ -27,6 +27,19 @@ const Auth = () => {
   }, []);
 
   const redirectByRole = async (userId: string) => {
+    // Check admin role first
+    const { data: adminRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (adminRole) {
+      navigate("/admin", { replace: true });
+      return;
+    }
+
     const { data: profile } = await supabase
       .from("profiles")
       .select("user_type")

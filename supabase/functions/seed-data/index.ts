@@ -53,6 +53,36 @@ serve(async (req) => {
       });
     }
 
+    if (action === 'create_test_account') {
+      const { email, password, fullName } = data;
+      
+      // Create auth user
+      const { data: userData, error: userError } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
+      if (userError) throw userError;
+      const userId = userData.user.id;
+
+      // Create profile
+      await supabase.from('profiles').insert({
+        user_id: userId,
+        full_name: fullName || 'حساب اختبار',
+        user_type: 'student',
+      });
+
+      // Grant admin role
+      await supabase.from('user_roles').insert({
+        user_id: userId,
+        role: 'admin',
+      });
+
+      return new Response(JSON.stringify({ success: true, userId }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     return new Response(JSON.stringify({ error: 'Unknown action' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
