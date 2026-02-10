@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { QuestionWizard } from "@/components/QuestionWizard";
+import { VideoPlayer } from "@/components/VideoPlayer";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Compass } from "lucide-react";
@@ -89,6 +90,7 @@ export default function HollandStep() {
 
   return (
     <div>
+      <VideoPlayer src="" title="هام جداً: كيف تجيب على الأسئلة بدقة؟" className="mb-6" />
       <div className="mb-8 text-center">
         <h2 className="text-2xl font-bold mb-2">اختبار هولاند للميول المهنية</h2>
         <p className="text-muted-foreground">أجب بـ "نعم" أو "لا" على كل سؤال — 42 سؤالاً في 7 مجموعات</p>
