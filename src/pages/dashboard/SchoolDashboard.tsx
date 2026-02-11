@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, School, Users, Key, BarChart3 } from "lucide-react";
+import { Loader2, School } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import SchoolAnalytics from "@/components/SchoolAnalytics";
 
 export default function SchoolDashboard() {
   const navigate = useNavigate();
@@ -44,6 +45,104 @@ export default function SchoolDashboard() {
     enabled: !!schoolId,
   });
 
+  // Students
+  const { data: students } = useQuery({
+    queryKey: ["school-students", schoolId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_school_membership")
+        .select("user_id, activated_at, activated_by_code")
+        .eq("school_id", schoolId!);
+      return data || [];
+    },
+    enabled: !!schoolId,
+  });
+
+  // Progress data - query user_progress for all school students
+  const studentIds = students?.map(s => s.user_id) || [];
+
+  const { data: rawProgress } = useQuery({
+    queryKey: ["school-progress-raw", schoolId, studentIds.length],
+    queryFn: async () => {
+      if (!studentIds.length) return [];
+      const { data } = await supabase
+        .from("user_progress")
+        .select("user_id, step_id, status")
+        .in("user_id", studentIds);
+      return data || [];
+    },
+    enabled: !!schoolId && studentIds.length > 0,
+  });
+
+  const { data: journeySteps } = useQuery({
+    queryKey: ["journey-steps-analytics"],
+    queryFn: async () => {
+      const { data } = await supabase.from("journey_steps").select("*").order("order_index");
+      return data || [];
+    },
+  });
+
+  // Impact data
+  const { data: impactRaw } = useQuery({
+    queryKey: ["school-impact-raw", schoolId, studentIds.length],
+    queryFn: async () => {
+      if (!studentIds.length) return [];
+      const { data } = await supabase
+        .from("impact_assessments")
+        .select("user_id, assessment_type, score_json")
+        .in("user_id", studentIds);
+      return data || [];
+    },
+    enabled: !!schoolId && studentIds.length > 0,
+  });
+
+  // Compute progress data for analytics component
+  const progressData = (() => {
+    if (!journeySteps || !rawProgress) return [];
+    return journeySteps.map(step => {
+      const matching = rawProgress.filter(p => p.step_id === step.id);
+      return {
+        step_slug: step.slug,
+        step_name: step.name_ar,
+        total_students: studentIds.length,
+        completed_count: matching.filter(p => p.status === "completed").length,
+        in_progress_count: matching.filter(p => p.status === "in_progress").length,
+      };
+    });
+  })();
+
+  // Compute impact summary
+  const impactData = (() => {
+    if (!impactRaw) return null;
+    const pre = impactRaw.filter(i => i.assessment_type === "pre");
+    const post = impactRaw.filter(i => i.assessment_type === "post");
+    const preScores = pre.filter(i => i.score_json && (i.score_json as any)?.percentage != null).map(i => (i.score_json as any).percentage);
+    const postScores = post.filter(i => i.score_json && (i.score_json as any)?.percentage != null).map(i => (i.score_json as any).percentage);
+    return {
+      count_pre_completed: pre.length,
+      count_post_completed: post.length,
+      avg_pre_score: preScores.length ? preScores.reduce((a: number, b: number) => a + b, 0) / preScores.length : null,
+      avg_post_score: postScores.length ? postScores.reduce((a: number, b: number) => a + b, 0) / postScores.length : null,
+    };
+  })();
+
+  // Student progress map for CSV export
+  const studentProgress = (() => {
+    if (!rawProgress || !journeySteps) return undefined;
+    const stepMap = new Map(journeySteps.map(s => [s.id, s.slug]));
+    const result: Record<string, string[]> = {};
+    rawProgress.forEach(p => {
+      if (p.status === "completed") {
+        const slug = stepMap.get(p.step_id);
+        if (slug) {
+          if (!result[p.user_id]) result[p.user_id] = [];
+          result[p.user_id].push(slug);
+        }
+      }
+    });
+    return result;
+  })();
+
   const totalSeats = orders?.reduce((s, o) => s + o.seats_total, 0) || 0;
   const usedSeats = orders?.reduce((s, o) => s + o.seats_used, 0) || 0;
 
@@ -74,55 +173,15 @@ export default function SchoolDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground flex items-center gap-1">
-              <Users className="w-4 h-4" /> المقاعد الكلية
-            </CardTitle>
-          </CardHeader>
-          <CardContent><p className="text-3xl font-bold">{totalSeats}</p></CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground flex items-center gap-1">
-              <BarChart3 className="w-4 h-4" /> المستخدمة
-            </CardTitle>
-          </CardHeader>
-          <CardContent><p className="text-3xl font-bold">{usedSeats}</p></CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground flex items-center gap-1">
-              <Key className="w-4 h-4" /> المتبقية
-            </CardTitle>
-          </CardHeader>
-          <CardContent><p className="text-3xl font-bold">{totalSeats - usedSeats}</p></CardContent>
-        </Card>
-      </div>
-
-      {orders && orders.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle className="text-lg">تفاصيل الطلبات</CardTitle></CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {orders.map(o => (
-                <div key={o.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <span className="font-medium">{o.seats_total} مقعد</span>
-                    <span className="text-sm text-muted-foreground mr-2">({o.seats_used} مستخدم)</span>
-                  </div>
-                  <span className={`text-sm px-2 py-1 rounded ${o.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                    {o.status === 'active' ? 'نشط' : o.status === 'paused' ? 'متوقف' : 'مغلق'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <SchoolAnalytics
+        schoolName={school?.name || "school"}
+        totalSeats={totalSeats}
+        usedSeats={usedSeats}
+        students={students || []}
+        progressData={progressData}
+        impactData={impactData}
+        studentProgress={studentProgress}
+      />
     </div>
   );
 }

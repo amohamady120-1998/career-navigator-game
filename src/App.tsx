@@ -45,6 +45,7 @@ import SchoolDashboard from "./pages/dashboard/SchoolDashboard";
 import AdminSchools from "./pages/admin/AdminSchools";
 import AdminSchoolOrders from "./pages/admin/AdminSchoolOrders";
 import AdminSchoolUsage from "./pages/admin/AdminSchoolUsage";
+import AdminSchoolReports from "./pages/admin/AdminSchoolReports";
 import { StepGuard } from "./components/StepGuard";
 import IntroVideo from "./pages/onboarding/IntroVideo";
 import NotFound from "./pages/NotFound";
@@ -104,6 +105,7 @@ const App = () => (
               <Route path="/admin/schools" element={<AdminSchools />} />
               <Route path="/admin/school-orders" element={<AdminSchoolOrders />} />
               <Route path="/admin/school-usage" element={<AdminSchoolUsage />} />
+              <Route path="/admin/school-reports" element={<AdminSchoolReports />} />
               <Route path="/admin" element={<SuperAdminDashboard />} />
               <Route path="/share/report/:token" element={<SharedReport />} />
               <Route path="/verify/:code" element={<VerifyCertificate />} />
