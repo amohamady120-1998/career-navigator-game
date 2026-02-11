@@ -41,6 +41,7 @@ import ConsultationBooking from "./pages/dashboard/ConsultationBooking";
 import AdminConsultations from "./pages/admin/AdminConsultations";
 import CompletionNextStep from "./pages/dashboard/CompletionNextStep";
 import ActivateSchoolCode from "./pages/dashboard/ActivateSchoolCode";
+import MyProfile from "./pages/dashboard/MyProfile";
 import SchoolDashboard from "./pages/dashboard/SchoolDashboard";
 import AdminSchools from "./pages/admin/AdminSchools";
 import AdminSchoolAdmins from "./pages/admin/AdminSchoolAdmins";
@@ -99,6 +100,7 @@ const App = () => (
                 <Route path="consultation" element={<ConsultationBooking />} />
                 <Route path="next-step" element={<CompletionNextStep />} />
                 <Route path="activate" element={<ActivateSchoolCode />} />
+                <Route path="my-profile" element={<MyProfile />} />
                 <Route path="school" element={<SchoolDashboard />} />
               </Route>
               <Route path="/parent" element={<ParentLayout />}>
