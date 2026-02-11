@@ -28,6 +28,7 @@ import ShortlistStep from "./pages/dashboard/ShortlistStep";
 import InitialReportStep from "./pages/dashboard/InitialReportStep";
 import ExcludedMajorsStep from "./pages/dashboard/ExcludedMajorsStep";
 import DoubtCheckpointStep from "./pages/dashboard/DoubtCheckpointStep";
+import ExploreMajorDynamic from "./pages/dashboard/ExploreMajorDynamic";
 import ParentDashboard from "./pages/dashboard/ParentDashboard";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import { StepGuard } from "./components/StepGuard";
@@ -64,6 +65,7 @@ const App = () => (
                 <Route path="shortlist" element={<ShortlistStep />} />
                 <Route path="excluded-majors" element={<ExcludedMajorsStep />} />
                 <Route path="doubt-checkpoint" element={<DoubtCheckpointStep />} />
+                <Route path="explore" element={<ExploreMajorDynamic />} />
                 <Route path="initial-report" element={<InitialReportStep />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="certificate" element={<StepGuard requiredStep="report"><Certificate /></StepGuard>} />
