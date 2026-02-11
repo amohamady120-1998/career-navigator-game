@@ -28,6 +28,8 @@ import ShortlistStep from "./pages/dashboard/ShortlistStep";
 import InitialReportStep from "./pages/dashboard/InitialReportStep";
 import ExcludedMajorsStep from "./pages/dashboard/ExcludedMajorsStep";
 import DoubtCheckpointStep from "./pages/dashboard/DoubtCheckpointStep";
+import ExploreMajorDatabase from "./pages/dashboard/ExploreMajorDatabase";
+import AdminExploreManager from "./pages/admin/AdminExploreManager";
 import ExploreMajorDynamic from "./pages/dashboard/ExploreMajorDynamic";
 import ParentDashboard from "./pages/dashboard/ParentDashboard";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
@@ -66,6 +68,8 @@ const App = () => (
                 <Route path="excluded-majors" element={<ExcludedMajorsStep />} />
                 <Route path="doubt-checkpoint" element={<DoubtCheckpointStep />} />
                 <Route path="explore" element={<ExploreMajorDynamic />} />
+                <Route path="explore/:majorId" element={<ExploreMajorDatabase />} />
+                <Route path="explore" element={<ExploreMajorDynamic />} />
                 <Route path="initial-report" element={<InitialReportStep />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="certificate" element={<StepGuard requiredStep="report"><Certificate /></StepGuard>} />
@@ -79,6 +83,7 @@ const App = () => (
                 <Route index element={<InstitutionDashboard />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
+              <Route path="/admin/explore-manager" element={<AdminExploreManager />} />
               <Route path="/admin" element={<SuperAdminDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

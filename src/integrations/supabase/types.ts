@@ -166,6 +166,121 @@ export type Database = {
         }
         Relationships: []
       }
+      major_explore_responses: {
+        Row: {
+          comfort_level: string
+          created_at: string | null
+          id: string
+          major_id: string | null
+          scenario_choice_index: number
+          stage_key: string
+          time_spent_sec: number
+          user_id: string
+        }
+        Insert: {
+          comfort_level: string
+          created_at?: string | null
+          id?: string
+          major_id?: string | null
+          scenario_choice_index: number
+          stage_key: string
+          time_spent_sec: number
+          user_id: string
+        }
+        Update: {
+          comfort_level?: string
+          created_at?: string | null
+          id?: string
+          major_id?: string | null
+          scenario_choice_index?: number
+          stage_key?: string
+          time_spent_sec?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "major_explore_responses_major_id_fkey"
+            columns: ["major_id"]
+            isOneToOne: false
+            referencedRelation: "majors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      major_explore_sections: {
+        Row: {
+          challenges_ar: Json
+          created_at: string | null
+          id: string
+          major_id: string | null
+          reality_snapshot_ar: string
+          scenario_options_ar: Json
+          scenario_prompt_ar: string
+          stage_key: string
+          stage_title_ar: string
+          updated_at: string | null
+        }
+        Insert: {
+          challenges_ar?: Json
+          created_at?: string | null
+          id?: string
+          major_id?: string | null
+          reality_snapshot_ar: string
+          scenario_options_ar?: Json
+          scenario_prompt_ar: string
+          stage_key: string
+          stage_title_ar: string
+          updated_at?: string | null
+        }
+        Update: {
+          challenges_ar?: Json
+          created_at?: string | null
+          id?: string
+          major_id?: string | null
+          reality_snapshot_ar?: string
+          scenario_options_ar?: Json
+          scenario_prompt_ar?: string
+          stage_key?: string
+          stage_title_ar?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "major_explore_sections_major_id_fkey"
+            columns: ["major_id"]
+            isOneToOne: false
+            referencedRelation: "majors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      majors: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name_ar: string
+          name_en: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name_ar: string
+          name_en?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name_ar?: string
+          name_en?: string | null
+        }
+        Relationships: []
+      }
       parent_child_links: {
         Row: {
           child_user_id: string
