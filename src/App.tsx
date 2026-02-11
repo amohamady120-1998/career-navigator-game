@@ -12,6 +12,7 @@ import ParentLayout from "./layouts/ParentLayout";
 import InstitutionLayout from "./layouts/InstitutionLayout";
 import InstitutionDashboard from "./pages/dashboard/InstitutionDashboard";
 import IntroStep from "./pages/dashboard/IntroStep";
+import OrientationStep from "./pages/dashboard/OrientationStep";
 import PreImpactStep from "./pages/dashboard/PreImpactStep";
 import HollandStep from "./pages/dashboard/HollandStep";
 import SimulationStep from "./pages/dashboard/SimulationStep";
@@ -46,6 +47,7 @@ const App = () => (
                 <Route index element={<IntroStep />} />
                 <Route path="payment" element={<PaymentStep />} />
                 <Route path="intro" element={<IntroStep />} />
+                <Route path="orientation" element={<OrientationStep />} />
                 <Route path="pre-impact" element={<StepGuard requiredStep="intro"><PreImpactStep /></StepGuard>} />
                 <Route path="holland" element={<StepGuard requiredStep="pre-impact"><HollandStep /></StepGuard>} />
                 <Route path="simulation" element={<StepGuard requiredStep="holland"><SimulationStep /></StepGuard>} />
