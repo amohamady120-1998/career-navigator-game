@@ -15,6 +15,7 @@ import IntroStep from "./pages/dashboard/IntroStep";
 import OrientationStep from "./pages/dashboard/OrientationStep";
 import PreImpactStep from "./pages/dashboard/PreImpactStep";
 import HollandStep from "./pages/dashboard/HollandStep";
+import PreAssessmentIntro from "./pages/dashboard/PreAssessmentIntro";
 import SimulationStep from "./pages/dashboard/SimulationStep";
 import ReportStep from "./pages/dashboard/ReportStep";
 import PostImpactStep from "./pages/dashboard/PostImpactStep";
@@ -49,6 +50,7 @@ const App = () => (
                 <Route path="intro" element={<IntroStep />} />
                 <Route path="orientation" element={<OrientationStep />} />
                 <Route path="pre-impact" element={<StepGuard requiredStep="intro"><PreImpactStep /></StepGuard>} />
+                <Route path="pre-assessment" element={<PreAssessmentIntro />} />
                 <Route path="holland" element={<StepGuard requiredStep="pre-impact"><HollandStep /></StepGuard>} />
                 <Route path="simulation" element={<StepGuard requiredStep="holland"><SimulationStep /></StepGuard>} />
                 <Route path="post-impact" element={<StepGuard requiredStep="simulation"><PostImpactStep /></StepGuard>} />
