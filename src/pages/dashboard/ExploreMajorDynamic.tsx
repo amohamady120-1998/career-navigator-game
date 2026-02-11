@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -70,6 +71,7 @@ const STAGE_LABELS = ["سنة 1", "سنة 2", "سنة 3", "سنة 4", "عمل", 
 export default function ExploreMajorDynamic() {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   
   const searchParams = new URLSearchParams(location.search);
   const majorNameParam = searchParams.get('major') || (location.state as any)?.majorName || "إدارة الأعمال";
@@ -77,6 +79,7 @@ export default function ExploreMajorDynamic() {
   const [majorData] = useState<MajorData>(getMajorData(majorNameParam));
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [exploreStepId, setExploreStepId] = useState<string | null>(null);
   
   const [currentStage, setCurrentStage] = useState(0);
   const [comfortLevels, setComfortLevels] = useState<Record<number, ComfortLevel>>({});
@@ -101,12 +104,16 @@ export default function ExploreMajorDynamic() {
           if (meta.reflections) setReflections(meta.reflections);
         }
 
-        // Initialize step in DB
-        await supabase.from('user_progress').upsert({
-          user_id: session.user.id,
-          step_id: 'explore_major',
-          status: 'in_progress'
-        });
+        // Fetch the explore step UUID
+        const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'explore').single();
+        if (stepRow) {
+          setExploreStepId(stepRow.id);
+          await supabase.from('user_progress').upsert({
+            user_id: session.user.id,
+            step_id: stepRow.id,
+            status: 'in_progress'
+          }, { onConflict: 'user_id,step_id' });
+        }
       } catch (error) {
         console.error("Error:", error);
       } finally {
@@ -139,16 +146,21 @@ export default function ExploreMajorDynamic() {
     try {
       saveProgress(currentStage);
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await supabase.from('user_progress').update({
+      if (session && exploreStepId) {
+        await supabase.from('user_progress').upsert({
+          user_id: session.user.id,
+          step_id: exploreStepId,
           status: 'completed',
           completed_at: new Date().toISOString()
-        }).eq('user_id', session.user.id).eq('step_id', 'explore_major');
+        }, { onConflict: 'user_id,step_id' });
+        queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
+        queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
       }
       toast.success("تم استكشاف التخصص بنجاح!");
       navigate('/dashboard/simulation');
     } catch (e) {
       console.error(e);
+      toast.error("حدث خطأ في الحفظ");
     } finally {
       setIsSaving(false);
     }

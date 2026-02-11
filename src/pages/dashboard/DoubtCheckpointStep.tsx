@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -35,9 +36,9 @@ const DOUBT_LEVELS: DoubtLevel[] = [
     icon: Scale,
     colorClass: "text-blue-600",
     bgClass: "bg-blue-50 border-blue-200",
-    supportMessage: "طبيعي جداً! هنا يجي دور المحاكاة الذكية.. هتحطك في مواقف حقيقية وتخليك تحسم قرارك بنفسك.",
-    ctaText: "جرب المحاكاة الذكية",
-    nextRoute: "/dashboard/simulation"
+    supportMessage: "طبيعي جداً! هنا يجي دور استكشاف التخصص.. هتتعمق في كل اختيار وتشوف الفرق بنفسك.",
+    ctaText: "استكشف التخصص",
+    nextRoute: "/dashboard/explore"
   },
   {
     id: 3,
@@ -63,7 +64,7 @@ const DOUBT_LEVELS: DoubtLevel[] = [
 
 export default function DoubtCheckpointStep() {
   const navigate = useNavigate();
-  
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedLevelId, setSelectedLevelId] = useState<number | null>(null);
@@ -123,6 +124,8 @@ export default function DoubtCheckpointStep() {
             completed_at: new Date().toISOString(),
             meta_data: { doubt_level: selectedLevel.id, label: selectedLevel.label }
           }, { onConflict: 'user_id,step_id' });
+          queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
+          queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
         }
         
         // Dynamic Routing based on selection
