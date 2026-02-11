@@ -9,6 +9,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import StudentProfileView from "@/components/StudentProfileView";
 import { useToast } from "@/hooks/use-toast";
 import {
   Users, GraduationCap, FlaskConical, FileText, School, Loader2,
@@ -78,9 +79,7 @@ export default function InstitutionDashboard() {
 
   // Student detail dialog
   const [detailOpen, setDetailOpen] = useState(false);
-  const [detailLoading, setDetailLoading] = useState(false);
   const [detailStudent, setDetailStudent] = useState<StudentRow | null>(null);
-  const [detailHolland, setDetailHolland] = useState<any>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -200,20 +199,9 @@ export default function InstitutionDashboard() {
     fetchData();
   };
 
-  const handleViewStudent = async (student: StudentRow) => {
+  const handleViewStudent = (student: StudentRow) => {
     setDetailStudent(student);
     setDetailOpen(true);
-    setDetailLoading(true);
-    setDetailHolland(null);
-
-    if (student.hollandTopCode) {
-      const [hollandRes, codeRes] = await Promise.all([
-        supabase.from("holland_results").select("scores, top_code").eq("user_id", student.user_id).maybeSingle(),
-        supabase.from("holland_codes").select("description, strengths, weaknesses, recommended_majors").eq("code", student.hollandTopCode).maybeSingle(),
-      ]);
-      setDetailHolland({ ...(hollandRes.data ?? {}), codeInfo: codeRes.data });
-    }
-    setDetailLoading(false);
   };
 
   const pct = (n: number) => (summary.total ? Math.round((n / summary.total) * 100) : 0);
@@ -368,61 +356,17 @@ export default function InstitutionDashboard() {
         </>
       )}
 
-      {/* Student Detail Dialog */}
+      {/* Student Profile Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto" dir="rtl">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" dir="rtl">
           <DialogHeader>
-            <DialogTitle>بيانات الطالب</DialogTitle>
+            <DialogTitle>ملف الطالب — {detailStudent?.full_name ?? ""}</DialogTitle>
           </DialogHeader>
           {detailStudent && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-muted-foreground text-xs">الاسم</p>
-                  <p className="font-medium">{detailStudent.full_name}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">المرحلة الدراسية</p>
-                  <p className="font-medium">{detailStudent.grade_level ?? "—"}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">الجوال</p>
-                  <p className="font-medium" dir="ltr">{detailStudent.phone ?? "—"}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">نسبة الإتمام</p>
-                  <p className="font-medium">{detailStudent.progressPercent}%</p>
-                </div>
-              </div>
-
-              {detailLoading ? (
-                <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
-              ) : detailHolland ? (
-                <div className="space-y-3">
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground mb-1">كود هولاند</p>
-                    <span className="bg-primary text-primary-foreground px-4 py-1.5 rounded-lg font-bold text-lg">
-                      {detailHolland.top_code}
-                    </span>
-                  </div>
-                  {detailHolland.codeInfo?.description && (
-                    <p className="text-sm text-muted-foreground text-center">{detailHolland.codeInfo.description}</p>
-                  )}
-                  {detailHolland.codeInfo?.recommended_majors && (
-                    <div>
-                      <p className="text-xs font-bold mb-2">تخصصات موصى بها</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {(detailHolland.codeInfo.recommended_majors as string[]).map((m: string, i: number) => (
-                          <span key={i} className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full text-xs">{m}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground text-sm py-4">لم يكمل اختبار هولاند بعد</p>
-              )}
-            </div>
+            <StudentProfileView
+              studentId={detailStudent.user_id}
+              studentName={detailStudent.full_name ?? undefined}
+            />
           )}
         </DialogContent>
       </Dialog>
