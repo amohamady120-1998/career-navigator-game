@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -105,31 +105,7 @@ export default function ConsultationBooking() {
   if (submitted) {
     const whatsappLink = generateWhatsAppLink(userName || "", formData.consultation_type, formData.whatsapp);
     
-    return (
-      <div className="max-w-lg mx-auto p-6 text-center" dir="rtl">
-        <Card>
-          <CardContent className="py-12 space-y-6">
-             <CheckCircle className="w-16 h-16 mx-auto" style={{ color: '#25D366' }} />
-             <div className="space-y-2">
-               <h2 className="text-2xl font-bold">تم إرسال طلبك بنجاح!</h2>
-               <p className="text-muted-foreground">سيتواصل معك فريقنا عبر الواتساب قريبًا</p>
-             </div>
-             
-             <div className="space-y-3 pt-4">
-               <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="block">
-                 <button className="w-full h-14 rounded-xl text-white text-base font-semibold transition-colors flex items-center justify-center gap-2" style={{ backgroundColor: '#25D366' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1fa857'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#25D366'}>
-                   <MessageCircle className="w-5 h-5" />
-                   فتح واتساب الآن
-                 </button>
-               </a>
-               <Button onClick={() => navigate("/dashboard")} variant="outline" className="w-full h-12 rounded-xl">
-                 العودة للوحة التحكم
-               </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <SuccessScreen whatsappLink={whatsappLink} onBack={() => navigate("/dashboard")} />;
   }
 
   return (
@@ -194,6 +170,62 @@ export default function ConsultationBooking() {
               {loading ? <><Loader2 className="w-4 h-4 animate-spin ml-2" /> جاري الإرسال...</> : "إرسال طلب الاستشارة"}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+const AUTO_REDIRECT_SECONDS = 4;
+
+function SuccessScreen({ whatsappLink, onBack }: { whatsappLink: string; onBack: () => void }) {
+  const [countdown, setCountdown] = useState(AUTO_REDIRECT_SECONDS);
+  const openedRef = useRef(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1 && !openedRef.current) {
+          openedRef.current = true;
+          window.open(whatsappLink, "_blank");
+        }
+        return prev > 0 ? prev - 1 : 0;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [whatsappLink]);
+
+  const handleManualClick = () => {
+    openedRef.current = true;
+  };
+
+  return (
+    <div className="max-w-lg mx-auto p-6 text-center" dir="rtl">
+      <Card>
+        <CardContent className="py-12 space-y-6">
+          <CheckCircle className="w-16 h-16 mx-auto" style={{ color: '#25D366' }} />
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold">تم إرسال طلبك بنجاح!</h2>
+            <p className="text-muted-foreground">سيتواصل معك فريقنا عبر الواتساب قريبًا</p>
+          </div>
+
+          {countdown > 0 && (
+            <p className="text-sm text-muted-foreground">
+              سيتم فتح الواتساب تلقائيًا خلال <span className="font-bold text-foreground">{countdown}</span> ثوانٍ...
+            </p>
+          )}
+
+          <div className="space-y-3 pt-2">
+            <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="block" onClick={handleManualClick}>
+              <button className="w-full h-14 rounded-xl text-white text-base font-semibold transition-colors flex items-center justify-center gap-2" style={{ backgroundColor: '#25D366' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1fa857'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#25D366'}>
+                <MessageCircle className="w-5 h-5" />
+                فتح واتساب الآن
+              </button>
+            </a>
+            <Button onClick={onBack} variant="outline" className="w-full h-12 rounded-xl">
+              العودة للوحة التحكم
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
