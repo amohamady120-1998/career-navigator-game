@@ -37,7 +37,7 @@ type ConsultationRequest = {
   created_at: string;
 };
 
-export default function AdminConsultations() {
+export default function AdminConsultations({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
@@ -120,7 +120,7 @@ export default function AdminConsultations() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6" dir="rtl">
+    <div className={embedded ? "" : "max-w-6xl mx-auto p-6"} dir="rtl">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl">📋 إدارة طلبات الاستشارات</CardTitle>

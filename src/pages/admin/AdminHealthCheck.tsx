@@ -11,7 +11,7 @@ interface Check {
   message?: string;
 }
 
-export default function AdminHealthCheck() {
+export default function AdminHealthCheck({ embedded = false }: { embedded?: boolean }) {
   const { data: checks, isLoading } = useQuery({
     queryKey: ["admin-health-check"],
     queryFn: async () => {
@@ -100,7 +100,7 @@ export default function AdminHealthCheck() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6" dir="rtl">
+    <div className={embedded ? "space-y-6" : "max-w-3xl mx-auto p-6 space-y-6"} dir="rtl">
       <h1 className="text-2xl font-bold flex items-center gap-2">
         <Activity className="w-6 h-6" /> فحص صحة النظام
       </h1>

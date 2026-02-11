@@ -23,7 +23,7 @@ const FUNNEL_STEPS = [
   { key: "certificate", label: "الشهادة" },
 ];
 
-export default function AdminAnalytics() {
+export default function AdminAnalytics({ embedded = false }: { embedded?: boolean }) {
   const [dateRange, setDateRange] = useState("all");
   const [schoolFilter, setSchoolFilter] = useState("all");
 
@@ -85,7 +85,7 @@ export default function AdminAnalytics() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-6" dir="rtl">
+    <div className={embedded ? "space-y-6" : "max-w-5xl mx-auto p-6 space-y-6"} dir="rtl">
       <h1 className="text-2xl font-bold flex items-center gap-2">
         <BarChart3 className="w-6 h-6" /> تحليلات التقدم (Funnel)
       </h1>

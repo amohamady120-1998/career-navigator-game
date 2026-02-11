@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import SchoolAnalytics from "@/components/SchoolAnalytics";
 
-export default function AdminSchoolReports() {
+export default function AdminSchoolReports({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>("");
 
@@ -127,7 +127,7 @@ export default function AdminSchoolReports() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-6" dir="rtl">
+    <div className={embedded ? "space-y-6" : "max-w-5xl mx-auto p-6 space-y-6"} dir="rtl">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <School className="w-6 h-6" /> تقارير المدارس

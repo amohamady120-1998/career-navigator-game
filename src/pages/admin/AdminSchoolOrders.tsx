@@ -13,7 +13,7 @@ const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondar
   closed: { label: "مغلق", variant: "destructive" },
 };
 
-export default function AdminSchoolOrders() {
+export default function AdminSchoolOrders({ embedded = false }: { embedded?: boolean }) {
   const qc = useQueryClient();
 
   const { data: orders, isLoading } = useQuery({
@@ -45,7 +45,7 @@ export default function AdminSchoolOrders() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-6" dir="rtl">
+    <div className={embedded ? "space-y-6" : "max-w-5xl mx-auto p-6 space-y-6"} dir="rtl">
       <h1 className="text-2xl font-bold flex items-center gap-2"><Package className="w-6 h-6" /> طلبات المقاعد</h1>
 
       <Card>

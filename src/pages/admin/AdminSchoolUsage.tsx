@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Users } from "lucide-react";
 
-export default function AdminSchoolUsage() {
+export default function AdminSchoolUsage({ embedded = false }: { embedded?: boolean }) {
   const { data: memberships, isLoading } = useQuery({
     queryKey: ["admin-school-usage"],
     queryFn: async () => {
@@ -52,7 +52,7 @@ export default function AdminSchoolUsage() {
   });
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-6" dir="rtl">
+    <div className={embedded ? "space-y-6" : "max-w-5xl mx-auto p-6 space-y-6"} dir="rtl">
       <h1 className="text-2xl font-bold flex items-center gap-2"><Users className="w-6 h-6" /> استخدام المدارس</h1>
 
       {Object.entries(bySchool).map(([schoolId, school]) => (
