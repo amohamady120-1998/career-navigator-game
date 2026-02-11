@@ -10,10 +10,7 @@ import { toast } from "sonner";
 // --- TYPES & DATA ---
 type Trait = 'action' | 'analytical' | 'cautious' | 'seek_info' | 'risk' | 'safe';
 
-type ScenarioOption = {
-  text: string;
-  trait: Trait;
-};
+type ScenarioOption = { text: string; trait: Trait; };
 
 type Scenario = {
   id: string;
@@ -33,79 +30,16 @@ const STAGE_NAMES: Record<number, string> = {
 };
 
 const SCENARIOS: Scenario[] = [
-  {
-    id: "s1_1", stage: 1, role: "متدرب في شركة",
-    text: "طلب منك مديرك إنجاز مهمة لا تعرف كيف تقوم بها، وموعد التسليم غداً. ماذا تفعل؟",
-    options: [
-      { text: "أبحث في الإنترنت وأحاول إنجازها بنفسي فوراً", trait: 'action' },
-      { text: "أحلل المطلوب وأسأل مديري عن التفاصيل الناقصة", trait: 'analytical' },
-      { text: "أطلب مساعدة زميل خبير لتجنب الأخطاء", trait: 'seek_info' }
-    ], requiresReasoning: false
-  },
-  {
-    id: "s1_2", stage: 1, role: "عضو في فريق طلابي",
-    text: "اختلف عضوان في الفريق حول فكرة المشروع، وبدأ النقاش يحتد. أنت قائد الفريق، كيف تتصرف؟",
-    options: [
-      { text: "أتدخل بحزم وأتخذ القرار النهائي لإنهاء الجدال", trait: 'action' },
-      { text: "أطلب من كل شخص كتابة فكرته ومميزاتها لمناقشتها بهدوء", trait: 'analytical' },
-      { text: "أقترح التصويت بين جميع أعضاء الفريق", trait: 'cautious' }
-    ], requiresReasoning: false
-  },
-  {
-    id: "s1_3", stage: 1, role: "منسق فعالية",
-    text: "قبل الفعالية بساعة، اعتذر المتحدث الرئيسي عن الحضور. ماذا تفعل؟",
-    options: [
-      { text: "أصعد للمسرح وأقدم فقرة بديلة أو أدير نقاشاً مفتوحاً", trait: 'risk' },
-      { text: "أبحث عن شخص بديل من الحضور لديه خبرة مقاربة", trait: 'seek_info' },
-      { text: "أعتذر للجمهور وألغي الفعالية حفاظاً على الجودة", trait: 'safe' }
-    ], requiresReasoning: false
-  },
-  {
-    id: "s2_1", stage: 2, role: "مدير مشروع تقني",
-    text: "العميل يطالب بتسليم المشروع غداً، ولكن هناك خطأ برمجي بسيط قد يسبب مشكلة لاحقاً. العميل لا يعرف عن الخطأ.",
-    options: [
-      { text: "أسلم المشروع في وقته وأصلح الخطأ لاحقاً دون إخباره", trait: 'risk' },
-      { text: "أؤجل التسليم وأخبر العميل بالحقيقة بشفافية", trait: 'safe' },
-      { text: "أقترح تسليماً جزئياً للأنظمة السليمة فقط", trait: 'analytical' }
-    ], requiresReasoning: true
-  },
-  {
-    id: "s2_2", stage: 2, role: "محلل مالي",
-    text: "اكتشفت ثغرة قانونية تتيح لشركتك توفير ملايين الدولارات، لكنها قد تضر بسمعة الشركة إذا عُرفت للجمهور.",
-    options: [
-      { text: "أستغل الثغرة لأن مصلحة الشركة المالية هي الأهم", trait: 'risk' },
-      { text: "أرفع تقريراً مفصلاً للإدارة العليا بالفوائد والمخاطر", trait: 'analytical' },
-      { text: "أتجاهل الثغرة تماماً لأن السمعة لا تقدر بثمن", trait: 'safe' }
-    ], requiresReasoning: true
-  },
-  {
-    id: "s3_1", stage: 3, role: "طبيب طوارئ",
-    text: "وصل مريضان: طفل يعاني من كسر مؤلم جداً يصرخ بشدة، ورجل مسن يعاني من ضيق تنفس صامت. لديك سرير واحد.",
-    options: [
-      { text: "أعالج الطفل أولاً لأن ألمه واضح وحالته تثير الذعر", trait: 'action' },
-      { text: "أعالج المسن فوراً لأن ضيق التنفس الصامت قد يكون قاتلاً", trait: 'analytical' },
-      { text: "أطلب من الممرض إجراء فحص حيوي سريع لهما قبل قراري", trait: 'seek_info' }
-    ], requiresReasoning: true, timeLimitMs: 45000
-  },
-  {
-    id: "s3_2", stage: 3, role: "مهندس سلامة",
-    text: "انطلق إنذار الحريق في المصنع، لكنك متأكد بنسبة 90% أنه إنذار كاذب بسبب عطل في الحساسات. إخلاء المصنع سيكلف خسائر بمئات الآلاف.",
-    options: [
-      { text: "أوقف الإنذار فوراً وأذهب للتحقق من الحساسات", trait: 'risk' },
-      { text: "أطلق أمر الإخلاء الشامل فوراً دون تردد", trait: 'safe' },
-      { text: "أطلب من فريق الصيانة التحقق خلال دقيقتين قبل الإخلاء", trait: 'cautious' }
-    ], requiresReasoning: true, timeLimitMs: 60000
-  }
+  { id: "s1_1", stage: 1, role: "متدرب في شركة", text: "طلب منك مديرك إنجاز مهمة لا تعرف كيف تقوم بها، وموعد التسليم غداً. ماذا تفعل؟", options: [{ text: "أبحث في الإنترنت وأحاول إنجازها بنفسي فوراً", trait: 'action' }, { text: "أحلل المطلوب وأسأل مديري عن التفاصيل الناقصة", trait: 'analytical' }, { text: "أطلب مساعدة زميل خبير لتجنب الأخطاء", trait: 'seek_info' }], requiresReasoning: false },
+  { id: "s1_2", stage: 1, role: "عضو في فريق طلابي", text: "اختلف عضوان في الفريق حول فكرة المشروع، وبدأ النقاش يحتد. أنت قائد الفريق، كيف تتصرف؟", options: [{ text: "أتدخل بحزم وأتخذ القرار النهائي لإنهاء الجدال", trait: 'action' }, { text: "أطلب من كل شخص كتابة فكرته ومميزاتها لمناقشتها بهدوء", trait: 'analytical' }, { text: "أقترح التصويت بين جميع أعضاء الفريق", trait: 'cautious' }], requiresReasoning: false },
+  { id: "s1_3", stage: 1, role: "منسق فعالية", text: "قبل الفعالية بساعة، اعتذر المتحدث الرئيسي عن الحضور. ماذا تفعل؟", options: [{ text: "أصعد للمسرح وأقدم فقرة بديلة أو أدير نقاشاً مفتوحاً", trait: 'risk' }, { text: "أبحث عن شخص بديل من الحضور لديه خبرة مقاربة", trait: 'seek_info' }, { text: "أعتذر للجمهور وألغي الفعالية حفاظاً على الجودة", trait: 'safe' }], requiresReasoning: false },
+  { id: "s2_1", stage: 2, role: "مدير مشروع تقني", text: "العميل يطالب بتسليم المشروع غداً، ولكن هناك خطأ برمجي بسيط قد يسبب مشكلة لاحقاً. العميل لا يعرف عن الخطأ.", options: [{ text: "أسلم المشروع في وقته وأصلح الخطأ لاحقاً دون إخباره", trait: 'risk' }, { text: "أؤجل التسليم وأخبر العميل بالحقيقة بشفافية", trait: 'safe' }, { text: "أقترح تسليماً جزئياً للأنظمة السليمة فقط", trait: 'analytical' }], requiresReasoning: true },
+  { id: "s2_2", stage: 2, role: "محلل مالي", text: "اكتشفت ثغرة قانونية تتيح لشركتك توفير ملايين الدولارات، لكنها قد تضر بسمعة الشركة إذا عُرفت للجمهور.", options: [{ text: "أستغل الثغرة لأن مصلحة الشركة المالية هي الأهم", trait: 'risk' }, { text: "أرفع تقريراً مفصلاً للإدارة العليا بالفوائد والمخاطر", trait: 'analytical' }, { text: "أتجاهل الثغرة تماماً لأن السمعة لا تقدر بثمن", trait: 'safe' }], requiresReasoning: true },
+  { id: "s3_1", stage: 3, role: "طبيب طوارئ", text: "وصل مريضان: طفل يعاني من كسر مؤلم جداً يصرخ بشدة، ورجل مسن يعاني من ضيق تنفس صامت. لديك سرير واحد.", options: [{ text: "أعالج الطفل أولاً لأن ألمه واضح وحالته تثير الذعر", trait: 'action' }, { text: "أعالج المسن فوراً لأن ضيق التنفس الصامت قد يكون قاتلاً", trait: 'analytical' }, { text: "أطلب من الممرض إجراء فحص حيوي سريع لهما قبل قراري", trait: 'seek_info' }], requiresReasoning: true, timeLimitMs: 45000 },
+  { id: "s3_2", stage: 3, role: "مهندس سلامة", text: "انطلق إنذار الحريق في المصنع، لكنك متأكد بنسبة 90% أنه إنذار كاذب بسبب عطل في الحساسات. إخلاء المصنع سيكلف خسائر بمئات الآلاف.", options: [{ text: "أوقف الإنذار فوراً وأذهب للتحقق من الحساسات", trait: 'risk' }, { text: "أطلق أمر الإخلاء الشامل فوراً دون تردد", trait: 'safe' }, { text: "أطلب من فريق الصيانة التحقق خلال دقيقتين قبل الإخلاء", trait: 'cautious' }], requiresReasoning: true, timeLimitMs: 60000 }
 ];
 
-type AnswerData = {
-  choice: number | null;
-  reasoning: string;
-  timeSpent: number;
-  timeout: boolean;
-  selectedChoiceAtTimeout?: number | null;
-};
-
+type AnswerData = { choice: number | null; reasoning: string; timeSpent: number; timeout: boolean; selectedChoiceAtTimeout?: number | null; };
 type ScreenType = 'scenario' | 'feedback' | 'reflection' | 'summary' | 'withdrawing';
 
 export default function SimulationStep() {
@@ -115,6 +49,7 @@ export default function SimulationStep() {
   const [isSaving, setIsSaving] = useState(false);
 
   const [screen, setScreen] = useState<ScreenType>('scenario');
+  const [previousScreen, setPreviousScreen] = useState<ScreenType | null>(null);
   const [currentStage, setCurrentStage] = useState(1);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, AnswerData>>({});
@@ -127,6 +62,7 @@ export default function SimulationStep() {
   const [reasoning, setReasoning] = useState("");
 
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [pausedTimeLeft, setPausedTimeLeft] = useState<number | null>(null);
   const startTimeRef = useRef(Date.now());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -168,7 +104,7 @@ export default function SimulationStep() {
         return;
       }
 
-      // No resume meta_data support since column doesn't exist — start fresh
+      // Start fresh (no meta_data column in schema)
       setupScenario(0);
     } catch {
       toast.error("حدث خطأ في استرجاع البيانات");
@@ -189,6 +125,7 @@ export default function SimulationStep() {
     setSelectedChoice(null);
     selectedChoiceRef.current = null;
     setReasoning("");
+    setPausedTimeLeft(null);
     startTimeRef.current = Date.now();
     clearCurrentTimer();
 
@@ -209,6 +146,21 @@ export default function SimulationStep() {
     }
   };
 
+  const resumeTimer = (secondsLeft: number, index: number) => {
+    clearCurrentTimer();
+    setTimeLeft(secondsLeft);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev !== null && prev <= 1) {
+          clearCurrentTimer();
+          handleTimeout(index);
+          return 0;
+        }
+        return prev !== null ? prev - 1 : null;
+      });
+    }, 1000);
+  };
+
   const handleTimeout = async (index: number) => {
     toast.error("انتهى الوقت! تم تسجيل الموقف كقرار متأخر.", { icon: <AlertTriangle className="w-4 h-4" /> });
     const timeSpent = Math.round(SCENARIOS[index].timeLimitMs! / 1000);
@@ -222,6 +174,27 @@ export default function SimulationStep() {
     await submitScenario(index, answerData);
   };
 
+  // --- WITHDRAWAL PAUSE/RESUME ---
+  const handleWithdrawClick = () => {
+    setAttemptedWithdrawal(true);
+    setPreviousScreen(screen);
+    setScreen('withdrawing');
+    if (timeLeft !== null) {
+      setPausedTimeLeft(timeLeft);
+    }
+    clearCurrentTimer();
+  };
+
+  const handleCancelWithdrawal = () => {
+    setScreen(previousScreen || (currentStage === 4 ? 'reflection' : 'scenario'));
+    setPreviousScreen(null);
+    if (pausedTimeLeft !== null && previousScreen === 'scenario') {
+      resumeTimer(pausedTimeLeft, currentIndex);
+      setPausedTimeLeft(null);
+    }
+  };
+
+  // --- SAVE & SUBMIT ---
   const submitScenario = async (index: number, answerData: AnswerData) => {
     clearCurrentTimer();
     const newAnswers = { ...answers, [SCENARIOS[index].id]: answerData };
@@ -249,7 +222,7 @@ export default function SimulationStep() {
     submitScenario(currentIndex, answerData);
   };
 
-  const persistAndFinish = async (status: string, extraMeta: Record<string, unknown> = {}) => {
+  const persistAndFinish = async (status: string) => {
     setIsSaving(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -262,7 +235,6 @@ export default function SimulationStep() {
         .single();
 
       if (step) {
-        const metrics = computeMetrics(answers);
         await supabase.from('user_progress').upsert(
           {
             user_id: session.user.id,
@@ -281,10 +253,12 @@ export default function SimulationStep() {
   };
 
   const handleSaveAndExit = () => {
+    clearCurrentTimer();
     toast.success("تم الحفظ بنجاح");
     navigate('/dashboard');
   };
 
+  // --- METRICS ---
   const computeMetrics = (ans: Record<string, AnswerData>) => {
     let actionCount = 0, analyticalCount = 0, cautiousCount = 0;
     let timeouts = 0, fastDecisions = 0;
@@ -294,7 +268,6 @@ export default function SimulationStep() {
       const q = SCENARIOS.find(s => s.id === key);
       if (a.timeout) timeouts++;
       if (a.timeSpent < 10 && q && !q.timeLimitMs) fastDecisions++;
-
       if (a.choice !== null && q) {
         const trait = q.options[a.choice]?.trait;
         if (trait === 'action' || trait === 'risk') actionCount++;
@@ -311,7 +284,12 @@ export default function SimulationStep() {
     const stress_response = timeouts > 0 ? 'hesitant' : (fastDecisions > 1 ? 'impulsive' : 'composed');
     const persistence = attemptedWithdrawal ? 'tested' : 'resilient';
 
-    return { decision_style, stress_response, persistence };
+    let reflection_quality = 'low';
+    const totalRefLength = (reflections.q1?.length || 0) + (reflections.q2?.length || 0) + (reflections.q3?.length || 0);
+    if (totalRefLength > 150) reflection_quality = 'high';
+    else if (totalRefLength > 60) reflection_quality = 'medium';
+
+    return { decision_style, stress_response, persistence, reflection_quality };
   };
 
   const getStageFeedback = (stage: number) => {
@@ -321,17 +299,16 @@ export default function SimulationStep() {
       if (metrics.decision_style === 'analytical') return "تُظهر تفضيلاً واضحاً لجمع المعلومات وفهم الصورة قبل اتخاذ القرار.";
       return "تميل للتأني والبحث عن التوافق قبل اتخاذ خطوات حاسمة.";
     }
-    if (stage === 2) {
-      return "في المواقف الواقعية، يبدو أنك توازن بين المسؤولية الأخلاقية والمهنية بطريقة مدروسة.";
-    }
+    if (stage === 2) return "في المواقف الواقعية، يبدو أنك توازن بين المسؤولية الأخلاقية والمهنية بطريقة مدروسة.";
     if (stage === 3) {
-      if (metrics.stress_response === 'hesitant') return "تحت الضغط، تميل لأخذ وقت أطول لضمان عدم الوقوع في أخطاء كارثية.";
-      if (metrics.stress_response === 'impulsive') return "تتحرك بسرعة وقت الأزمات وتفضل اتخاذ قرارات شجاعة بدلاً من الانتظار.";
+      if (metrics.stress_response === 'hesitant') return "تحت الضغط، تميل لأخذ وقت إضافي لضمان عدم الوقوع في أخطاء.";
+      if (metrics.stress_response === 'impulsive') return "تتحرك بسرعة وقت الأزمات وتتخذ قرارات شجاعة بدلاً من الانتظار.";
       return "تحافظ على هدوئك وتستخدم المعطيات المتاحة بشكل ممتاز تحت الضغط.";
     }
-    return "لقد أتممت التأمل بنجاح. عقليتك الآن مكشوفة أمامنا لنرسم مسارك الصحيح.";
+    return "الآن صار عندنا وضوح أكبر لطريقة تفكيرك. هذه المراجعة بتساعدنا نربط بين اختياراتك وشخصيتك المهنية.";
   };
 
+  // --- STAGE NAVIGATION ---
   const handleContinueFeedback = async () => {
     if (currentStage === 4) {
       setScreen('summary');
@@ -380,7 +357,7 @@ export default function SimulationStep() {
             {withdrawalReason.length}/20 حرف مطلوب
           </p>
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => setScreen(currentStage === 4 ? 'reflection' : 'scenario')}>تراجع، سأكمل</Button>
+            <Button variant="outline" className="flex-1" onClick={handleCancelWithdrawal}>تراجع، سأكمل</Button>
             <Button variant="destructive" className="flex-1" onClick={handleWithdrawalConfirm} disabled={withdrawalReason.length < 20 || isSaving}>
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "تأكيد الانسحاب"}
             </Button>
@@ -419,7 +396,7 @@ export default function SimulationStep() {
           <div className="text-center mb-10">
             <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4"><CheckCircle2 className="w-8 h-8" /></div>
             <h1 className="text-4xl font-extrabold mb-2">خلصنا المحاكاة…</h1>
-            <p className="text-xl text-muted-foreground font-medium">خلّينا نشوف الصورة الكاملة لطريقة تفكيرك.</p>
+            <p className="text-xl text-muted-foreground font-medium">الآن صار عندنا وضوح أكبر لطريقة تفكيرك.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
@@ -437,7 +414,7 @@ export default function SimulationStep() {
             </Card>
             <Card className="p-5 border-l-4 border-l-purple-500 flex items-start gap-4">
               <Zap className="w-8 h-8 text-purple-500 shrink-0" />
-              <div><h3 className="font-bold text-lg mb-1">طبيعة العمل الأنسب</h3><p className="text-muted-foreground text-sm">بيئات العمل التي تتطلب {m.decision_style === 'analytical' ? 'التخطيط والتحليل العميق' : 'الحركة المستمرة وسرعة البديهة'}</p></div>
+              <div><h3 className="font-bold text-lg mb-1">جودة التأمل</h3><p className="text-muted-foreground text-sm">قدرتك على مراجعة قراراتك وفهم ذاتك تعتبر {m.reflection_quality === 'high' ? 'عالية جداً وعميقة' : m.reflection_quality === 'medium' ? 'جيدة وواضحة' : 'مباشرة ومختصرة'}</p></div>
             </Card>
           </div>
 
@@ -458,22 +435,29 @@ export default function SimulationStep() {
               <div className="font-extrabold text-lg text-primary">أثر ستارت</div>
               <div className="text-sm font-bold text-muted-foreground bg-secondary px-3 py-1 rounded-full">المرحلة 4 من 4 - المراجعة</div>
             </div>
-            <Button variant="ghost" className="text-muted-foreground font-bold" onClick={handleSaveAndExit}><Save className="w-4 h-4 ml-2" />حفظ وخروج</Button>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" className="text-muted-foreground font-bold" onClick={handleSaveAndExit}><Save className="w-4 h-4 ml-2" />حفظ</Button>
+              <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 font-bold" onClick={handleWithdrawClick}><LogOut className="w-4 h-4 ml-1" />انسحاب</Button>
+            </div>
           </div>
         </header>
 
         <main className="flex-grow py-8 px-4 max-w-2xl mx-auto w-full">
           <h2 className="text-3xl font-bold mb-2">وقفة تأمل</h2>
-          <p className="text-muted-foreground mb-8 font-medium">الأسئلة القادمة لا تقل أهمية عن المحاكاة، لأنها تساعدنا في فهم وعيك الذاتي بتجربتك.</p>
+          <p className="text-muted-foreground mb-8 font-medium">الأسئلة القادمة تساعدنا في فهم وعيك الذاتي بتجربتك. (مطلوب 10 أحرف لكل إجابة على الأقل)</p>
 
           <div className="space-y-6 mb-10">
             <div>
               <label className="block font-bold mb-2">1. ما هو أكثر موقف شعرت فيه أنك تتصرف بطبيعتك ولماذا؟</label>
-              <Textarea value={reflections.q1} onChange={(e) => setReflections({...reflections, q1: e.target.value})} rows={3}/>
+              <Textarea value={reflections.q1} onChange={(e) => setReflections({...reflections, q1: e.target.value})} className={reflections.q1.length > 0 && reflections.q1.length < 10 ? 'border-amber-500' : ''} rows={3}/>
             </div>
             <div>
               <label className="block font-bold mb-2">2. كيف تعاملت نفسياً مع المواقف التي كان فيها ضغط وقت؟</label>
-              <Textarea value={reflections.q2} onChange={(e) => setReflections({...reflections, q2: e.target.value})} rows={3}/>
+              <Textarea value={reflections.q2} onChange={(e) => setReflections({...reflections, q2: e.target.value})} className={reflections.q2.length > 0 && reflections.q2.length < 10 ? 'border-amber-500' : ''} rows={3}/>
+            </div>
+            <div>
+              <label className="block font-bold mb-2">3. لو أتيحت لك الفرصة لإعادة المحاكاة، ما الذي كنت ستغيره في قراراتك؟</label>
+              <Textarea value={reflections.q3} onChange={(e) => setReflections({...reflections, q3: e.target.value})} className={reflections.q3.length > 0 && reflections.q3.length < 10 ? 'border-amber-500' : ''} rows={3}/>
             </div>
           </div>
 
@@ -499,7 +483,7 @@ export default function SimulationStep() {
           </Card>
 
           <Button size="lg" className="w-full h-14 text-lg font-bold rounded-xl"
-            disabled={reflections.q1.length < 10 || reflections.q2.length < 10 || isSaving}
+            disabled={reflections.q1.length < 10 || reflections.q2.length < 10 || reflections.q3.length < 10 || isSaving}
             onClick={() => handleContinueFeedback()}>
             {isSaving ? <Loader2 className="animate-spin" /> : "إرسال وإنهاء"}
           </Button>
@@ -520,16 +504,14 @@ export default function SimulationStep() {
           <div className="flex items-center gap-3">
             <div className="font-extrabold text-lg text-primary hidden sm:block">أثر ستارت</div>
             <div className="text-sm font-bold text-muted-foreground bg-secondary px-3 py-1 rounded-full flex flex-col sm:flex-row sm:gap-1">
-              <span>المرحلة {currentStage} من 4</span>
-              <span className="hidden sm:inline">-</span>
-              <span className="text-primary">{STAGE_NAMES[currentStage]}</span>
+              <span>المرحلة {currentStage} من 4</span><span className="hidden sm:inline">-</span><span className="text-primary">{STAGE_NAMES[currentStage]}</span>
             </div>
           </div>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" className="text-muted-foreground font-bold hidden sm:flex" onClick={handleSaveAndExit}>
               <Save className="w-4 h-4 ml-2" /> حفظ
             </Button>
-            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10 font-bold" onClick={() => { setAttemptedWithdrawal(true); setScreen('withdrawing'); }}>
+            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10 font-bold" onClick={handleWithdrawClick}>
               <LogOut className="w-4 h-4 ml-1 sm:ml-2" /> <span className="hidden sm:inline">انسحاب</span>
             </Button>
           </div>
