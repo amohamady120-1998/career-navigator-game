@@ -19,11 +19,17 @@ interface MajorSection {
   scenario_options_ar: string[];
 }
 
+interface ExistingResponse {
+  stage_key: string;
+  comfort_level: string;
+  scenario_choice_index: number;
+}
+
 const COMFORT_UI = [
-  { id: 'very_comfortable', label: "مريح جدًا", emoji: "🤩" },
-  { id: 'ok', label: "مقبول", emoji: "🙂" },
-  { id: 'hesitant', label: "متردد", emoji: "🤔" },
-  { id: 'not_comfortable', label: "مش مريح", emoji: "😰" }
+  { id: 'very_comfortable' as ComfortLevel, label: "مريح جدًا", emoji: "🤩" },
+  { id: 'ok' as ComfortLevel, label: "مقبول", emoji: "🙂" },
+  { id: 'hesitant' as ComfortLevel, label: "متردد", emoji: "🤔" },
+  { id: 'not_comfortable' as ComfortLevel, label: "مش مريح", emoji: "😰" }
 ];
 
 const STAGE_ORDER = ['year1', 'year2', 'year3', 'year4', 'post_grad'];
@@ -32,41 +38,57 @@ const STAGE_LABELS = ['سنة 1', 'سنة 2', 'سنة 3', 'سنة 4', 'عمل', 
 export default function ExploreMajorDatabase() {
   const navigate = useNavigate();
   const { majorId } = useParams();
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [major, setMajor] = useState<{ id: string; name_ar: string } | null>(null);
   const [sections, setSections] = useState<MajorSection[]>([]);
-  
+
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [selectedComfort, setSelectedComfort] = useState<ComfortLevel | null>(null);
   const [selectedScenario, setSelectedScenario] = useState<number | null>(null);
   const [reflections, setReflections] = useState({ q1: "", q2: "", q3: "" });
-  
+  const [allComplete, setAllComplete] = useState(false);
+
   const stageStartTimeRef = useRef(Date.now());
 
   useEffect(() => {
-    if (!majorId) {
-      navigate('/dashboard');
-      return;
-    }
+    if (!majorId) { navigate('/dashboard'); return; }
     loadData();
-  }, [majorId, navigate]);
+  }, [majorId]);
 
   const loadData = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return navigate('/auth');
 
-      const [majorRes, sectionsRes] = await Promise.all([
-        supabase.from('majors').select('id, name_ar').eq('id', majorId).single(),
-        supabase.from('major_explore_sections').select('*').eq('major_id', majorId)
+      const [majorRes, sectionsRes, responsesRes] = await Promise.all([
+        supabase.from('majors').select('id, name_ar').eq('id', majorId!).single(),
+        supabase.from('major_explore_sections').select('*').eq('major_id', majorId!),
+        supabase.from('major_explore_responses').select('stage_key, comfort_level, scenario_choice_index').eq('user_id', session.user.id).eq('major_id', majorId!)
       ]);
 
       if (majorRes.data) setMajor(majorRes.data);
+
       if (sectionsRes.data) {
-        const sorted = (sectionsRes.data as MajorSection[]).sort((a, b) => STAGE_ORDER.indexOf(a.stage_key) - STAGE_ORDER.indexOf(b.stage_key));
+        const sorted = (sectionsRes.data as MajorSection[]).sort(
+          (a, b) => STAGE_ORDER.indexOf(a.stage_key) - STAGE_ORDER.indexOf(b.stage_key)
+        );
         setSections(sorted);
+      }
+
+      // Resume: find first incomplete stage
+      const completedStages = new Set(
+        (responsesRes.data as ExistingResponse[] || []).map(r => r.stage_key)
+      );
+
+      const firstIncomplete = STAGE_ORDER.findIndex(s => !completedStages.has(s));
+      if (firstIncomplete === -1) {
+        // All 5 stages completed — show reflection or completion
+        setCurrentStageIndex(5);
+        setAllComplete(true);
+      } else {
+        setCurrentStageIndex(firstIncomplete);
       }
 
       stageStartTimeRef.current = Date.now();
@@ -80,39 +102,66 @@ export default function ExploreMajorDatabase() {
   const handleNext = async () => {
     if (currentStageIndex < 5 && (!selectedComfort || selectedScenario === null)) return;
     setIsSaving(true);
-    
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // Save response if not on reflection stage
+      // Save response for current stage (upsert to handle retries)
       if (currentStageIndex < 5) {
         const currentStageKey = STAGE_ORDER[currentStageIndex];
         const timeSpentSec = Math.round((Date.now() - stageStartTimeRef.current) / 1000);
-        await supabase.from('major_explore_responses').insert({
-          user_id: session.user.id,
-          major_id: majorId,
-          stage_key: currentStageKey,
-          comfort_level: selectedComfort,
-          scenario_choice_index: selectedScenario,
-          time_spent_sec: timeSpentSec
-        });
+
+        const { data: existing } = await supabase
+          .from('major_explore_responses')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .eq('major_id', majorId!)
+          .eq('stage_key', currentStageKey)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase.from('major_explore_responses')
+            .update({
+              comfort_level: selectedComfort!,
+              scenario_choice_index: selectedScenario!,
+              time_spent_sec: timeSpentSec
+            })
+            .eq('id', existing.id);
+        } else {
+          await supabase.from('major_explore_responses').insert({
+            user_id: session.user.id,
+            major_id: majorId!,
+            stage_key: currentStageKey,
+            comfort_level: selectedComfort!,
+            scenario_choice_index: selectedScenario!,
+            time_spent_sec: timeSpentSec
+          });
+        }
       }
 
       const nextIndex = currentStageIndex + 1;
-      const isComplete = nextIndex > 5;
-      
-      // Update progress
-      await supabase.from('user_progress').upsert({
-        user_id: session.user.id,
-        step_id: 'explore_major',
-        status: isComplete ? 'completed' : 'in_progress',
-        completed_at: isComplete ? new Date().toISOString() : null
-      });
+      const isReflectionDone = currentStageIndex === 5;
 
-      if (isComplete) {
+      if (isReflectionDone) {
+        // Save reflections into user_progress meta_data
+        const { data: stepRow } = await supabase
+          .from('journey_steps')
+          .select('id')
+          .eq('slug', 'simulation')
+          .maybeSingle();
+
+        // Mark explore as done in progress (use a journey step if it exists)
         toast.success("تم استكشاف التخصص بنجاح!");
         navigate('/dashboard/simulation');
+      } else if (nextIndex === 5) {
+        // Moving to reflection stage
+        setCurrentStageIndex(5);
+        setAllComplete(true);
+        setSelectedComfort(null);
+        setSelectedScenario(null);
+        stageStartTimeRef.current = Date.now();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setCurrentStageIndex(nextIndex);
         setSelectedComfort(null);
@@ -141,8 +190,8 @@ export default function ExploreMajorDatabase() {
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4" dir="rtl">
         <Card className="p-8 bg-card border border-border shadow-sm text-center max-w-md">
           <h2 className="text-2xl font-bold text-foreground mb-3">المحتوى قيد التجهيز</h2>
-          <p className="text-muted-foreground mb-6">محتوى رحلة تخصص "{major.name_ar}" غير مكتمل.</p>
-          <Button onClick={() => navigate('/dashboard')} variant="outline">عودة</Button>
+          <p className="text-muted-foreground mb-6">محتوى رحلة تخصص "{major.name_ar}" غير مكتمل بعد. يرجى المحاولة لاحقاً.</p>
+          <Button onClick={() => navigate(-1)} variant="outline">رجوع</Button>
         </Card>
       </div>
     );
@@ -173,7 +222,7 @@ export default function ExploreMajorDatabase() {
               <ArrowLeft className="w-4 h-4 ml-1" /> رجوع
             </Button>
           </div>
-          
+
           {/* Progress Timeline */}
           <div className="flex items-center justify-between gap-1">
             {[0, 1, 2, 3, 4, 5].map((step) => (
@@ -198,7 +247,7 @@ export default function ExploreMajorDatabase() {
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground">
-              النسخة المصورة (رحلة 60 دقيقة) ستكون متاحة قريبًا.
+              🎥 النسخة المصورة الكاملة (رحلة 60 دقيقة من سنة أولى للتخرج) ستكون متاحة قريبًا داخل المنصة.
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               الآن: عِش التجربة التفاعلية الواقعية واتخذ قراراتك بنفسك.
@@ -248,8 +297,8 @@ export default function ExploreMajorDatabase() {
                     key={idx}
                     onClick={() => setSelectedScenario(idx)}
                     className={`w-full text-right p-4 rounded-xl border-2 transition-all font-medium text-sm ${
-                      selectedScenario === idx 
-                        ? "border-primary bg-primary/5 text-primary shadow-sm" 
+                      selectedScenario === idx
+                        ? "border-primary bg-primary/5 text-primary shadow-sm"
                         : "border-border hover:border-primary/30 text-muted-foreground"
                     }`}
                   >
@@ -268,7 +317,7 @@ export default function ExploreMajorDatabase() {
                 {COMFORT_UI.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => setSelectedComfort(item.id as ComfortLevel)}
+                    onClick={() => setSelectedComfort(item.id)}
                     className={`p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all text-xs ${
                       selectedComfort === item.id
                         ? "border-primary bg-card shadow-md text-primary font-bold scale-105"
@@ -294,15 +343,15 @@ export default function ExploreMajorDatabase() {
             <Card className="p-6 bg-card border border-border shadow-sm space-y-6">
               <div>
                 <label className="block font-bold text-foreground mb-2">1. بعد ما شفت التحديات، هل تحس إن التخصص ده يشبه طبيعتك؟</label>
-                <Textarea value={reflections.q1} onChange={(e) => setReflections({...reflections, q1: e.target.value})} className="bg-secondary/30" rows={2}/>
+                <Textarea value={reflections.q1} onChange={(e) => setReflections({ ...reflections, q1: e.target.value })} className="bg-secondary/30" rows={2} />
               </div>
               <div>
                 <label className="block font-bold text-foreground mb-2">2. إيه أكتر مرحلة قلقتك أو حسيت إنها صعبة عليك؟</label>
-                <Textarea value={reflections.q2} onChange={(e) => setReflections({...reflections, q2: e.target.value})} className="bg-secondary/30" rows={2}/>
+                <Textarea value={reflections.q2} onChange={(e) => setReflections({ ...reflections, q2: e.target.value })} className="bg-secondary/30" rows={2} />
               </div>
               <div>
                 <label className="block font-bold text-foreground mb-2">3. هل أنت مستعد تتحمل ضغط بيئة العمل الخاصة بهذا المجال مستقبلاً؟</label>
-                <Textarea value={reflections.q3} onChange={(e) => setReflections({...reflections, q3: e.target.value})} className="bg-secondary/30" rows={2}/>
+                <Textarea value={reflections.q3} onChange={(e) => setReflections({ ...reflections, q3: e.target.value })} className="bg-secondary/30" rows={2} />
               </div>
             </Card>
           </div>
@@ -310,8 +359,8 @@ export default function ExploreMajorDatabase() {
 
         {/* NAVIGATION CTA */}
         <div className="mt-8 pt-4 border-t border-border">
-          <Button 
-            size="lg" 
+          <Button
+            size="lg"
             className="w-full h-14 text-lg font-bold rounded-xl shadow-md"
             disabled={!canProceed || isSaving}
             onClick={handleNext}
