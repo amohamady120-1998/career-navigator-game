@@ -45,7 +45,7 @@ const FALLBACK_REPORT: ReportData = {
   shareToken: ""
 };
 
-const STORAGE_KEY = "athar_initial_report";
+
 
 export default function InitialReportStep() {
   const navigate = useNavigate();
@@ -61,17 +61,19 @@ export default function InitialReportStep() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return navigate('/auth');
 
-        // Try loading cached report
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            if (parsed.majors?.[0]?.id) {
-              setReportData(parsed);
-              setIsLoading(false);
-              return;
-            }
-          } catch { /* fall through */ }
+        // Try loading from DB first
+        const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'initial-report').single();
+        if (stepRow) {
+          const { data: progress } = await supabase.from('user_progress')
+            .select('meta_data')
+            .eq('user_id', session.user.id)
+            .eq('step_id', stepRow.id)
+            .maybeSingle();
+          if (progress?.meta_data && (progress.meta_data as any).majors?.[0]?.id) {
+            setReportData(progress.meta_data as ReportData);
+            setIsLoading(false);
+            return;
+          }
         }
 
         // Try to fetch real Holland results
@@ -137,15 +139,19 @@ export default function InitialReportStep() {
         report.shareToken = Math.random().toString(36).substring(2, 15);
         const finalReport = { ...report, majors: mappedMajors };
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(finalReport));
         
-        // Save to database as well
-        await supabase.from('user_progress').upsert({
-          user_id: session.user.id,
-          step_id: 'initial_report',
-          status: 'completed',
-          meta_data: finalReport
-        });
+        
+        // Save to database - look up the real step UUID
+        const { data: saveStepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'initial-report').single();
+        if (saveStepRow) {
+          await supabase.from('user_progress').upsert({
+            user_id: session.user.id,
+            step_id: saveStepRow.id,
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            meta_data: finalReport
+          }, { onConflict: 'user_id,step_id' });
+        }
 
         setReportData(finalReport);
       } catch (error) {

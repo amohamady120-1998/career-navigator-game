@@ -75,19 +75,25 @@ export default function DoubtCheckpointStep() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return navigate('/auth');
 
-        // Try to load from localStorage first
-        const stored = localStorage.getItem('athar_doubt_checkpoint');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          setSelectedLevelId(parsed.doubt_level);
-        }
+        // Look up step UUID and load from DB
+        const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'doubt-checkpoint').single();
+        if (stepRow) {
+          const { data: progress } = await supabase.from('user_progress')
+            .select('meta_data')
+            .eq('user_id', session.user.id)
+            .eq('step_id', stepRow.id)
+            .maybeSingle();
+          if (progress?.meta_data && (progress.meta_data as any).doubt_level) {
+            setSelectedLevelId((progress.meta_data as any).doubt_level);
+          }
 
-        // Initialize step in DB
-        await supabase.from('user_progress').upsert({
-          user_id: session.user.id,
-          step_id: 'doubt_checkpoint',
-          status: 'in_progress'
-        });
+          // Initialize step in DB
+          await supabase.from('user_progress').upsert({
+            user_id: session.user.id,
+            step_id: stepRow.id,
+            status: 'in_progress'
+          }, { onConflict: 'user_id,step_id' });
+        }
       } catch (error) {
         console.error("Error loading checkpoint:", error);
       } finally {
@@ -108,18 +114,16 @@ export default function DoubtCheckpointStep() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session && selectedLevel) {
-        // Save to localStorage
-        localStorage.setItem('athar_doubt_checkpoint', JSON.stringify({
-          doubt_level: selectedLevel.id,
-          label: selectedLevel.label,
-          timestamp: new Date().toISOString()
-        }));
-
-        // Update step in DB
-        await supabase.from('user_progress').update({
-          status: 'completed',
-          completed_at: new Date().toISOString()
-        }).eq('user_id', session.user.id).eq('step_id', 'doubt_checkpoint');
+        const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'doubt-checkpoint').single();
+        if (stepRow) {
+          await supabase.from('user_progress').upsert({
+            user_id: session.user.id,
+            step_id: stepRow.id,
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            meta_data: { doubt_level: selectedLevel.id, label: selectedLevel.label }
+          }, { onConflict: 'user_id,step_id' });
+        }
         
         // Dynamic Routing based on selection
         navigate(selectedLevel.nextRoute);

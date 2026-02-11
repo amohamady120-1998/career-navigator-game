@@ -22,18 +22,22 @@ export default function ShortlistStep() {
         if (!session) return navigate('/auth');
 
         // Fetch the report data from initial_report step
+        // Look up step UUIDs
+        const { data: stepsData } = await supabase.from('journey_steps').select('id, slug').in('slug', ['initial-report', 'shortlist']);
+        const stepMap = Object.fromEntries((stepsData || []).map(s => [s.slug, s.id]));
+
         const { data: reportProgress } = await supabase
           .from('user_progress')
           .select('meta_data')
           .eq('user_id', session.user.id)
-          .eq('step_id', 'initial_report')
+          .eq('step_id', stepMap['initial-report'] || '')
           .maybeSingle();
 
         const { data: shortlistProgress } = await supabase
           .from('user_progress')
           .select('meta_data')
           .eq('user_id', session.user.id)
-          .eq('step_id', 'shortlist')
+          .eq('step_id', stepMap['shortlist'] || '')
           .maybeSingle();
 
         let loadedMajors: MajorOption[] = [];
@@ -65,12 +69,15 @@ export default function ShortlistStep() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      await supabase.from('user_progress').upsert({
-        user_id: session.user.id,
-        step_id: 'shortlist',
-        status: 'in_progress',
-        meta_data: { ranking_json: newRanking, last_saved_at: new Date().toISOString() }
-      });
+      const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'shortlist').single();
+      if (stepRow) {
+        await supabase.from('user_progress').upsert({
+          user_id: session.user.id,
+          step_id: stepRow.id,
+          status: 'in_progress',
+          meta_data: { ranking_json: newRanking, last_saved_at: new Date().toISOString() }
+        }, { onConflict: 'user_id,step_id' });
+      }
     } catch (error) {
       toast.error("خطأ أثناء حفظ الترتيب");
     } finally {
@@ -98,15 +105,25 @@ export default function ShortlistStep() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        await supabase.from('user_progress')
-          .update({ status: 'completed', completed_at: new Date().toISOString() })
-          .eq('user_id', session.user.id)
-          .eq('step_id', 'shortlist');
+        const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'shortlist').single();
+        if (stepRow) {
+          await supabase.from('user_progress')
+            .update({ status: 'completed', completed_at: new Date().toISOString() })
+            .eq('user_id', session.user.id)
+            .eq('step_id', stepRow.id);
+        }
+
+        // Also persist to student_shortlist table
+        await supabase.from('student_shortlist').upsert({
+          user_id: session.user.id,
+          major_ids: rankedIds,
+          ranking_ids: rankedIds,
+        }, { onConflict: 'user_id' });
       }
     } catch (e) {
       console.error(e);
     }
-    navigate('/dashboard/why-not');
+    navigate('/dashboard/excluded-majors');
   };
 
   // Navigates to the dynamic explore page using the DB UUID
