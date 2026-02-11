@@ -579,6 +579,109 @@ export type Database = {
           },
         ]
       }
+      school_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          is_used: boolean
+          school_order_id: string
+          used_at: string | null
+          used_by_user_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          is_used?: boolean
+          school_order_id: string
+          used_at?: string | null
+          used_by_user_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          is_used?: boolean
+          school_order_id?: string
+          used_at?: string | null
+          used_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_codes_school_order_id_fkey"
+            columns: ["school_order_id"]
+            isOneToOne: false
+            referencedRelation: "school_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      school_orders: {
+        Row: {
+          created_at: string | null
+          id: string
+          school_id: string
+          seats_total: number
+          seats_used: number
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          school_id: string
+          seats_total: number
+          seats_used?: number
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          school_id?: string
+          seats_total?: number
+          seats_used?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_orders_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schools: {
+        Row: {
+          city: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_whatsapp: string | null
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          city?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          city?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       simulation_responses: {
         Row: {
           created_at: string
@@ -736,6 +839,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_school_membership: {
+        Row: {
+          activated_at: string | null
+          activated_by_code: string | null
+          id: string
+          school_id: string
+          school_order_id: string | null
+          user_id: string
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by_code?: string | null
+          id?: string
+          school_id: string
+          school_order_id?: string | null
+          user_id: string
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by_code?: string | null
+          id?: string
+          school_id?: string
+          school_order_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_school_membership_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_school_membership_school_order_id_fkey"
+            columns: ["school_order_id"]
+            isOneToOne: false
+            referencedRelation: "school_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       certificate_verification: {
@@ -758,6 +903,7 @@ export type Database = {
       }
     }
     Functions: {
+      activate_school_code: { Args: { p_code: string }; Returns: Json }
       calculate_holland_scores: { Args: { _user_id: string }; Returns: Json }
       get_holland_code: { Args: { _user_id: string }; Returns: string }
       has_role: {
