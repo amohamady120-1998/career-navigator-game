@@ -436,6 +436,63 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_settings: {
+        Row: {
+          created_at: string | null
+          email_to: string | null
+          id: string
+          is_enabled: boolean | null
+          key: string
+          webhook_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email_to?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          key: string
+          webhook_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email_to?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          key?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      notifications_log: {
+        Row: {
+          created_at: string | null
+          error: string | null
+          event_key: string
+          id: string
+          payload: Json
+          sent_email: boolean | null
+          sent_webhook: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          error?: string | null
+          event_key: string
+          id?: string
+          payload?: Json
+          sent_email?: boolean | null
+          sent_webhook?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          error?: string | null
+          event_key?: string
+          id?: string
+          payload?: Json
+          sent_email?: boolean | null
+          sent_webhook?: boolean | null
+        }
+        Relationships: []
+      }
       parent_child_links: {
         Row: {
           child_user_id: string
