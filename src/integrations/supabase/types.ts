@@ -106,6 +106,36 @@ export type Database = {
         }
         Relationships: []
       }
+      final_reports: {
+        Row: {
+          created_at: string | null
+          id: string
+          payload: Json
+          pdf_url: string | null
+          share_token: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          payload?: Json
+          pdf_url?: string | null
+          share_token?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          payload?: Json
+          pdf_url?: string | null
+          share_token?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       holland_codes: {
         Row: {
           career_paths: Json | null
@@ -489,6 +519,38 @@ export type Database = {
           text_ar?: string
         }
         Relationships: []
+      }
+      report_shares: {
+        Row: {
+          created_at: string | null
+          id: string
+          report_id: string | null
+          share_token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          report_id?: string | null
+          share_token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          report_id?: string | null
+          share_token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_shares_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "final_reports"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       simulation_responses: {
         Row: {
