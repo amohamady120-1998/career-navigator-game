@@ -62,7 +62,7 @@ export default function PreImpactStep() {
     await queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
     toast({ title: "تم الحفظ ✓", description: "تم حفظ إجاباتك بنجاح" });
     setCompleted(true);
-    setTimeout(() => navigate("/dashboard/holland"), 1500);
+    setTimeout(() => navigate("/dashboard/orientation"), 1500);
   };
 
   if (isLoading) {

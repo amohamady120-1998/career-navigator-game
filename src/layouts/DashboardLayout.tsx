@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -14,6 +14,13 @@ export default function DashboardLayout() {
   const location = useLocation();
   const [showPledge, setShowPledge] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const processedRef = useRef(false);
+  const locationRef = useRef(location.pathname);
+
+  // Keep locationRef current without re-running the effect
+  useEffect(() => {
+    locationRef.current = location.pathname;
+  }, [location.pathname]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -24,47 +31,59 @@ export default function DashboardLayout() {
         }
 
         if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("user_type, school_name, has_paid")
-            .eq("user_id", session.user.id)
-            .maybeSingle();
-
-          if (profile?.user_type === "parent") {
-            navigate("/parent", { replace: true });
+          // Prevent duplicate processing
+          if (processedRef.current) {
+            setAuthChecked(true);
             return;
           }
-          if (profile?.user_type === "institution") {
-            navigate("/institution", { replace: true });
-            return;
-          }
-          if (!profile?.school_name) {
-            navigate("/dashboard/profile", { replace: true });
-          } else if (profile?.user_type === "student" && !(profile as any).has_paid && !location.pathname.startsWith("/dashboard/payment")) {
-            navigate("/dashboard/payment", { replace: true });
-          }
+          processedRef.current = true;
 
-          // Smart resume: if on exact /dashboard, redirect to first incomplete step
-          if (location.pathname === "/dashboard" || location.pathname === "/dashboard/") {
-            const { data: steps } = await supabase
-              .from("journey_steps")
-              .select("id, slug")
-              .order("order_index");
-
-            const { data: progress } = await supabase
-              .from("user_progress")
-              .select("step_id, status")
+          try {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("user_type, school_name, has_paid")
               .eq("user_id", session.user.id)
-              .eq("status", "completed");
+              .maybeSingle();
 
-            if (steps && progress) {
-              const completedIds = new Set(progress.map((p) => p.step_id));
-              const completedSlugs = steps.filter((s) => completedIds.has(s.id)).map((s) => s.slug);
-              const firstIncomplete = STEP_ORDER.find((s) => !completedSlugs.includes(s));
-              if (firstIncomplete && firstIncomplete !== "intro") {
-                navigate(`/dashboard/${firstIncomplete}`, { replace: true });
+            if (profile?.user_type === "parent") {
+              navigate("/parent", { replace: true });
+              return;
+            }
+            if (profile?.user_type === "institution") {
+              navigate("/institution", { replace: true });
+              return;
+            }
+            if (!profile?.school_name) {
+              navigate("/dashboard/profile", { replace: true });
+            } else if (profile?.user_type === "student" && !(profile as any).has_paid && !locationRef.current.startsWith("/dashboard/payment")) {
+              navigate("/dashboard/payment", { replace: true });
+            }
+
+            // Smart resume: if on exact /dashboard, redirect to first incomplete step
+            const currentPath = locationRef.current;
+            if (currentPath === "/dashboard" || currentPath === "/dashboard/") {
+              const { data: steps } = await supabase
+                .from("journey_steps")
+                .select("id, slug")
+                .order("order_index");
+
+              const { data: progress } = await supabase
+                .from("user_progress")
+                .select("step_id, status")
+                .eq("user_id", session.user.id)
+                .eq("status", "completed");
+
+              if (steps && progress) {
+                const completedIds = new Set(progress.map((p) => p.step_id));
+                const completedSlugs = steps.filter((s) => completedIds.has(s.id)).map((s) => s.slug);
+                const firstIncomplete = STEP_ORDER.find((s) => !completedSlugs.includes(s));
+                if (firstIncomplete && firstIncomplete !== "intro") {
+                  navigate(`/dashboard/${firstIncomplete}`, { replace: true });
+                }
               }
             }
+          } catch (err) {
+            console.error("DashboardLayout auth error:", err);
           }
 
           setAuthChecked(true);
@@ -75,7 +94,7 @@ export default function DashboardLayout() {
     );
 
     return () => subscription.unsubscribe();
-  }, [navigate, location.pathname]);
+  }, [navigate]);
 
   const handlePledgeAccept = () => {
     localStorage.setItem("athar_pledge_accepted", "true");
