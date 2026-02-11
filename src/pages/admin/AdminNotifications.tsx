@@ -16,7 +16,7 @@ const EVENT_LABELS: Record<string, string> = {
   school_activation: "تفعيل كود مدرسي",
 };
 
-export default function AdminNotifications() {
+export default function AdminNotifications({ embedded = false }: { embedded?: boolean }) {
   const qc = useQueryClient();
 
   const { data: settings, isLoading } = useQuery({
@@ -49,7 +49,7 @@ export default function AdminNotifications() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8" dir="rtl">
+    <div className={embedded ? "space-y-8" : "max-w-4xl mx-auto p-6 space-y-8"} dir="rtl">
       <h1 className="text-2xl font-bold flex items-center gap-2">
         <Bell className="w-6 h-6" /> إعدادات الإشعارات
       </h1>

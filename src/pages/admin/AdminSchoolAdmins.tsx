@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { Loader2, Plus, ShieldCheck, Trash2, UserCog } from "lucide-react";
 
-export default function AdminSchoolAdmins() {
+export default function AdminSchoolAdmins({ embedded = false }: { embedded?: boolean }) {
   const qc = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
   const [email, setEmail] = useState("");
@@ -107,7 +107,7 @@ export default function AdminSchoolAdmins() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6" dir="rtl">
+    <div className={embedded ? "space-y-6" : "max-w-4xl mx-auto p-6 space-y-6"} dir="rtl">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <UserCog className="w-6 h-6" /> إدارة مشرفي المدارس

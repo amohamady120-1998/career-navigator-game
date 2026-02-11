@@ -30,7 +30,7 @@ const STAGE_LABELS: Record<string, string> = {
   post_grad: "العمل"
 };
 
-export default function AdminExploreManager() {
+export default function AdminExploreManager({ embedded = false }: { embedded?: boolean }) {
   const [majors, setMajors] = useState<Major[]>([]);
   const [selectedMajorId, setSelectedMajorId] = useState<string | null>(null);
   const [activeStage, setActiveStage] = useState('year1');
@@ -151,8 +151,8 @@ export default function AdminExploreManager() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6" dir="rtl">
-      <div className="max-w-6xl mx-auto">
+    <div className={embedded ? "" : "min-h-screen bg-background text-foreground p-6"} dir="rtl">
+      <div className={embedded ? "" : "max-w-6xl mx-auto"}>
         <h1 className="text-3xl font-bold mb-8">مدير محتوى الرحلة التفاعلية</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

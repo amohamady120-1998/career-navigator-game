@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { Loader2, Plus, School, Download, Key } from "lucide-react";
 
-export default function AdminSchools() {
+export default function AdminSchools({ embedded = false }: { embedded?: boolean }) {
   const qc = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [showOrder, setShowOrder] = useState<string | null>(null);
@@ -90,7 +90,7 @@ export default function AdminSchools() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-6" dir="rtl">
+    <div className={embedded ? "space-y-6" : "max-w-5xl mx-auto p-6 space-y-6"} dir="rtl">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold flex items-center gap-2"><School className="w-6 h-6" /> إدارة المدارس</h1>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>

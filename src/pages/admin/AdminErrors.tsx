@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, AlertTriangle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function AdminErrors() {
+export default function AdminErrors({ embedded = false }: { embedded?: boolean }) {
   const [routeFilter, setRouteFilter] = useState("");
   const [selectedError, setSelectedError] = useState<any>(null);
 
@@ -35,7 +35,7 @@ export default function AdminErrors() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-6" dir="rtl">
+    <div className={embedded ? "space-y-6" : "max-w-5xl mx-auto p-6 space-y-6"} dir="rtl">
       <h1 className="text-2xl font-bold flex items-center gap-2">
         <AlertTriangle className="w-6 h-6" /> سجل الأخطاء
       </h1>
