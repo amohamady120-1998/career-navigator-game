@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, BarChart3, Compass, Gamepad2, FileText, Lock, CheckCircle2, LogOut, ClipboardCheck, Settings, Award, Bot } from "lucide-react";
+import { BookOpen, BarChart3, Compass, Gamepad2, FileText, Lock, CheckCircle2, LogOut, ClipboardCheck, Settings, Award, Bot, AlertCircle, HelpCircle } from "lucide-react";
 import atharLogoDark from "@/assets/athar-logo-dark.png";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,12 +21,16 @@ const stepIcons: Record<string, typeof BookOpen> = {
   intro: BookOpen,
   "pre-impact": BarChart3,
   holland: Compass,
+  "initial-report": FileText,
+  shortlist: Award,
+  "excluded-majors": AlertCircle,
+  "doubt-checkpoint": HelpCircle,
   simulation: Gamepad2,
   "post-impact": ClipboardCheck,
   report: FileText,
 };
 
-const STEP_ORDER = ["intro", "pre-impact", "holland", "simulation", "post-impact", "report"];
+const STEP_ORDER = ["intro", "pre-impact", "holland", "initial-report", "shortlist", "excluded-majors", "doubt-checkpoint", "simulation", "post-impact", "report"];
 
 export function AppSidebar() {
   const navigate = useNavigate();

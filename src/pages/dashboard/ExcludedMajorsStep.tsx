@@ -55,16 +55,27 @@ export default function ExcludedMajorsStep() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return navigate('/auth');
 
-        // Try to load from localStorage first
-        const stored = localStorage.getItem('athar_excluded_majors');
-        let loadedMajors = stored ? JSON.parse(stored) : FALLBACK_EXCLUDED;
+        // Try to load from DB first, then localStorage, then fallback
+        const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'excluded-majors').single();
+        
+        let loadedMajors = FALLBACK_EXCLUDED;
+        if (stepRow) {
+          const { data: progress } = await supabase.from('user_progress')
+            .select('meta_data')
+            .eq('user_id', session.user.id)
+            .eq('step_id', stepRow.id)
+            .maybeSingle();
+          if (progress?.meta_data && (progress.meta_data as any).excluded_majors) {
+            loadedMajors = (progress.meta_data as any).excluded_majors;
+          }
 
-        // Initialize step in DB
-        await supabase.from('user_progress').upsert({
-          user_id: session.user.id,
-          step_id: 'excluded_majors',
-          status: 'in_progress'
-        });
+          // Initialize step in DB
+          await supabase.from('user_progress').upsert({
+            user_id: session.user.id,
+            step_id: stepRow.id,
+            status: 'in_progress'
+          }, { onConflict: 'user_id,step_id' });
+        }
 
         setExcludedMajors(loadedMajors);
 
@@ -84,12 +95,15 @@ export default function ExcludedMajorsStep() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        await supabase.from('user_progress').update({
-          status: 'completed',
-          completed_at: new Date().toISOString()
-        }).eq('user_id', session.user.id).eq('step_id', 'excluded_majors');
+        const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'excluded-majors').single();
+        if (stepRow) {
+          await supabase.from('user_progress').update({
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          }).eq('user_id', session.user.id).eq('step_id', stepRow.id);
+        }
       }
-      navigate('/dashboard/shortlist');
+      navigate('/dashboard/doubt-checkpoint');
     } catch (e) {
       console.error(e);
     } finally {

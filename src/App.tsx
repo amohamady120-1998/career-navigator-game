@@ -59,18 +59,17 @@ const App = () => (
                 <Route path="pre-impact" element={<StepGuard requiredStep="intro"><PreImpactStep /></StepGuard>} />
                 <Route path="pre-assessment" element={<PreAssessmentIntro />} />
                 <Route path="holland" element={<StepGuard requiredStep="pre-impact"><HollandAssessment /></StepGuard>} />
-                <Route path="simulation" element={<StepGuard requiredStep="holland"><SimulationStep /></StepGuard>} />
+                <Route path="initial-report" element={<StepGuard requiredStep="holland"><InitialReportStep /></StepGuard>} />
+                <Route path="shortlist" element={<StepGuard requiredStep="initial-report"><ShortlistStep /></StepGuard>} />
+                <Route path="excluded-majors" element={<StepGuard requiredStep="shortlist"><ExcludedMajorsStep /></StepGuard>} />
+                <Route path="doubt-checkpoint" element={<StepGuard requiredStep="excluded-majors"><DoubtCheckpointStep /></StepGuard>} />
+                <Route path="simulation" element={<StepGuard requiredStep="doubt-checkpoint"><SimulationStep /></StepGuard>} />
                 <Route path="post-impact" element={<StepGuard requiredStep="simulation"><PostImpactStep /></StepGuard>} />
                 <Route path="report" element={<StepGuard requiredStep="post-impact"><ReportStep /></StepGuard>} />
                 <Route path="profile" element={<ProfileStep />} />
                 <Route path="ai-counselor" element={<AICounselorPage />} />
-                <Route path="shortlist" element={<ShortlistStep />} />
-                <Route path="excluded-majors" element={<ExcludedMajorsStep />} />
-                <Route path="doubt-checkpoint" element={<DoubtCheckpointStep />} />
                 <Route path="explore" element={<ExploreMajorDynamic />} />
                 <Route path="explore/:majorId" element={<ExploreMajorDatabase />} />
-                <Route path="explore" element={<ExploreMajorDynamic />} />
-                <Route path="initial-report" element={<InitialReportStep />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="certificate" element={<StepGuard requiredStep="report"><Certificate /></StepGuard>} />
               </Route>

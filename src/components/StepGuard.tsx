@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
-const STEP_ORDER = ["intro", "pre-impact", "holland", "simulation", "post-impact", "report"];
+const STEP_ORDER = ["intro", "pre-impact", "holland", "initial-report", "shortlist", "excluded-majors", "doubt-checkpoint", "simulation", "post-impact", "report"];
 
 interface StepGuardProps {
   requiredStep: string;

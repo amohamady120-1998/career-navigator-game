@@ -204,7 +204,7 @@ export default function HollandAssessment() {
         <p className="text-muted-foreground mb-8 max-w-md">
           شكرًا لصراحتك. لقد تم جمع إجاباتك بنجاح ونحن الآن نقوم بتحليل ميولك المهنية.
         </p>
-        <Button onClick={() => navigate("/dashboard/simulation")} className="btn-gradient rounded-xl h-12 px-10 text-base">
+        <Button onClick={() => navigate("/dashboard/initial-report")} className="btn-gradient rounded-xl h-12 px-10 text-base">
           انتقل للخطوة التالية
         </Button>
       </motion.div>
