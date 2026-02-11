@@ -25,6 +25,7 @@ import Certificate from "./pages/dashboard/Certificate";
 import PaymentStep from "./pages/dashboard/PaymentStep";
 import AICounselorPage from "./pages/dashboard/AICounselorPage";
 import ShortlistStep from "./pages/dashboard/ShortlistStep";
+import InitialReportStep from "./pages/dashboard/InitialReportStep";
 import ParentDashboard from "./pages/dashboard/ParentDashboard";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import { StepGuard } from "./components/StepGuard";
@@ -59,6 +60,7 @@ const App = () => (
                 <Route path="profile" element={<ProfileStep />} />
                 <Route path="ai-counselor" element={<AICounselorPage />} />
                 <Route path="shortlist" element={<ShortlistStep />} />
+                <Route path="initial-report" element={<InitialReportStep />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="certificate" element={<StepGuard requiredStep="report"><Certificate /></StepGuard>} />
               </Route>
