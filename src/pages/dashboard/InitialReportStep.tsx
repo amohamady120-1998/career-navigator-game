@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Loader2, ArrowLeft, Download, Share2, Copy, Brain, Target, TrendingUp, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
-type Major = { title: string; reasons: string[] };
+type Major = { id?: string; title: string; reasons: string[] };
 
 type ReportData = {
   hollandCode: string;
@@ -65,9 +65,12 @@ export default function InitialReportStep() {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           try {
-            setReportData(JSON.parse(saved));
-            setIsLoading(false);
-            return;
+            const parsed = JSON.parse(saved);
+            if (parsed.majors?.[0]?.id) {
+              setReportData(parsed);
+              setIsLoading(false);
+              return;
+            }
           } catch { /* fall through */ }
         }
 
@@ -118,11 +121,33 @@ export default function InitialReportStep() {
           }
         }
 
+        // Map and auto-create majors in DB
+        const mappedMajors = await Promise.all(
+          report.majors.map(async (m) => {
+            let { data } = await supabase.from('majors').select('id').eq('name_ar', m.title).maybeSingle();
+            if (!data) {
+              const insertRes = await supabase.from('majors').insert({ name_ar: m.title, is_active: true }).select('id').single();
+              data = insertRes.data;
+            }
+            return { ...m, id: data?.id };
+          })
+        );
+
         // Generate share token
         report.shareToken = Math.random().toString(36).substring(2, 15);
+        const finalReport = { ...report, majors: mappedMajors };
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(report));
-        setReportData(report);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(finalReport));
+        
+        // Save to database as well
+        await supabase.from('user_progress').upsert({
+          user_id: session.user.id,
+          step_id: 'initial_report',
+          status: 'completed',
+          meta_data: finalReport
+        });
+
+        setReportData(finalReport);
       } catch (error) {
         console.error("Error loading report:", error);
         toast.error("حدث خطأ في تحميل التقرير");

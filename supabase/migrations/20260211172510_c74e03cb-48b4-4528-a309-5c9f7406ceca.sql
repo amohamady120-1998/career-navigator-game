@@ -1,0 +1,1 @@
+ALTER TABLE majors ADD CONSTRAINT majors_name_ar_key UNIQUE (name_ar);

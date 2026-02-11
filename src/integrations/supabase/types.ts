@@ -476,6 +476,7 @@ export type Database = {
         Row: {
           completed_at: string | null
           id: string
+          meta_data: Json | null
           status: string
           step_id: string
           user_id: string
@@ -483,6 +484,7 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           id?: string
+          meta_data?: Json | null
           status?: string
           step_id: string
           user_id: string
@@ -490,6 +492,7 @@ export type Database = {
         Update: {
           completed_at?: string | null
           id?: string
+          meta_data?: Json | null
           status?: string
           step_id?: string
           user_id?: string
