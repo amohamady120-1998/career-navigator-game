@@ -25,6 +25,7 @@ import AICounselorPage from "./pages/dashboard/AICounselorPage";
 import ParentDashboard from "./pages/dashboard/ParentDashboard";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import { StepGuard } from "./components/StepGuard";
+import IntroVideo from "./pages/onboarding/IntroVideo";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/onboarding/intro-video" element={<IntroVideo />} />
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<IntroStep />} />
                 <Route path="payment" element={<PaymentStep />} />
