@@ -79,7 +79,7 @@ export function ConsentGate({ requiredStep = "pre-impact", children }: ConsentGa
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={() => {/* prevent closing without consent */}}>
         <DialogContent className="max-w-2xl" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-2xl">قبل ما نبدأ...</DialogTitle>
@@ -178,7 +178,7 @@ export function ConsentGate({ requiredStep = "pre-impact", children }: ConsentGa
         </DialogContent>
       </Dialog>
 
-      {userConsent ? children : null}
+      {children}
     </>
   );
 }

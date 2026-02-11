@@ -59,7 +59,15 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import { ConsentGate } from "./components/ConsentGate";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
@@ -79,22 +87,22 @@ const App = () => (
                 <Route index element={<IntroStep />} />
                 <Route path="payment" element={<PaymentStep />} />
                 <Route path="intro" element={<IntroStep />} />
-                <Route path="orientation" element={<OrientationStep />} />
+                <Route path="orientation" element={<ConsentGate requiredStep="pre-impact"><StepGuard requiredStep="pre-impact"><OrientationStep /></StepGuard></ConsentGate>} />
                 <Route path="pre-impact" element={<ConsentGate requiredStep="intro"><StepGuard requiredStep="intro"><PreImpactStep /></StepGuard></ConsentGate>} />
                 <Route path="pre-assessment" element={<PreAssessmentIntro />} />
-                <Route path="holland" element={<ConsentGate requiredStep="pre-impact"><StepGuard requiredStep="pre-impact"><HollandAssessment /></StepGuard></ConsentGate>} />
+                <Route path="holland" element={<ConsentGate requiredStep="orientation"><StepGuard requiredStep="orientation"><HollandAssessment /></StepGuard></ConsentGate>} />
                 <Route path="initial-report" element={<StepGuard requiredStep="holland"><InitialReportStep /></StepGuard>} />
                 <Route path="shortlist" element={<StepGuard requiredStep="initial-report"><ShortlistStep /></StepGuard>} />
                 <Route path="excluded-majors" element={<StepGuard requiredStep="shortlist"><ExcludedMajorsStep /></StepGuard>} />
                 <Route path="doubt-checkpoint" element={<StepGuard requiredStep="excluded-majors"><DoubtCheckpointStep /></StepGuard>} />
-                <Route path="simulation" element={<StepGuard requiredStep="doubt-checkpoint"><SimulationStep /></StepGuard>} />
+                <Route path="explore" element={<StepGuard requiredStep="doubt-checkpoint"><ExploreMajorDynamic /></StepGuard>} />
+                <Route path="explore/:majorId" element={<StepGuard requiredStep="doubt-checkpoint"><ExploreMajorDatabase /></StepGuard>} />
+                <Route path="simulation" element={<StepGuard requiredStep="explore"><SimulationStep /></StepGuard>} />
                 <Route path="post-impact" element={<StepGuard requiredStep="simulation"><PostImpactAssessment /></StepGuard>} />
                 <Route path="report" element={<StepGuard requiredStep="post-impact"><ReportStep /></StepGuard>} />
                 <Route path="final-report" element={<StepGuard requiredStep="post-impact"><FinalReport /></StepGuard>} />
                 <Route path="profile" element={<ProfileStep />} />
                 <Route path="ai-counselor" element={<AICounselorPage />} />
-                <Route path="explore" element={<ExploreMajorDynamic />} />
-                <Route path="explore/:majorId" element={<ExploreMajorDatabase />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="certificate" element={<StepGuard requiredStep="report"><Certificate /></StepGuard>} />
                 <Route path="consultation" element={<ConsultationBooking />} />

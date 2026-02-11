@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -103,13 +104,14 @@ const MODULES: ModuleData[] = [
 const PASSING_SCORE_PERCENT = 70;
 const REQUIRED_WATCH_PERCENT = 90;
 
-// The "intro" journey step UUID from journey_steps table
-const INTRO_STEP_ID = "0101d638-a9fd-4100-b24d-9e2c676a79ba";
+// Will be fetched dynamically
+let ORIENTATION_STEP_ID: string | null = null;
 
 // ─── Component ───
 
 export default function OrientationStep() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -138,27 +140,40 @@ export default function OrientationStep() {
       if (!session) { navigate("/auth", { replace: true }); return; }
       setUserId(session.user.id);
 
-      // Check if intro step already completed
-      const { data: progress } = await supabase
-        .from("user_progress")
-        .select("status")
-        .eq("user_id", session.user.id)
-        .eq("step_id", INTRO_STEP_ID)
-        .maybeSingle();
+      // Fetch the orientation step UUID dynamically
+      const { data: stepData } = await supabase
+        .from("journey_steps")
+        .select("id")
+        .eq("slug", "orientation")
+        .single();
+      
+      if (stepData) {
+        ORIENTATION_STEP_ID = stepData.id;
+      }
 
-      if (progress?.status === "completed") {
-        setCompletedModules(MODULES.map((m) => m.id));
-        setActiveModuleIndex(MODULES.length);
-      } else {
-        // Restore partial progress from localStorage
-        const saved = localStorage.getItem(`orientation_progress_${session.user.id}`);
-        if (saved) {
-          try {
-            const arr = JSON.parse(saved) as string[];
-            setCompletedModules(arr);
-            const next = MODULES.findIndex((m) => !arr.includes(m.id));
-            setActiveModuleIndex(next !== -1 ? next : MODULES.length);
-          } catch { /* ignore */ }
+      // Check if orientation step already completed
+      if (ORIENTATION_STEP_ID) {
+        const { data: progress } = await supabase
+          .from("user_progress")
+          .select("status")
+          .eq("user_id", session.user.id)
+          .eq("step_id", ORIENTATION_STEP_ID)
+          .maybeSingle();
+
+        if (progress?.status === "completed") {
+          setCompletedModules(MODULES.map((m) => m.id));
+          setActiveModuleIndex(MODULES.length);
+        } else {
+          // Restore partial progress from localStorage
+          const saved = localStorage.getItem(`orientation_progress_${session.user.id}`);
+          if (saved) {
+            try {
+              const arr = JSON.parse(saved) as string[];
+              setCompletedModules(arr);
+              const next = MODULES.findIndex((m) => !arr.includes(m.id));
+              setActiveModuleIndex(next !== -1 ? next : MODULES.length);
+            } catch { /* ignore */ }
+          }
         }
       }
       setIsLoading(false);
@@ -227,13 +242,15 @@ export default function OrientationStep() {
       setCompletedModules(newCompleted);
       localStorage.setItem(`orientation_progress_${userId}`, JSON.stringify(newCompleted));
 
-      // If all modules done, mark the intro step completed in DB
-      if (newCompleted.length === MODULES.length) {
+      // If all modules done, mark the orientation step completed in DB
+      if (newCompleted.length === MODULES.length && ORIENTATION_STEP_ID) {
         await supabase.from("user_progress").upsert(
-          { user_id: userId, step_id: INTRO_STEP_ID, status: "completed", completed_at: new Date().toISOString() },
+          { user_id: userId, step_id: ORIENTATION_STEP_ID, status: "completed", completed_at: new Date().toISOString() },
           { onConflict: "user_id,step_id" },
         );
         localStorage.removeItem(`orientation_progress_${userId}`);
+        await queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
+        await queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
         toast.success("أكملت مرحلة التهيئة بنجاح!");
       }
     }
