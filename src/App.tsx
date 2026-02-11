@@ -18,8 +18,10 @@ import HollandAssessment from "./pages/dashboard/HollandAssessment";
 import PreAssessmentIntro from "./pages/dashboard/PreAssessmentIntro";
 import SimulationStep from "./pages/dashboard/SimulationStep";
 import ReportStep from "./pages/dashboard/ReportStep";
+import FinalReport from "./pages/dashboard/FinalReport";
 import PostImpactStep from "./pages/dashboard/PostImpactStep";
 import PostImpactAssessment from "./pages/dashboard/PostImpactAssessment";
+import SharedReport from "./pages/share/SharedReport";
 import ProfileStep from "./pages/dashboard/ProfileStep";
 import SettingsPage from "./pages/dashboard/Settings";
 import Certificate from "./pages/dashboard/Certificate";
@@ -70,6 +72,7 @@ const App = () => (
                 <Route path="simulation" element={<StepGuard requiredStep="doubt-checkpoint"><SimulationStep /></StepGuard>} />
                 <Route path="post-impact" element={<StepGuard requiredStep="simulation"><PostImpactAssessment /></StepGuard>} />
                 <Route path="report" element={<StepGuard requiredStep="post-impact"><ReportStep /></StepGuard>} />
+                <Route path="final-report" element={<StepGuard requiredStep="post-impact"><FinalReport /></StepGuard>} />
                 <Route path="profile" element={<ProfileStep />} />
                 <Route path="ai-counselor" element={<AICounselorPage />} />
                 <Route path="explore" element={<ExploreMajorDynamic />} />
@@ -91,6 +94,7 @@ const App = () => (
               <Route path="/admin/explore-manager" element={<AdminExploreManager />} />
               <Route path="/admin/consultations" element={<AdminConsultations />} />
               <Route path="/admin" element={<SuperAdminDashboard />} />
+              <Route path="/share/report/:token" element={<SharedReport />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

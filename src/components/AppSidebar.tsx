@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 
 // Ordered step config matching the required journey order
-const SIDEBAR_STEPS = [
+const SIDEBAR_STEPS: { slug: string; labelAr: string; icon: any; customPath?: string }[] = [
   { slug: "intro", labelAr: "المقدمة", icon: BookOpen },
   { slug: "pre-impact", labelAr: "قياس الأثر القبلي", icon: BarChart3 },
   { slug: "orientation", labelAr: "التهيئة", icon: PlayCircle },
@@ -30,7 +30,7 @@ const SIDEBAR_STEPS = [
   { slug: "explore", labelAr: "استكشاف التخصص", icon: Search },
   { slug: "simulation", labelAr: "المحاكاة المهنية", icon: Gamepad2 },
   { slug: "post-impact", labelAr: "قياس الأثر البعدي", icon: ClipboardCheck },
-  { slug: "report", labelAr: "التقرير النهائي", icon: FileText },
+  { slug: "report", labelAr: "التقرير النهائي", icon: FileText, customPath: "/dashboard/final-report" },
 ];
 
 const STEP_SLUGS = SIDEBAR_STEPS.map(s => s.slug);
@@ -144,7 +144,7 @@ export function AppSidebar() {
                 const Icon = item.icon;
                 const unlocked = hasPaid && isStepUnlocked(item.slug);
                 const completed = isStepCompleted(item.slug);
-                const path = `/dashboard/${item.slug}`;
+                const path = item.customPath || `/dashboard/${item.slug}`;
 
                 return (
                   <SidebarMenuItem key={item.slug}>
