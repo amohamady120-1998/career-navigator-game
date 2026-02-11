@@ -97,6 +97,41 @@ export type Database = {
         }
         Relationships: []
       }
+      holland_major_map: {
+        Row: {
+          created_at: string | null
+          holland_code: string
+          id: string
+          major_id: string | null
+          rank_order: number
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          holland_code: string
+          id?: string
+          major_id?: string | null
+          rank_order: number
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          holland_code?: string
+          id?: string
+          major_id?: string | null
+          rank_order?: number
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "holland_major_map_major_id_fkey"
+            columns: ["major_id"]
+            isOneToOne: false
+            referencedRelation: "majors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       holland_results: {
         Row: {
           created_at: string
@@ -454,6 +489,30 @@ export type Database = {
           options_json?: Json
           text_ar?: string
           timer_seconds?: number | null
+        }
+        Relationships: []
+      }
+      student_shortlist: {
+        Row: {
+          id: string
+          major_ids: Json
+          ranking_ids: Json
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          major_ids?: Json
+          ranking_ids?: Json
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          major_ids?: Json
+          ranking_ids?: Json
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
