@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, BarChart3, Compass, Gamepad2, FileText, Lock, CheckCircle2, LogOut, ClipboardCheck, Settings, Award } from "lucide-react";
+import { BookOpen, BarChart3, Compass, Gamepad2, FileText, Lock, CheckCircle2, LogOut, ClipboardCheck, Settings, Award, Bot } from "lucide-react";
 import atharLogoDark from "@/assets/athar-logo-dark.png";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -201,6 +201,14 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-3 border-t border-sidebar-border space-y-1">
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-2 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 rounded-lg text-sm"
+          onClick={() => navigate("/dashboard/ai-counselor")}
+        >
+          <Bot className="w-4 h-4 text-accent" />
+          مستشار أثر الذكي
+        </Button>
         <Button
           variant="ghost"
           className="w-full justify-start gap-2 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 rounded-lg text-sm"

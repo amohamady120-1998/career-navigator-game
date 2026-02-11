@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.lookup-user-by-email]
 verify_jwt = false
+
+[functions.ai-counselor]
+verify_jwt = false
