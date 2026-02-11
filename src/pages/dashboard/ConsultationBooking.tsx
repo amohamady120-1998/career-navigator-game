@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { Loader2, CheckCircle, Phone, MessageCircle } from "lucide-react";
 
 // Team WhatsApp number (update with actual number)
-const TEAM_WHATSAPP = "966XXXXXXXXX";
+const TEAM_WHATSAPP = "966563872949";
 
 const CONSULTATION_TYPES = [
   { value: "career", label: "استشارة مهنية" },
