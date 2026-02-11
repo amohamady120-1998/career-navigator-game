@@ -70,6 +70,42 @@ export type Database = {
           },
         ]
       }
+      consultation_requests: {
+        Row: {
+          consultation_type: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          report_link: string | null
+          status: string | null
+          user_id: string
+          user_name: string | null
+          whatsapp: string
+        }
+        Insert: {
+          consultation_type: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          report_link?: string | null
+          status?: string | null
+          user_id: string
+          user_name?: string | null
+          whatsapp: string
+        }
+        Update: {
+          consultation_type?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          report_link?: string | null
+          status?: string | null
+          user_id?: string
+          user_name?: string | null
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       holland_codes: {
         Row: {
           career_paths: Json | null
