@@ -9,11 +9,8 @@ import { motion, AnimatePresence } from "framer-motion";
 const HOLLAND_STEP_ID = "0b586437-03db-40c4-8cdc-4f889a322c49";
 
 const OPTIONS = [
-  { value: 1, label: "لا ينطبق عليّ" },
-  { value: 2, label: "ينطبق قليلًا" },
-  { value: 3, label: "متوسط" },
-  { value: 4, label: "ينطبق كثيرًا" },
-  { value: 5, label: "ينطبق جدًا" },
+  { value: "yes" as any, label: "نعم" },
+  { value: "no" as any, label: "لا" },
 ];
 
 const MIN_TIME_PER_QUESTION_MS = 5000;
@@ -25,7 +22,7 @@ export default function HollandAssessment() {
   const [isSaving, setIsSaving] = useState(false);
   const [questions, setQuestions] = useState<{ id: string; text: string }[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [timeSpent, setTimeSpent] = useState<Record<string, number>>({});
   const [isCompleted, setIsCompleted] = useState(false);
   const [isTimeAllowed, setIsTimeAllowed] = useState(false);
@@ -60,10 +57,9 @@ export default function HollandAssessment() {
           .eq("user_id", session.user.id);
 
         if (existingAnswers && existingAnswers.length > 0) {
-          const answeredMap: Record<string, number> = {};
+          const answeredMap: Record<string, string> = {};
           existingAnswers.forEach((a) => {
-            const num = parseInt(a.answer_value);
-            if (!isNaN(num)) answeredMap[a.question_id] = num;
+            answeredMap[a.question_id] = a.answer_value;
           });
           setAnswers(answeredMap);
 
@@ -108,12 +104,12 @@ export default function HollandAssessment() {
     return () => clearTimeout(timer);
   }, [currentIndex]);
 
-  const saveAnswerToDb = async (questionId: string, value: number) => {
+  const saveAnswerToDb = async (questionId: string, value: string) => {
     if (!userId) return;
     setIsSaving(true);
     try {
       await supabase.from("answers").upsert(
-        { user_id: userId, question_id: questionId, answer_value: String(value) },
+        { user_id: userId, question_id: questionId, answer_value: value },
         { onConflict: "user_id,question_id" }
       );
     } catch {
@@ -132,7 +128,7 @@ export default function HollandAssessment() {
     return newTimeSpent;
   };
 
-  const handleSelectOption = async (value: number) => {
+  const handleSelectOption = async (value: string) => {
     const currentQ = questions[currentIndex];
     setAnswers((prev) => ({ ...prev, [currentQ.id]: value }));
     await saveAnswerToDb(currentQ.id, value);
