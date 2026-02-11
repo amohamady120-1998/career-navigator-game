@@ -70,6 +70,33 @@ export type Database = {
           },
         ]
       }
+      certificates: {
+        Row: {
+          certificate_code: string
+          full_name: string | null
+          id: string
+          issued_at: string | null
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          certificate_code: string
+          full_name?: string | null
+          id?: string
+          issued_at?: string | null
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          certificate_code?: string
+          full_name?: string | null
+          id?: string
+          issued_at?: string | null
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       consultation_requests: {
         Row: {
           consultation_type: string
@@ -711,7 +738,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      certificate_verification: {
+        Row: {
+          certificate_code: string | null
+          full_name: string | null
+          issued_at: string | null
+        }
+        Insert: {
+          certificate_code?: string | null
+          full_name?: string | null
+          issued_at?: string | null
+        }
+        Update: {
+          certificate_code?: string | null
+          full_name?: string | null
+          issued_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_holland_scores: { Args: { _user_id: string }; Returns: Json }

@@ -22,6 +22,7 @@ import FinalReport from "./pages/dashboard/FinalReport";
 import PostImpactStep from "./pages/dashboard/PostImpactStep";
 import PostImpactAssessment from "./pages/dashboard/PostImpactAssessment";
 import SharedReport from "./pages/share/SharedReport";
+import VerifyCertificate from "./pages/share/VerifyCertificate";
 import ProfileStep from "./pages/dashboard/ProfileStep";
 import SettingsPage from "./pages/dashboard/Settings";
 import Certificate from "./pages/dashboard/Certificate";
@@ -95,6 +96,7 @@ const App = () => (
               <Route path="/admin/consultations" element={<AdminConsultations />} />
               <Route path="/admin" element={<SuperAdminDashboard />} />
               <Route path="/share/report/:token" element={<SharedReport />} />
+              <Route path="/verify/:code" element={<VerifyCertificate />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
