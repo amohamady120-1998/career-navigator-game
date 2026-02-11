@@ -18,12 +18,14 @@ import AdminNotifications from "@/pages/admin/AdminNotifications";
 import AdminAnalytics from "@/pages/admin/AdminAnalytics";
 import AdminErrors from "@/pages/admin/AdminErrors";
 import AdminHealthCheck from "@/pages/admin/AdminHealthCheck";
+import AdminUsersTab from "@/components/admin/AdminUsersTab";
 
 const TAB_GROUPS = [
   {
     label: "عام",
     tabs: [
       { value: "overview", label: "📊 نظرة عامة" },
+      { value: "users", label: "👥 المستخدمون" },
       { value: "health", label: "🩺 فحص النظام" },
     ],
   },
@@ -110,6 +112,7 @@ export default function SuperAdminDashboard() {
         </ScrollArea>
 
         <TabsContent value="overview"><AdminOverviewTab /></TabsContent>
+        <TabsContent value="users"><AdminUsersTab /></TabsContent>
         <TabsContent value="health"><AdminHealthCheck embedded /></TabsContent>
         <TabsContent value="schools"><AdminSchools embedded /></TabsContent>
         <TabsContent value="school-orders"><AdminSchoolOrders embedded /></TabsContent>
