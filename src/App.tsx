@@ -56,6 +56,7 @@ const App = () => (
               </Route>
               <Route path="/parent" element={<ParentLayout />}>
                 <Route index element={<ParentDashboard />} />
+                <Route path="ai-counselor" element={<AICounselorPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
               <Route path="/institution" element={<InstitutionLayout />}>

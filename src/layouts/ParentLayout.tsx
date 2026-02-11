@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Settings, Bot } from "lucide-react";
 import atharLogoDark from "@/assets/athar-logo-dark.png";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -50,6 +50,16 @@ export default function ParentLayout() {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/parent/ai-counselor")}
+            aria-label="مستشار أثر الذكي"
+            className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
+          >
+            <Bot className="w-4 h-4 ml-1" />
+            <span className="hidden sm:inline text-xs">المستشار الذكي</span>
+          </Button>
           <Button
             variant="ghost"
             size="sm"
