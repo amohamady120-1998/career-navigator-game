@@ -48,6 +48,9 @@ import AdminSchoolOrders from "./pages/admin/AdminSchoolOrders";
 import AdminSchoolUsage from "./pages/admin/AdminSchoolUsage";
 import AdminSchoolReports from "./pages/admin/AdminSchoolReports";
 import AdminNotifications from "./pages/admin/AdminNotifications";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminErrors from "./pages/admin/AdminErrors";
+import AdminHealthCheck from "./pages/admin/AdminHealthCheck";
 import { StepGuard } from "./components/StepGuard";
 import IntroVideo from "./pages/onboarding/IntroVideo";
 import NotFound from "./pages/NotFound";
@@ -110,6 +113,9 @@ const App = () => (
               <Route path="/admin/school-reports" element={<AdminSchoolReports />} />
               <Route path="/admin/school-admins" element={<AdminSchoolAdmins />} />
               <Route path="/admin/notifications" element={<AdminNotifications />} />
+              <Route path="/admin/analytics" element={<AdminAnalytics />} />
+              <Route path="/admin/errors" element={<AdminErrors />} />
+              <Route path="/admin/health-check" element={<AdminHealthCheck />} />
               <Route path="/admin" element={<SuperAdminDashboard />} />
               <Route path="/share/report/:token" element={<SharedReport />} />
               <Route path="/verify/:code" element={<VerifyCertificate />} />
