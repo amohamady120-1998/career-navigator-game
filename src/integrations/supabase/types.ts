@@ -192,6 +192,33 @@ export type Database = {
         }
         Relationships: []
       }
+      impact_assessments: {
+        Row: {
+          answers: Json
+          assessment_type: string
+          created_at: string | null
+          id: string
+          score_json: Json | null
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          assessment_type: string
+          created_at?: string | null
+          id?: string
+          score_json?: Json | null
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          assessment_type?: string
+          created_at?: string | null
+          id?: string
+          score_json?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       institution_student_links: {
         Row: {
           created_at: string

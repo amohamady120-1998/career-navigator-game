@@ -19,6 +19,7 @@ import PreAssessmentIntro from "./pages/dashboard/PreAssessmentIntro";
 import SimulationStep from "./pages/dashboard/SimulationStep";
 import ReportStep from "./pages/dashboard/ReportStep";
 import PostImpactStep from "./pages/dashboard/PostImpactStep";
+import PostImpactAssessment from "./pages/dashboard/PostImpactAssessment";
 import ProfileStep from "./pages/dashboard/ProfileStep";
 import SettingsPage from "./pages/dashboard/Settings";
 import Certificate from "./pages/dashboard/Certificate";
@@ -67,7 +68,7 @@ const App = () => (
                 <Route path="excluded-majors" element={<StepGuard requiredStep="shortlist"><ExcludedMajorsStep /></StepGuard>} />
                 <Route path="doubt-checkpoint" element={<StepGuard requiredStep="excluded-majors"><DoubtCheckpointStep /></StepGuard>} />
                 <Route path="simulation" element={<StepGuard requiredStep="doubt-checkpoint"><SimulationStep /></StepGuard>} />
-                <Route path="post-impact" element={<StepGuard requiredStep="simulation"><PostImpactStep /></StepGuard>} />
+                <Route path="post-impact" element={<StepGuard requiredStep="simulation"><PostImpactAssessment /></StepGuard>} />
                 <Route path="report" element={<StepGuard requiredStep="post-impact"><ReportStep /></StepGuard>} />
                 <Route path="profile" element={<ProfileStep />} />
                 <Route path="ai-counselor" element={<AICounselorPage />} />
