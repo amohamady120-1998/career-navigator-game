@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import {
   Trophy, Briefcase, GraduationCap, TrendingUp, TrendingDown, Brain, Sparkles,
   Download, Share2, Copy, FileText, BarChart3, Gamepad2, CheckCircle2, ArrowLeft,
-  MessageSquare
+  MessageSquare, Link2, Unlink2
 } from "lucide-react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
@@ -177,6 +177,24 @@ export default function FinalReport() {
     setShareModalOpen(true);
   };
 
+  const handleRevokeShare = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      await supabase.from("final_reports").upsert(
+        { user_id: session.user.id, share_token: null, payload: {} },
+        { onConflict: "user_id" }
+      );
+      
+      setShareToken(null);
+      setShareModalOpen(false);
+      toast.success("تم إلغاء رابط المشاركة بنجاح");
+    } catch (error) {
+      toast.error("حدث خطأ في إلغاء المشاركة");
+    }
+  };
+
   const handleCopyLink = () => {
     if (!shareToken) return;
     navigator.clipboard.writeText(`${window.location.origin}/share/report/${shareToken}`);
@@ -208,13 +226,18 @@ export default function FinalReport() {
           </div>
           <h1 className="text-3xl font-bold mb-2">تقريرك النهائي</h1>
           <p className="text-muted-foreground">ملخص شامل لرحلتك في اكتشاف ذاتك المهنية</p>
-          <div className="flex justify-center gap-3 mt-4 print:hidden">
+          <div className="flex justify-center gap-3 mt-4 print:hidden flex-wrap">
             <Button variant="outline" className="gap-2" onClick={handlePrint}>
               <Download className="w-4 h-4" /> طباعة التقرير
             </Button>
             <Button variant="outline" className="gap-2" onClick={handleShare}>
               <Share2 className="w-4 h-4" /> مشاركة التقرير
             </Button>
+            {shareToken && (
+              <Button variant="destructive" className="gap-2" onClick={handleRevokeShare}>
+                <Unlink2 className="w-4 h-4" /> إلغاء المشاركة
+              </Button>
+            )}
           </div>
         </div>
 
