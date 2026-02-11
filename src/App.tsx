@@ -40,6 +40,11 @@ import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import ConsultationBooking from "./pages/dashboard/ConsultationBooking";
 import AdminConsultations from "./pages/admin/AdminConsultations";
 import CompletionNextStep from "./pages/dashboard/CompletionNextStep";
+import ActivateSchoolCode from "./pages/dashboard/ActivateSchoolCode";
+import SchoolDashboard from "./pages/dashboard/SchoolDashboard";
+import AdminSchools from "./pages/admin/AdminSchools";
+import AdminSchoolOrders from "./pages/admin/AdminSchoolOrders";
+import AdminSchoolUsage from "./pages/admin/AdminSchoolUsage";
 import { StepGuard } from "./components/StepGuard";
 import IntroVideo from "./pages/onboarding/IntroVideo";
 import NotFound from "./pages/NotFound";
@@ -82,6 +87,8 @@ const App = () => (
                 <Route path="certificate" element={<StepGuard requiredStep="report"><Certificate /></StepGuard>} />
                 <Route path="consultation" element={<ConsultationBooking />} />
                 <Route path="next-step" element={<CompletionNextStep />} />
+                <Route path="activate" element={<ActivateSchoolCode />} />
+                <Route path="school" element={<SchoolDashboard />} />
               </Route>
               <Route path="/parent" element={<ParentLayout />}>
                 <Route index element={<ParentDashboard />} />
@@ -94,6 +101,9 @@ const App = () => (
               </Route>
               <Route path="/admin/explore-manager" element={<AdminExploreManager />} />
               <Route path="/admin/consultations" element={<AdminConsultations />} />
+              <Route path="/admin/schools" element={<AdminSchools />} />
+              <Route path="/admin/school-orders" element={<AdminSchoolOrders />} />
+              <Route path="/admin/school-usage" element={<AdminSchoolUsage />} />
               <Route path="/admin" element={<SuperAdminDashboard />} />
               <Route path="/share/report/:token" element={<SharedReport />} />
               <Route path="/verify/:code" element={<VerifyCertificate />} />
