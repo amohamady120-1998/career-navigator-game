@@ -33,6 +33,8 @@ import AdminExploreManager from "./pages/admin/AdminExploreManager";
 import ExploreMajorDynamic from "./pages/dashboard/ExploreMajorDynamic";
 import ParentDashboard from "./pages/dashboard/ParentDashboard";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
+import ConsultationBooking from "./pages/dashboard/ConsultationBooking";
+import AdminConsultations from "./pages/admin/AdminConsultations";
 import { StepGuard } from "./components/StepGuard";
 import IntroVideo from "./pages/onboarding/IntroVideo";
 import NotFound from "./pages/NotFound";
@@ -72,6 +74,7 @@ const App = () => (
                 <Route path="explore/:majorId" element={<ExploreMajorDatabase />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="certificate" element={<StepGuard requiredStep="report"><Certificate /></StepGuard>} />
+                <Route path="consultation" element={<ConsultationBooking />} />
               </Route>
               <Route path="/parent" element={<ParentLayout />}>
                 <Route index element={<ParentDashboard />} />
@@ -83,6 +86,7 @@ const App = () => (
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
               <Route path="/admin/explore-manager" element={<AdminExploreManager />} />
+              <Route path="/admin/consultations" element={<AdminConsultations />} />
               <Route path="/admin" element={<SuperAdminDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
