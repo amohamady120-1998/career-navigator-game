@@ -901,6 +901,73 @@ export type Database = {
         }
         Relationships: []
       }
+      view_school_impact_summary: {
+        Row: {
+          avg_post_score: number | null
+          avg_pre_score: number | null
+          count_post_completed: number | null
+          count_pre_completed: number | null
+          school_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_school_membership_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      view_school_progress_counts: {
+        Row: {
+          completed_count: number | null
+          in_progress_count: number | null
+          order_index: number | null
+          school_id: string | null
+          step_name: string | null
+          step_slug: string | null
+          total_students: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_school_membership_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      view_school_students: {
+        Row: {
+          activated_at: string | null
+          activated_by_code: string | null
+          school_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by_code?: string | null
+          school_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by_code?: string | null
+          school_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_school_membership_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       activate_school_code: { Args: { p_code: string }; Returns: Json }
