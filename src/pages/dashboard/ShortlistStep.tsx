@@ -6,73 +6,76 @@ import { Card } from "@/components/ui/card";
 import { Loader2, ArrowLeft, ChevronUp, ChevronDown, CheckCircle2, Award, Briefcase, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
-type MajorOption = {
-  id: string;
-  name: string;
-  reasons: string[];
-  tags: string[];
-};
-
-const FALLBACK_MAJORS: MajorOption[] = [
-  {
-    id: "m_1",
-    name: "إدارة الأعمال",
-    reasons: ["شخصيتك المبادرة (E) تتناسب مع قيادة الفرق", "قدرتك العالية على اتخاذ القرارات تحت الضغط", "تفضيلك للبيئات الديناميكية والمتغيرة"],
-    tags: ["قيادة", "مبادرة", "تأثير"]
-  },
-  {
-    id: "m_2",
-    name: "هندسة البرمجيات",
-    reasons: ["نمطك التحليلي (I) يجعلك ممتازاً في حل المشكلات", "دقتك في التعامل مع التفاصيل والمنطق", "ميلك للعمل المستقل والتركيز العميق"],
-    tags: ["تحليل", "تقنية", "منطق"]
-  },
-  {
-    id: "m_3",
-    name: "التسويق والعلاقات العامة",
-    reasons: ["مهاراتك الاجتماعية (S) تدعم تواصلك الفعال", "إبداعك في إيصال الأفكار وإقناع الآخرين", "رغبتك في بيئة عمل تفاعلية وغير روتينية"],
-    tags: ["تواصل", "إبداع", "اجتماعي"]
-  }
-];
-
-const STORAGE_KEY = "athar_shortlist_ranking";
+type MajorOption = { id: string; title: string; reasons: string[]; tags?: string[] };
 
 export default function ShortlistStep() {
   const navigate = useNavigate();
-
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [majors] = useState<MajorOption[]>(FALLBACK_MAJORS);
+  const [majors, setMajors] = useState<MajorOption[]>([]);
   const [rankedIds, setRankedIds] = useState<string[]>([]);
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return navigate('/auth');
+    const loadShortlist = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return navigate('/auth');
 
-      // Load saved ranking from localStorage
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          const valid = parsed.filter((id: string) => FALLBACK_MAJORS.find(m => m.id === id));
-          if (valid.length === FALLBACK_MAJORS.length) {
-            setRankedIds(valid);
-          } else {
-            setRankedIds(FALLBACK_MAJORS.map(m => m.id));
-          }
-        } catch {
-          setRankedIds(FALLBACK_MAJORS.map(m => m.id));
+        // Fetch the report data from initial_report step
+        const { data: reportProgress } = await supabase
+          .from('user_progress')
+          .select('meta_data')
+          .eq('user_id', session.user.id)
+          .eq('step_id', 'initial_report')
+          .maybeSingle();
+
+        const { data: shortlistProgress } = await supabase
+          .from('user_progress')
+          .select('meta_data')
+          .eq('user_id', session.user.id)
+          .eq('step_id', 'shortlist')
+          .maybeSingle();
+
+        let loadedMajors: MajorOption[] = [];
+        if (reportProgress?.meta_data) {
+          loadedMajors = (reportProgress.meta_data as any).majors || [];
+          // ensure tags exist for UI
+          loadedMajors = loadedMajors.map(m => ({...m, tags: m.tags || ["موصى به"]}));
         }
-      } else {
-        setRankedIds(FALLBACK_MAJORS.map(m => m.id));
+
+        let loadedRankings = loadedMajors.map(m => m.id);
+        if (shortlistProgress?.meta_data && (shortlistProgress.meta_data as any).ranking_json) {
+          loadedRankings = (shortlistProgress.meta_data as any).ranking_json;
+        }
+
+        setMajors(loadedMajors);
+        const validRankings = loadedRankings.filter(id => loadedMajors.find(m => m.id === id));
+        setRankedIds(validRankings.length === loadedMajors.length ? validRankings : loadedMajors.map(m => m.id));
+      } catch (error) {
+        toast.error("حدث خطأ في تحميل التخصصات");
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
-    init();
+    loadShortlist();
   }, [navigate]);
 
-  const saveRanking = (newRanking: string[]) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newRanking));
+  const saveRankingToDb = async (newRanking: string[]) => {
+    setIsSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      await supabase.from('user_progress').upsert({
+        user_id: session.user.id,
+        step_id: 'shortlist',
+        status: 'in_progress',
+        meta_data: { ranking_json: newRanking, last_saved_at: new Date().toISOString() }
+      });
+    } catch (error) {
+      toast.error("خطأ أثناء حفظ الترتيب");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const moveUp = (index: number) => {
@@ -80,7 +83,7 @@ export default function ShortlistStep() {
     const newRankedIds = [...rankedIds];
     [newRankedIds[index - 1], newRankedIds[index]] = [newRankedIds[index], newRankedIds[index - 1]];
     setRankedIds(newRankedIds);
-    saveRanking(newRankedIds);
+    saveRankingToDb(newRankedIds);
   };
 
   const moveDown = (index: number) => {
@@ -88,35 +91,27 @@ export default function ShortlistStep() {
     const newRankedIds = [...rankedIds];
     [newRankedIds[index + 1], newRankedIds[index]] = [newRankedIds[index], newRankedIds[index + 1]];
     setRankedIds(newRankedIds);
-    saveRanking(newRankedIds);
+    saveRankingToDb(newRankedIds);
   };
 
   const handleContinue = async () => {
-    setIsSaving(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      // Look up step id for shortlist
-      const { data: steps } = await supabase.from('journey_steps').select('id').eq('slug', 'shortlist').maybeSingle();
-      if (steps) {
-        await supabase.from('user_progress').upsert({
-          user_id: session.user.id,
-          step_id: steps.id,
-          status: 'completed',
-          completed_at: new Date().toISOString()
-        });
+      if (session) {
+        await supabase.from('user_progress')
+          .update({ status: 'completed', completed_at: new Date().toISOString() })
+          .eq('user_id', session.user.id)
+          .eq('step_id', 'shortlist');
       }
     } catch (e) {
       console.error(e);
-    } finally {
-      setIsSaving(false);
     }
     navigate('/dashboard/why-not');
   };
 
-  const handleExplore = (majorName: string) => {
-    toast.success(`جاري تجهيز بيئة استكشاف تخصص "${majorName}"...`);
+  // Navigates to the dynamic explore page using the DB UUID
+  const handleExplore = (majorId: string) => {
+    navigate(`/dashboard/explore/${majorId}`);
   };
 
   if (isLoading) {
@@ -175,7 +170,7 @@ export default function ShortlistStep() {
                 </div>
               </div>
 
-              <h2 className="text-2xl font-extrabold text-foreground mb-4">{major.name}</h2>
+              <h2 className="text-2xl font-extrabold text-foreground mb-4">{major.title}</h2>
 
               <div className="space-y-2 mb-4">
                 {major.reasons.map((reason, idx) => (
@@ -194,9 +189,9 @@ export default function ShortlistStep() {
                 ))}
               </div>
 
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => handleExplore(major.name)}>
-                استكشف التخصص
-                <ExternalLink className="w-4 h-4" />
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => handleExplore(major.id)}>
+                 استكشف التخصص
+                 <ExternalLink className="w-4 h-4" />
               </Button>
             </Card>
           ))}
@@ -220,7 +215,7 @@ export default function ShortlistStep() {
                   <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-extrabold text-sm">
                     {index + 1}
                   </div>
-                  <span className="font-bold text-foreground">{major.name}</span>
+                  <span className="font-bold text-foreground">{major.title}</span>
                 </div>
                 <div className="flex gap-1">
                   <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={index === 0} onClick={() => moveUp(index)}>

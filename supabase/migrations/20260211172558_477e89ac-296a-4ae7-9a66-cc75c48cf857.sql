@@ -1,0 +1,1 @@
+ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS meta_data JSONB DEFAULT '{}'::jsonb;
