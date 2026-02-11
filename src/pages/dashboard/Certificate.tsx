@@ -132,6 +132,15 @@ export default function Certificate() {
           </div>
         </div>
       </motion.div>
+
+      <div className="flex flex-col items-center gap-3 print:hidden mt-6">
+        <Button onClick={() => navigate("/dashboard/consultation")} className="w-full max-w-md h-12 text-base font-bold rounded-xl">
+          احجز استشارة
+        </Button>
+        <Button onClick={() => navigate("/dashboard/next-step")} variant="outline" className="w-full max-w-md rounded-xl">
+          الخطوة التالية
+        </Button>
+      </div>
     </div>
   );
 }

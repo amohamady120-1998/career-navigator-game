@@ -35,6 +35,7 @@ import ParentDashboard from "./pages/dashboard/ParentDashboard";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import ConsultationBooking from "./pages/dashboard/ConsultationBooking";
 import AdminConsultations from "./pages/admin/AdminConsultations";
+import CompletionNextStep from "./pages/dashboard/CompletionNextStep";
 import { StepGuard } from "./components/StepGuard";
 import IntroVideo from "./pages/onboarding/IntroVideo";
 import NotFound from "./pages/NotFound";
@@ -75,6 +76,7 @@ const App = () => (
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="certificate" element={<StepGuard requiredStep="report"><Certificate /></StepGuard>} />
                 <Route path="consultation" element={<ConsultationBooking />} />
+                <Route path="next-step" element={<CompletionNextStep />} />
               </Route>
               <Route path="/parent" element={<ParentLayout />}>
                 <Route index element={<ParentDashboard />} />
