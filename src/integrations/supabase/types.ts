@@ -38,6 +38,30 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_events: {
+        Row: {
+          created_at: string | null
+          event_name: string
+          event_props: Json
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_name: string
+          event_props?: Json
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_name?: string
+          event_props?: Json
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       answers: {
         Row: {
           answer_value: string
@@ -69,6 +93,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      app_error_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string
+          id: string
+          meta: Json
+          route: string | null
+          stack: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message: string
+          id?: string
+          meta?: Json
+          route?: string | null
+          stack?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string
+          id?: string
+          meta?: Json
+          route?: string | null
+          stack?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       certificates: {
         Row: {
@@ -601,6 +655,33 @@ export type Database = {
           order_index?: number
           riasec_code?: string | null
           text_ar?: string
+        }
+        Relationships: []
+      }
+      rate_limit_entries: {
+        Row: {
+          count: number
+          created_at: string | null
+          id: string
+          key: string
+          user_id: string | null
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string | null
+          id?: string
+          key: string
+          user_id?: string | null
+          window_start: string
+        }
+        Update: {
+          count?: number
+          created_at?: string | null
+          id?: string
+          key?: string
+          user_id?: string | null
+          window_start?: string
         }
         Relationships: []
       }

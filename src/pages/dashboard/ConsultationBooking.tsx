@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, Phone, MessageCircle } from "lucide-react";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { trackEvent, logError } from "@/lib/analytics";
 
 // Team WhatsApp number (update with actual number)
 const TEAM_WHATSAPP = "966563872949";
@@ -83,6 +85,14 @@ export default function ConsultationBooking() {
     }
 
     setLoading(true);
+    // Rate limit check
+    const { allowed } = await checkRateLimit("consultation_submit");
+    if (!allowed) {
+      toast.error("تم تنفيذ عدد كبير من المحاولات. حاول بعد قليل.");
+      setLoading(false);
+      return;
+    }
+
     const { error } = await supabase.from("consultation_requests").insert({
       user_id: userId,
       user_name: userName,
@@ -95,9 +105,11 @@ export default function ConsultationBooking() {
     setLoading(false);
     if (error) {
       toast.error("حدث خطأ أثناء إرسال الطلب");
+      logError("Consultation submit failed", { meta: { error: error.message } });
       console.error(error);
     } else {
       setSubmitted(true);
+      trackEvent("consultation_submitted", { type: formData.consultation_type });
       toast.success("تم إرسال طلب الاستشارة بنجاح!");
     }
   };
