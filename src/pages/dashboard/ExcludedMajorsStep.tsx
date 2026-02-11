@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -39,7 +40,7 @@ const FALLBACK_EXCLUDED: ExcludedMajor[] = [
 
 export default function ExcludedMajorsStep() {
   const navigate = useNavigate();
-  
+  const queryClient = useQueryClient();
   // State
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -97,10 +98,14 @@ export default function ExcludedMajorsStep() {
       if (session) {
         const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'excluded-majors').single();
         if (stepRow) {
-          await supabase.from('user_progress').update({
+          await supabase.from('user_progress').upsert({
+            user_id: session.user.id,
+            step_id: stepRow.id,
             status: 'completed',
             completed_at: new Date().toISOString()
-          }).eq('user_id', session.user.id).eq('step_id', stepRow.id);
+          }, { onConflict: 'user_id,step_id' });
+          queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
+          queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
         }
       }
       navigate('/dashboard/doubt-checkpoint');

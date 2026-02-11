@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -44,7 +45,7 @@ type ScreenType = 'scenario' | 'feedback' | 'reflection' | 'summary' | 'withdraw
 
 export default function SimulationStep() {
   const navigate = useNavigate();
-
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -100,7 +101,7 @@ export default function SimulationStep() {
         .maybeSingle();
 
       if (progress?.status === 'completed' || progress?.status === 'withdrawn') {
-        navigate('/dashboard/report');
+        navigate('/dashboard/post-impact');
         return;
       }
 
@@ -244,6 +245,8 @@ export default function SimulationStep() {
           },
           { onConflict: "user_id,step_id" }
         );
+        queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
+        queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
       }
     } catch {
       toast.error("خطأ في حفظ البيانات");
@@ -332,7 +335,7 @@ export default function SimulationStep() {
     }
     clearCurrentTimer();
     await persistAndFinish('completed');
-    navigate('/dashboard/report');
+    navigate('/dashboard/post-impact');
   };
 
   // --- RENDERING ---
