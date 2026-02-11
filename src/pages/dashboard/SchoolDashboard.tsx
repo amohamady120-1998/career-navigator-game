@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, School } from "lucide-react";
+import { Loader2, School, ShieldAlert } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import SchoolAnalytics from "@/components/SchoolAnalytics";
 
 export default function SchoolDashboard() {
   const navigate = useNavigate();
   const [schoolId, setSchoolId] = useState<string | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,13 +18,29 @@ export default function SchoolDashboard() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate("/auth"); return; }
 
-      const { data: membership } = await supabase
-        .from("user_school_membership")
-        .select("school_id")
+      // Derive school_id securely from school_admins table
+      const { data: schoolAdmin } = await supabase
+        .from("school_admins")
+        .select("school_id, role")
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      if (membership) setSchoolId(membership.school_id);
+      if (schoolAdmin) {
+        setSchoolId(schoolAdmin.school_id);
+      } else {
+        // Fallback: check user_school_membership (for backward compat)
+        const { data: membership } = await supabase
+          .from("user_school_membership")
+          .select("school_id")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+
+        if (membership) {
+          setSchoolId(membership.school_id);
+        } else {
+          setAccessDenied(true);
+        }
+      }
       setLoading(false);
     })();
   }, [navigate]);
@@ -45,7 +63,6 @@ export default function SchoolDashboard() {
     enabled: !!schoolId,
   });
 
-  // Students
   const { data: students } = useQuery({
     queryKey: ["school-students", schoolId],
     queryFn: async () => {
@@ -58,7 +75,6 @@ export default function SchoolDashboard() {
     enabled: !!schoolId,
   });
 
-  // Progress data - query user_progress for all school students
   const studentIds = students?.map(s => s.user_id) || [];
 
   const { data: rawProgress } = useQuery({
@@ -82,7 +98,6 @@ export default function SchoolDashboard() {
     },
   });
 
-  // Impact data
   const { data: impactRaw } = useQuery({
     queryKey: ["school-impact-raw", schoolId, studentIds.length],
     queryFn: async () => {
@@ -96,7 +111,6 @@ export default function SchoolDashboard() {
     enabled: !!schoolId && studentIds.length > 0,
   });
 
-  // Compute progress data for analytics component
   const progressData = (() => {
     if (!journeySteps || !rawProgress) return [];
     return journeySteps.map(step => {
@@ -111,7 +125,6 @@ export default function SchoolDashboard() {
     });
   })();
 
-  // Compute impact summary
   const impactData = (() => {
     if (!impactRaw) return null;
     const pre = impactRaw.filter(i => i.assessment_type === "pre");
@@ -126,7 +139,6 @@ export default function SchoolDashboard() {
     };
   })();
 
-  // Student progress map for CSV export
   const studentProgress = (() => {
     if (!rawProgress || !journeySteps) return undefined;
     const stepMap = new Map(journeySteps.map(s => [s.id, s.slug]));
@@ -150,13 +162,17 @@ export default function SchoolDashboard() {
     return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   }
 
-  if (!schoolId) {
+  if (accessDenied) {
     return (
       <div className="max-w-lg mx-auto p-6 text-center" dir="rtl">
         <Card>
           <CardContent className="py-12">
-            <School className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">لم يتم ربط حسابك بمدرسة بعد</p>
+            <ShieldAlert className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <p className="text-lg font-semibold mb-2">ليس لديك صلاحية</p>
+            <p className="text-muted-foreground mb-4">لم يتم ربط حسابك بمدرسة بعد. تواصل مع المشرف لتعيينك.</p>
+            <Button onClick={() => navigate("/dashboard")} variant="outline">
+              العودة للوحة الرئيسية
+            </Button>
           </CardContent>
         </Card>
       </div>
