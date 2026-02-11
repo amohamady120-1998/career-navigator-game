@@ -43,6 +43,7 @@ import CompletionNextStep from "./pages/dashboard/CompletionNextStep";
 import ActivateSchoolCode from "./pages/dashboard/ActivateSchoolCode";
 import SchoolDashboard from "./pages/dashboard/SchoolDashboard";
 import AdminSchools from "./pages/admin/AdminSchools";
+import AdminSchoolAdmins from "./pages/admin/AdminSchoolAdmins";
 import AdminSchoolOrders from "./pages/admin/AdminSchoolOrders";
 import AdminSchoolUsage from "./pages/admin/AdminSchoolUsage";
 import AdminSchoolReports from "./pages/admin/AdminSchoolReports";
@@ -106,6 +107,7 @@ const App = () => (
               <Route path="/admin/school-orders" element={<AdminSchoolOrders />} />
               <Route path="/admin/school-usage" element={<AdminSchoolUsage />} />
               <Route path="/admin/school-reports" element={<AdminSchoolReports />} />
+              <Route path="/admin/school-admins" element={<AdminSchoolAdmins />} />
               <Route path="/admin" element={<SuperAdminDashboard />} />
               <Route path="/share/report/:token" element={<SharedReport />} />
               <Route path="/verify/:code" element={<VerifyCertificate />} />
