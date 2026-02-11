@@ -54,6 +54,9 @@ import AdminHealthCheck from "./pages/admin/AdminHealthCheck";
 import { StepGuard } from "./components/StepGuard";
 import IntroVideo from "./pages/onboarding/IntroVideo";
 import NotFound from "./pages/NotFound";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import { ConsentGate } from "./components/ConsentGate";
 
 const queryClient = new QueryClient();
 
@@ -68,15 +71,17 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
               <Route path="/onboarding/intro-video" element={<IntroVideo />} />
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<IntroStep />} />
                 <Route path="payment" element={<PaymentStep />} />
                 <Route path="intro" element={<IntroStep />} />
                 <Route path="orientation" element={<OrientationStep />} />
-                <Route path="pre-impact" element={<StepGuard requiredStep="intro"><PreImpactStep /></StepGuard>} />
+                <Route path="pre-impact" element={<ConsentGate requiredStep="intro"><StepGuard requiredStep="intro"><PreImpactStep /></StepGuard></ConsentGate>} />
                 <Route path="pre-assessment" element={<PreAssessmentIntro />} />
-                <Route path="holland" element={<StepGuard requiredStep="pre-impact"><HollandAssessment /></StepGuard>} />
+                <Route path="holland" element={<ConsentGate requiredStep="pre-impact"><StepGuard requiredStep="pre-impact"><HollandAssessment /></StepGuard></ConsentGate>} />
                 <Route path="initial-report" element={<StepGuard requiredStep="holland"><InitialReportStep /></StepGuard>} />
                 <Route path="shortlist" element={<StepGuard requiredStep="initial-report"><ShortlistStep /></StepGuard>} />
                 <Route path="excluded-majors" element={<StepGuard requiredStep="shortlist"><ExcludedMajorsStep /></StepGuard>} />

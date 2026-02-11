@@ -956,6 +956,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_consents: {
+        Row: {
+          consent_version: string
+          consented_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          consent_version?: string
+          consented_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          consent_version?: string
+          consented_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_progress: {
         Row: {
           completed_at: string | null
