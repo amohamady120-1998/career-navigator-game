@@ -92,15 +92,15 @@ export default function DashboardLayout() {
     <>
       <PledgeModal open={showPledge} onAccept={handlePledgeAccept} />
       <SidebarProvider>
-        <div className="min-h-screen flex w-full">
+        <div className="min-h-screen flex flex-row-reverse w-full" dir="rtl">
           <AppSidebar />
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-w-0">
             <header className="h-14 flex items-center justify-between border-b border-border/60 px-4 bg-card/80 backdrop-blur-sm sticky top-0 z-30">
-              <div className="flex items-center">
+              <div className="flex items-center gap-3">
                 <SidebarTrigger aria-label="فتح/إغلاق القائمة">
                   <Menu className="w-5 h-5" />
                 </SidebarTrigger>
-                <h1 className="mr-4 font-extrabold text-lg">أثر البداية</h1>
+                <h1 className="font-extrabold text-lg">أثر البداية</h1>
               </div>
               <ThemeToggle />
             </header>

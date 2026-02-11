@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, BarChart3, Compass, Gamepad2, FileText, Lock, CheckCircle2, LogOut, ClipboardCheck, Settings, Award, Bot, AlertCircle, HelpCircle } from "lucide-react";
+import { BookOpen, BarChart3, Compass, Gamepad2, FileText, Lock, CheckCircle2, LogOut, Settings, Award, Bot, AlertCircle, HelpCircle, Search, ClipboardCheck, PlayCircle, ArrowLeftCircle } from "lucide-react";
 import atharLogoDark from "@/assets/athar-logo-dark.png";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,20 +17,23 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 
-const stepIcons: Record<string, typeof BookOpen> = {
-  intro: BookOpen,
-  "pre-impact": BarChart3,
-  holland: Compass,
-  "initial-report": FileText,
-  shortlist: Award,
-  "excluded-majors": AlertCircle,
-  "doubt-checkpoint": HelpCircle,
-  simulation: Gamepad2,
-  "post-impact": ClipboardCheck,
-  report: FileText,
-};
+// Ordered step config matching the required journey order
+const SIDEBAR_STEPS = [
+  { slug: "intro", labelAr: "المقدمة", icon: BookOpen },
+  { slug: "pre-impact", labelAr: "قياس الأثر القبلي", icon: BarChart3 },
+  { slug: "orientation", labelAr: "التهيئة", icon: PlayCircle },
+  { slug: "holland", labelAr: "اختبار هولند", icon: Compass },
+  { slug: "initial-report", labelAr: "التقرير المبدئي", icon: FileText },
+  { slug: "shortlist", labelAr: "ترتيب الاختيارات", icon: Award },
+  { slug: "excluded-majors", labelAr: "تخصصات أقل توافقًا", icon: AlertCircle },
+  { slug: "doubt-checkpoint", labelAr: "لحظة صدق", icon: HelpCircle },
+  { slug: "explore", labelAr: "استكشاف التخصص", icon: Search },
+  { slug: "simulation", labelAr: "المحاكاة المهنية", icon: Gamepad2 },
+  { slug: "post-impact", labelAr: "قياس الأثر البعدي", icon: ClipboardCheck },
+  { slug: "report", labelAr: "التقرير النهائي", icon: FileText },
+];
 
-const STEP_ORDER = ["intro", "pre-impact", "holland", "initial-report", "shortlist", "excluded-majors", "doubt-checkpoint", "simulation", "post-impact", "report"];
+const STEP_SLUGS = SIDEBAR_STEPS.map(s => s.slug);
 
 export function AppSidebar() {
   const navigate = useNavigate();
@@ -83,9 +86,10 @@ export function AppSidebar() {
   });
 
   const isStepUnlocked = (slug: string): boolean => {
-    const idx = STEP_ORDER.indexOf(slug);
+    const idx = STEP_SLUGS.indexOf(slug);
     if (idx === 0) return true;
-    const prevSlug = STEP_ORDER[idx - 1];
+    // "explore" is unlocked if doubt-checkpoint is done
+    const prevSlug = STEP_SLUGS[idx - 1];
     return completedSlugs?.includes(prevSlug) ?? false;
   };
 
@@ -101,19 +105,17 @@ export function AppSidebar() {
     navigate("/");
   };
 
-  // Calculate progress
   const completedCount = completedSlugs?.length ?? 0;
-  const totalSteps = STEP_ORDER.length;
+  const totalSteps = STEP_SLUGS.length;
   const progressPct = (completedCount / totalSteps) * 100;
 
   return (
-    <Sidebar className="border-l-0">
+    <Sidebar className="border-r-0 border-l border-sidebar-border" side="right">
       <SidebarContent>
         <div className="p-5 border-b border-sidebar-border flex items-center justify-center">
           <img src={atharLogoDark} alt="أثر البداية" className="h-14 object-contain" />
         </div>
 
-        {/* Progress indicator */}
         {hasPaid && (
           <div className="px-4 pt-4 pb-2">
             <div className="flex justify-between text-xs text-sidebar-foreground/50 mb-1.5">
@@ -138,14 +140,14 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {steps?.map((step) => {
-                const Icon = stepIcons[step.slug] || BookOpen;
-                const unlocked = hasPaid && isStepUnlocked(step.slug);
-                const completed = isStepCompleted(step.slug);
-                const path = `/dashboard/${step.slug}`;
+              {SIDEBAR_STEPS.map((item) => {
+                const Icon = item.icon;
+                const unlocked = hasPaid && isStepUnlocked(item.slug);
+                const completed = isStepCompleted(item.slug);
+                const path = `/dashboard/${item.slug}`;
 
                 return (
-                  <SidebarMenuItem key={step.id}>
+                  <SidebarMenuItem key={item.slug}>
                     <SidebarMenuButton
                       asChild
                       className={!unlocked ? "opacity-40 pointer-events-none" : "transition-all duration-200"}
@@ -153,7 +155,7 @@ export function AppSidebar() {
                       {!unlocked ? (
                         <div className="flex items-center gap-3 px-3 py-2.5">
                           <Lock className="w-4 h-4" />
-                          <span className="text-sm">{step.name_ar}</span>
+                          <span className="text-sm">{item.labelAr}</span>
                         </div>
                       ) : (
                         <NavLink
@@ -167,7 +169,7 @@ export function AppSidebar() {
                           ) : (
                             <Icon className="w-4 h-4 ml-3" />
                           )}
-                          <span className="text-sm">{step.name_ar}</span>
+                          <span className="text-sm">{item.labelAr}</span>
                         </NavLink>
                       )}
                     </SidebarMenuButton>
@@ -175,7 +177,7 @@ export function AppSidebar() {
                 );
               })}
 
-              {/* Certificate link */}
+              {/* Certificate */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
@@ -195,6 +197,31 @@ export function AppSidebar() {
                     >
                       <Award className="w-4 h-4 ml-3 text-accent" />
                       <span className="text-sm">الشهادة</span>
+                    </NavLink>
+                  )}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Next Step / Consultation */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className={!hasPaid || !reportCompleted ? "opacity-40 pointer-events-none" : "transition-all duration-200"}
+                >
+                  {!hasPaid || !reportCompleted ? (
+                    <div className="flex items-center gap-3 px-3 py-2.5">
+                      <Lock className="w-4 h-4" />
+                      <span className="text-sm">الخطوة التالية</span>
+                    </div>
+                  ) : (
+                    <NavLink
+                      to="/dashboard/next-step"
+                      end
+                      className="hover:bg-sidebar-accent/50 rounded-lg transition-colors duration-200"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
+                    >
+                      <ArrowLeftCircle className="w-4 h-4 ml-3 text-accent" />
+                      <span className="text-sm">الخطوة التالية</span>
                     </NavLink>
                   )}
                 </SidebarMenuButton>
