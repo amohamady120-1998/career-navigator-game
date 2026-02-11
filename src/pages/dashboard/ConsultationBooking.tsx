@@ -8,7 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, Phone } from "lucide-react";
+import { Loader2, CheckCircle, Phone, MessageCircle } from "lucide-react";
+
+// Team WhatsApp number (update with actual number)
+const TEAM_WHATSAPP = "966XXXXXXXXX";
 
 const CONSULTATION_TYPES = [
   { value: "career", label: "استشارة مهنية" },
@@ -16,6 +19,25 @@ const CONSULTATION_TYPES = [
   { value: "university_abroad", label: "قبول جامعي خارجي" },
   { value: "scholarship", label: "منح دراسية" },
 ];
+
+const getConsultationLabel = (value: string): string => {
+  return CONSULTATION_TYPES.find(t => t.value === value)?.label || value;
+};
+
+const generateWhatsAppLink = (userName: string, consultationType: string, whatsapp: string): string => {
+  const consultationLabel = getConsultationLabel(consultationType);
+  const message = `مرحبًا فريق أثر،
+
+أنا ${userName || 'طالب أثر'}.
+
+قدمت طلب استشارة (${consultationLabel}) عبر المنصة،
+
+وأرغب في تحديد موعد في أقرب وقت ممكن.
+
+رقمي للتأكيد: ${whatsapp}`;
+  
+  return `https://wa.me/${TEAM_WHATSAPP}?text=${encodeURIComponent(message)}`;
+};
 
 export default function ConsultationBooking() {
   const navigate = useNavigate();
@@ -81,16 +103,29 @@ export default function ConsultationBooking() {
   };
 
   if (submitted) {
+    const whatsappLink = generateWhatsAppLink(userName || "", formData.consultation_type, formData.whatsapp);
+    
     return (
       <div className="max-w-lg mx-auto p-6 text-center" dir="rtl">
         <Card>
-          <CardContent className="py-12 space-y-4">
-            <CheckCircle className="w-16 h-16 text-primary mx-auto" />
-            <h2 className="text-2xl font-bold">تم إرسال طلبك بنجاح!</h2>
-            <p className="text-muted-foreground">سيتواصل معك فريقنا عبر الواتساب قريبًا</p>
-            <Button onClick={() => navigate("/dashboard")} variant="outline">
-              العودة للرحلة
-            </Button>
+          <CardContent className="py-12 space-y-6">
+             <CheckCircle className="w-16 h-16 mx-auto" style={{ color: '#25D366' }} />
+             <div className="space-y-2">
+               <h2 className="text-2xl font-bold">تم إرسال طلبك بنجاح!</h2>
+               <p className="text-muted-foreground">سيتواصل معك فريقنا عبر الواتساب قريبًا</p>
+             </div>
+             
+             <div className="space-y-3 pt-4">
+               <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="block">
+                 <button className="w-full h-14 rounded-xl text-white text-base font-semibold transition-colors flex items-center justify-center gap-2" style={{ backgroundColor: '#25D366' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1fa857'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#25D366'}>
+                   <MessageCircle className="w-5 h-5" />
+                   فتح واتساب الآن
+                 </button>
+               </a>
+               <Button onClick={() => navigate("/dashboard")} variant="outline" className="w-full h-12 rounded-xl">
+                 العودة للوحة التحكم
+               </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
