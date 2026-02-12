@@ -102,28 +102,55 @@ export default function ShortlistStep() {
   };
 
   const handleContinue = async () => {
+    console.log('[ShortlistStep] Continue button clicked');
+    setIsSaving(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'shortlist').single();
-        if (stepRow) {
-          await supabase.from('user_progress')
-            .update({ status: 'completed', completed_at: new Date().toISOString() })
-            .eq('user_id', session.user.id)
-            .eq('step_id', stepRow.id);
-        }
-
-        // Also persist to student_shortlist table
-        await supabase.from('student_shortlist').upsert({
-          user_id: session.user.id,
-          major_ids: rankedIds,
-          ranking_ids: rankedIds,
-        }, { onConflict: 'user_id' });
+      if (!session) {
+        toast.error("يرجى تسجيل الدخول أولاً");
+        setIsSaving(false);
+        return;
       }
+
+      const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'shortlist').single();
+      if (stepRow) {
+        const { error: progressError } = await supabase.from('user_progress').upsert({
+          user_id: session.user.id,
+          step_id: stepRow.id,
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          meta_data: { ranking_json: rankedIds, completed_at: new Date().toISOString() }
+        }, { onConflict: 'user_id,step_id' });
+
+        if (progressError) {
+          console.error('[ShortlistStep] Progress save error:', progressError);
+          toast.error("خطأ أثناء حفظ التقدم");
+          setIsSaving(false);
+          return;
+        }
+        console.log('[ShortlistStep] Progress saved successfully');
+      }
+
+      const { error: shortlistError } = await supabase.from('student_shortlist').upsert({
+        user_id: session.user.id,
+        major_ids: rankedIds,
+        ranking_ids: rankedIds,
+      }, { onConflict: 'user_id' });
+
+      if (shortlistError) {
+        console.error('[ShortlistStep] Shortlist save error:', shortlistError);
+        toast.error("خطأ أثناء حفظ الترتيب");
+        setIsSaving(false);
+        return;
+      }
+
+      console.log('[ShortlistStep] Navigating to /dashboard/excluded-majors');
+      navigate('/dashboard/excluded-majors');
     } catch (e) {
-      console.error(e);
+      console.error('[ShortlistStep] Unexpected error:', e);
+      toast.error("حدث خطأ غير متوقع");
+      setIsSaving(false);
     }
-    navigate('/dashboard/excluded-majors');
   };
 
   // Navigates to the dynamic explore page using the DB UUID
@@ -249,7 +276,7 @@ export default function ShortlistStep() {
 
         {/* PRIMARY CTA */}
         <div className="pb-10">
-          <Button size="lg" className="w-full h-14 text-lg font-bold rounded-xl shadow-md transition-all active:scale-95" onClick={handleContinue}>
+          <Button type="button" size="lg" className="w-full h-14 text-lg font-bold rounded-xl shadow-md transition-all active:scale-95" onClick={handleContinue} disabled={isSaving}>
             {isSaving ? <Loader2 className="w-6 h-6 animate-spin" /> : "كمّل — شوف التخصصات الأقل توافقًا"}
             {!isSaving && <ArrowLeft className="w-5 h-5 mr-2" />}
           </Button>
