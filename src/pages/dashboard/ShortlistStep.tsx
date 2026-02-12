@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,6 +11,7 @@ type MajorOption = { id: string; title: string; reasons: string[]; tags?: string
 
 export default function ShortlistStep() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [majors, setMajors] = useState<MajorOption[]>([]);
@@ -144,7 +146,10 @@ export default function ShortlistStep() {
         return;
       }
 
-      console.log('[ShortlistStep] Navigating to /dashboard/excluded-majors');
+      // Invalidate StepGuard cache so the next page sees "shortlist" as completed
+      await queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
+      await queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
+      console.log('[ShortlistStep] Cache invalidated, navigating to /dashboard/excluded-majors');
       navigate('/dashboard/excluded-majors');
     } catch (e) {
       console.error('[ShortlistStep] Unexpected error:', e);
