@@ -51,13 +51,17 @@ export default function ExcludedMajorsStep() {
 
   // --- INITIALIZATION ---
   useEffect(() => {
+    const timeout = setTimeout(() => {
+      setExcludedMajors(FALLBACK_EXCLUDED);
+      setIsLoading(false);
+    }, 2000);
+
     const loadExcludedMajors = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return navigate('/auth');
+        if (!session) { clearTimeout(timeout); return navigate('/auth'); }
 
-        // Try to load from DB first, then localStorage, then fallback
-        const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'excluded-majors').single();
+        const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'excluded-majors').maybeSingle();
         
         let loadedMajors = FALLBACK_EXCLUDED;
         if (stepRow) {
@@ -70,7 +74,6 @@ export default function ExcludedMajorsStep() {
             loadedMajors = (progress.meta_data as any).excluded_majors;
           }
 
-          // Initialize step in DB
           await supabase.from('user_progress').upsert({
             user_id: session.user.id,
             step_id: stepRow.id,
@@ -79,16 +82,17 @@ export default function ExcludedMajorsStep() {
         }
 
         setExcludedMajors(loadedMajors);
-
       } catch (error) {
         console.error("Error loading excluded majors:", error);
-        toast.error("حدث خطأ في تحميل البيانات");
+        setExcludedMajors(FALLBACK_EXCLUDED);
       } finally {
+        clearTimeout(timeout);
         setIsLoading(false);
       }
     };
 
     loadExcludedMajors();
+    return () => clearTimeout(timeout);
   }, [navigate]);
 
   const handleContinue = async () => {

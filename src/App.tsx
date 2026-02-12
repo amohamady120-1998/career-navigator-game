@@ -98,6 +98,8 @@ const App = () => (
                 <Route path="explore" element={<StepGuard requiredStep="doubt-checkpoint"><ExploreMajorDynamic /></StepGuard>} />
                 <Route path="explore/:majorId" element={<StepGuard requiredStep="doubt-checkpoint"><ExploreMajorDatabase /></StepGuard>} />
                 <Route path="simulation" element={<StepGuard requiredStep="explore"><SimulationStep /></StepGuard>} />
+                <Route path="why-not" element={<StepGuard requiredStep="shortlist"><ExcludedMajorsStep /></StepGuard>} />
+                <Route path="checkpoint" element={<StepGuard requiredStep="excluded-majors"><DoubtCheckpointStep /></StepGuard>} />
                 <Route path="post-impact" element={<StepGuard requiredStep="simulation"><PostImpactAssessment /></StepGuard>} />
                 <Route path="report" element={<StepGuard requiredStep="post-impact"><ReportStep /></StepGuard>} />
                 <Route path="final-report" element={<StepGuard requiredStep="post-impact"><FinalReport /></StepGuard>} />

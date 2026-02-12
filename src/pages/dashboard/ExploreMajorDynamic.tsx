@@ -89,6 +89,7 @@ export default function ExploreMajorDynamic() {
   const storageKey = `athar_explore_${majorNameParam}`;
 
   useEffect(() => {
+    const timeout = setTimeout(() => setIsLoading(false), 2000);
     const loadProgress = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -105,7 +106,7 @@ export default function ExploreMajorDynamic() {
         }
 
         // Fetch the explore step UUID
-        const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'explore').single();
+        const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'explore').maybeSingle();
         if (stepRow) {
           setExploreStepId(stepRow.id);
           await supabase.from('user_progress').upsert({
@@ -117,10 +118,12 @@ export default function ExploreMajorDynamic() {
       } catch (error) {
         console.error("Error:", error);
       } finally {
+        clearTimeout(timeout);
         setIsLoading(false);
       }
     };
     loadProgress();
+    return () => clearTimeout(timeout);
   }, [navigate, majorNameParam, storageKey]);
 
   const saveProgress = (nextStage: number) => {
