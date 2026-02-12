@@ -77,17 +77,22 @@ export default function SimulationStep() {
   }, []);
 
   const loadProgress = async () => {
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+      setupScenario(0);
+    }, 2000);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return navigate('/auth');
+      if (!session) { clearTimeout(timeout); return navigate('/auth'); }
 
       const { data: step } = await supabase
         .from("journey_steps")
         .select("id")
         .eq("slug", "simulation")
-        .single();
+        .maybeSingle();
 
       if (!step) {
+        clearTimeout(timeout);
         setIsLoading(false);
         setupScenario(0);
         return;
@@ -101,11 +106,12 @@ export default function SimulationStep() {
         .maybeSingle();
 
       if (progress?.status === 'completed' || progress?.status === 'withdrawn') {
+        clearTimeout(timeout);
         navigate('/dashboard/post-impact');
         return;
       }
 
-      // Start fresh (no meta_data column in schema)
+      clearTimeout(timeout);
       setupScenario(0);
     } catch {
       toast.error("حدث خطأ في استرجاع البيانات");
