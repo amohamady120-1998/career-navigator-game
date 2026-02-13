@@ -96,25 +96,36 @@ export default function ExcludedMajorsStep() {
   }, [navigate]);
 
   const handleContinue = async () => {
+    console.log("[ExcludedMajors] NEXT_CLICKED");
     setIsSaving(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'excluded-majors').single();
         if (stepRow) {
-          await supabase.from('user_progress').upsert({
+          const { error } = await supabase.from('user_progress').upsert({
             user_id: session.user.id,
             step_id: stepRow.id,
             status: 'completed',
             completed_at: new Date().toISOString()
           }, { onConflict: 'user_id,step_id' });
-          queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
-          queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
+          if (error) {
+            console.error("[ExcludedMajors] SAVE_FAILED:", error);
+            toast.error("خطأ أثناء حفظ التقدم");
+            setIsSaving(false);
+            return;
+          }
+          console.log("[ExcludedMajors] SAVE_SUCCESS");
+          await queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
+          await queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
+          console.log("[ExcludedMajors] SIDEBAR_SYNC invalidated");
         }
       }
+      console.log("[ExcludedMajors] Navigating to /dashboard/doubt-checkpoint");
       navigate('/dashboard/doubt-checkpoint');
     } catch (e) {
-      console.error(e);
+      console.error("[ExcludedMajors] SAVE_FAILED:", e);
+      toast.error("حدث خطأ غير متوقع");
     } finally {
       setIsSaving(false);
     }
@@ -216,6 +227,7 @@ export default function ExcludedMajorsStep() {
 
         {/* 6) PRIMARY CTA */}
         <Button
+          type="button"
           size="lg"
           className="w-full h-14 text-lg font-bold rounded-xl shadow-md mb-10"
           onClick={handleContinue}

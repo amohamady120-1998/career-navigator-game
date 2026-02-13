@@ -7,7 +7,9 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-const STEP_ORDER = ["intro", "pre-impact", "orientation", "holland", "initial-report", "shortlist", "excluded-majors", "doubt-checkpoint", "explore", "simulation", "post-impact", "report"];
+import { STEP_SLUGS } from "@/lib/stepConfig";
+
+const STEP_ORDER = STEP_SLUGS;
 
 export default function DashboardLayout() {
   const navigate = useNavigate();

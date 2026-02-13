@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-
-const STEP_ORDER = ["intro", "pre-impact", "orientation", "holland", "initial-report", "shortlist", "excluded-majors", "doubt-checkpoint", "explore", "simulation", "post-impact", "report"];
+import { STEP_SLUGS } from "@/lib/stepConfig";
 
 interface StepGuardProps {
   requiredStep: string;
@@ -46,7 +45,8 @@ export function StepGuard({ requiredStep, children }: StepGuardProps) {
       setAllowed(true);
     } else {
       // Find the first incomplete step and redirect there
-      const firstIncomplete = STEP_ORDER.find((s) => !completedSlugs.includes(s)) || "intro";
+      const firstIncomplete = STEP_SLUGS.find((s) => !completedSlugs.includes(s)) || "intro";
+      console.log("[StepGuard] GUARD_BLOCKED — required:", requiredStep, "redirecting to:", firstIncomplete);
       navigate(`/dashboard/${firstIncomplete}`, { replace: true });
     }
   }, [completedSlugs, isLoading, requiredStep, navigate]);
