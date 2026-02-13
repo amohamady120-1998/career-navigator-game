@@ -25,9 +25,9 @@ const DOUBT_OPTIONS: DoubtOption[] = [
     icon: Sparkles,
     colorClass: "text-green-600",
     bgClass: "bg-green-50 border-green-200",
-    supportMessage: "ممتاز! ثقتك في اختيارك هي أقوى مؤشر للنجاح. يلا نكمّل ونجهّز تقريرك النهائي.",
-    ctaText: "اعرض تقريري النهائي",
-    nextRoute: "/dashboard/final-report"
+    supportMessage: "ممتاز! ثقتك في اختيارك هي أقوى مؤشر للنجاح. يلا نكمّل ونستكشف التخصص بشكل أعمق.",
+    ctaText: "استكشف التخصص",
+    nextRoute: "/dashboard/explore"
   },
   {
     id: 2,
@@ -35,9 +35,9 @@ const DOUBT_OPTIONS: DoubtOption[] = [
     icon: MessageCircleQuestion,
     colorClass: "text-blue-600",
     bgClass: "bg-blue-50 border-blue-200",
-    supportMessage: "طبيعي جداً! الأسئلة دي علامة وعي مش ضعف. تقدر تحجز استشارة مع مرشد مهني يساعدك.",
-    ctaText: "احجز استشارة",
-    nextRoute: "/dashboard/consultation"
+    supportMessage: "طبيعي جداً! الأسئلة دي علامة وعي مش ضعف. يلا نكمّل الاستكشاف وبعدها تقدر تحجز استشارة.",
+    ctaText: "كمّل الاستكشاف",
+    nextRoute: "/dashboard/explore"
   },
   {
     id: 3,
@@ -95,6 +95,7 @@ export default function DoubtCheckpointStep() {
 
   const handleContinue = async () => {
     if (!selectedId) return;
+    console.log("[DoubtCheckpoint] NEXT_CLICKED, selectedId:", selectedId);
     setIsSaving(true);
     const selected = DOUBT_OPTIONS.find(o => o.id === selectedId);
     try {
@@ -102,20 +103,31 @@ export default function DoubtCheckpointStep() {
       if (session && selected) {
         const { data: stepRow } = await supabase.from('journey_steps').select('id').eq('slug', 'doubt-checkpoint').maybeSingle();
         if (stepRow) {
-          await supabase.from('user_progress').upsert({
+          const { error } = await supabase.from('user_progress').upsert({
             user_id: session.user.id,
             step_id: stepRow.id,
             status: 'completed',
             completed_at: new Date().toISOString(),
             meta_data: { doubt_level: selected.id, label: selected.label }
           }, { onConflict: 'user_id,step_id' });
-          queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
-          queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
+          if (error) {
+            console.error("[DoubtCheckpoint] SAVE_FAILED:", error);
+            toast.error("خطأ أثناء حفظ التقدم");
+            setIsSaving(false);
+            return;
+          }
+          console.log("[DoubtCheckpoint] SAVE_SUCCESS");
+          await queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
+          await queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
+          console.log("[DoubtCheckpoint] SIDEBAR_SYNC invalidated");
         }
+        console.log("[DoubtCheckpoint] Navigating to:", selected.nextRoute);
         navigate(selected.nextRoute);
       }
-    } catch {
+    } catch (e) {
+      console.error("[DoubtCheckpoint] SAVE_FAILED:", e);
       toast.error("حدث خطأ، يرجى المحاولة مرة أخرى.");
+    } finally {
       setIsSaving(false);
     }
   };
@@ -182,6 +194,7 @@ export default function DoubtCheckpointStep() {
           <Card className="p-6 bg-accent/5 border border-accent/20 mb-10 shadow-sm animate-in fade-in">
             <p className="text-foreground leading-relaxed mb-6">{selectedOption.supportMessage}</p>
             <Button
+              type="button"
               size="lg"
               className="w-full h-14 text-lg font-bold rounded-xl shadow-md"
               onClick={handleContinue}

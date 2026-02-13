@@ -273,7 +273,10 @@ export default function OrientationStep() {
     setCurrentQuestionIndex(0);
   };
 
-  const handleCompleteAll = () => navigate("/dashboard/pre-impact");
+  const handleCompleteAll = () => {
+    console.log("[OrientationStep] NEXT_CLICKED → navigating to /dashboard/holland");
+    navigate("/dashboard/holland");
+  };
 
   // ── Loading ──
   if (isLoading) {
@@ -529,8 +532,8 @@ export default function OrientationStep() {
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
             لقد أتممت مرحلة التهيئة بنجاح. عقليتك الآن مستعدة لاتخاذ قرارات مبنية على أسس صحيحة.
           </p>
-          <Button className="btn-gradient font-bold h-14 px-10 text-lg rounded-xl" onClick={handleCompleteAll}>
-            ابدأ المقياس القبلي
+          <Button type="button" className="btn-gradient font-bold h-14 px-10 text-lg rounded-xl" onClick={handleCompleteAll}>
+            ابدأ اختبار هولند
           </Button>
         </motion.div>
       )}

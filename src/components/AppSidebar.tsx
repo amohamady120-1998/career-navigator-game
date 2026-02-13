@@ -5,6 +5,7 @@ import atharLogoDark from "@/assets/athar-logo-dark.png";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { JOURNEY_STEPS } from "@/lib/stepConfig";
 import {
   Sidebar,
   SidebarContent,
@@ -17,21 +18,31 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 
-// Ordered step config matching the required journey order
-const SIDEBAR_STEPS: { slug: string; labelAr: string; icon: any; customPath?: string }[] = [
-  { slug: "intro", labelAr: "المقدمة", icon: BookOpen },
-  { slug: "pre-impact", labelAr: "قياس الأثر القبلي", icon: BarChart3 },
-  { slug: "orientation", labelAr: "التهيئة", icon: PlayCircle },
-  { slug: "holland", labelAr: "اختبار هولند", icon: Compass },
-  { slug: "initial-report", labelAr: "التقرير المبدئي", icon: FileText },
-  { slug: "shortlist", labelAr: "ترتيب الاختيارات", icon: Award },
-  { slug: "excluded-majors", labelAr: "تخصصات أقل توافقًا", icon: AlertCircle },
-  { slug: "doubt-checkpoint", labelAr: "لحظة صدق", icon: HelpCircle },
-  { slug: "explore", labelAr: "استكشاف التخصص", icon: Search },
-  { slug: "simulation", labelAr: "المحاكاة المهنية", icon: Gamepad2 },
-  { slug: "post-impact", labelAr: "قياس الأثر البعدي", icon: ClipboardCheck },
-  { slug: "report", labelAr: "التقرير النهائي", icon: FileText, customPath: "/dashboard/final-report" },
-];
+// Map slugs to icons
+const SLUG_ICONS: Record<string, any> = {
+  "intro": BookOpen,
+  "pre-impact": BarChart3,
+  "orientation": PlayCircle,
+  "holland": Compass,
+  "initial-report": FileText,
+  "shortlist": Award,
+  "excluded-majors": AlertCircle,
+  "doubt-checkpoint": HelpCircle,
+  "explore": Search,
+  "simulation": Gamepad2,
+  "post-impact": ClipboardCheck,
+  "report": FileText,
+  "certificate": Award,
+  "next-step": ArrowLeftCircle,
+};
+
+// Build sidebar steps from centralized config
+const SIDEBAR_STEPS = JOURNEY_STEPS.map(s => ({
+  slug: s.slug,
+  labelAr: s.labelAr,
+  icon: SLUG_ICONS[s.slug] || BookOpen,
+  path: s.route,
+}));
 
 const STEP_SLUGS = SIDEBAR_STEPS.map(s => s.slug);
 
@@ -88,7 +99,6 @@ export function AppSidebar() {
   const isStepUnlocked = (slug: string): boolean => {
     const idx = STEP_SLUGS.indexOf(slug);
     if (idx === 0) return true;
-    // "explore" is unlocked if doubt-checkpoint is done
     const prevSlug = STEP_SLUGS[idx - 1];
     return completedSlugs?.includes(prevSlug) ?? false;
   };
@@ -96,8 +106,6 @@ export function AppSidebar() {
   const isStepCompleted = (slug: string): boolean => {
     return completedSlugs?.includes(slug) ?? false;
   };
-
-  const reportCompleted = completedSlugs?.includes("report") ?? false;
 
   const handleLogout = async () => {
     localStorage.removeItem("athar_pledge_accepted");
@@ -144,7 +152,6 @@ export function AppSidebar() {
                 const Icon = item.icon;
                 const unlocked = hasPaid && isStepUnlocked(item.slug);
                 const completed = isStepCompleted(item.slug);
-                const path = item.customPath || `/dashboard/${item.slug}`;
 
                 return (
                   <SidebarMenuItem key={item.slug}>
@@ -159,7 +166,7 @@ export function AppSidebar() {
                         </div>
                       ) : (
                         <NavLink
-                          to={path}
+                          to={item.path}
                           end
                           className="hover:bg-sidebar-accent/50 rounded-lg transition-colors duration-200"
                           activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
@@ -176,56 +183,6 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
-
-              {/* Certificate */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className={!hasPaid || !reportCompleted ? "opacity-40 pointer-events-none" : "transition-all duration-200"}
-                >
-                  {!hasPaid || !reportCompleted ? (
-                    <div className="flex items-center gap-3 px-3 py-2.5">
-                      <Lock className="w-4 h-4" />
-                      <span className="text-sm">الشهادة</span>
-                    </div>
-                  ) : (
-                    <NavLink
-                      to="/dashboard/certificate"
-                      end
-                      className="hover:bg-sidebar-accent/50 rounded-lg transition-colors duration-200"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
-                    >
-                      <Award className="w-4 h-4 ml-3 text-accent" />
-                      <span className="text-sm">الشهادة</span>
-                    </NavLink>
-                  )}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {/* Next Step / Consultation */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className={!hasPaid || !reportCompleted ? "opacity-40 pointer-events-none" : "transition-all duration-200"}
-                >
-                  {!hasPaid || !reportCompleted ? (
-                    <div className="flex items-center gap-3 px-3 py-2.5">
-                      <Lock className="w-4 h-4" />
-                      <span className="text-sm">الخطوة التالية</span>
-                    </div>
-                  ) : (
-                    <NavLink
-                      to="/dashboard/next-step"
-                      end
-                      className="hover:bg-sidebar-accent/50 rounded-lg transition-colors duration-200"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
-                    >
-                      <ArrowLeftCircle className="w-4 h-4 ml-3 text-accent" />
-                      <span className="text-sm">الخطوة التالية</span>
-                    </NavLink>
-                  )}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
