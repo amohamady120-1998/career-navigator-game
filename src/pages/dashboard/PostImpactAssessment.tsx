@@ -121,7 +121,7 @@ export default function PostImpactAssessment() {
 
     toast({ title: "تم الحفظ ✓", description: "تم حفظ إجاباتك بنجاح" });
     setCompleted(true);
-    setTimeout(() => navigate("/dashboard/report"), 1500);
+    setTimeout(() => navigate("/dashboard/final-report"), 1500);
   };
 
   if (completed) {
