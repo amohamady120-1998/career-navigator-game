@@ -156,8 +156,8 @@ export default function ExploreMajorDynamic() {
           status: 'completed',
           completed_at: new Date().toISOString()
         }, { onConflict: 'user_id,step_id' });
-        queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
-        queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
+        queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] });
+
       }
       toast.success("تم استكشاف التخصص بنجاح!");
       navigate('/dashboard/simulation');

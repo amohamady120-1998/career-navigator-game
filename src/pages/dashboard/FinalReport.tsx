@@ -194,8 +194,8 @@ export default function FinalReport() {
           { user_id: session.user.id, step_id: step.id, status: "completed", completed_at: new Date().toISOString() },
           { onConflict: "user_id,step_id" }
         );
-        queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
-        queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
+        queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] });
+
       }
 
       // Upsert final_reports payload

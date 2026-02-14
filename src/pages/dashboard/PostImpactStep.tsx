@@ -59,8 +59,8 @@ export default function PostImpactStep() {
       }, { onConflict: "user_id,step_id" });
     }
 
-    await queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
-    await queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
+    await queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] });
+
     toast({ title: "تم الحفظ ✓", description: "تم حفظ إجاباتك بنجاح" });
     setCompleted(true);
     setTimeout(() => navigate("/dashboard/report"), 1500);

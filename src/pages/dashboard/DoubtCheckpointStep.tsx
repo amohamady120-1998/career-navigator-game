@@ -117,8 +117,8 @@ export default function DoubtCheckpointStep() {
             return;
           }
           console.log("[DoubtCheckpoint] SAVE_SUCCESS");
-          await queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
-          await queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
+          await queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] });
+
           console.log("[DoubtCheckpoint] SIDEBAR_SYNC invalidated");
         }
         console.log("[DoubtCheckpoint] Navigating to:", selected.nextRoute);

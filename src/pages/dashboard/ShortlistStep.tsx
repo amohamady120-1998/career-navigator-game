@@ -147,8 +147,8 @@ export default function ShortlistStep() {
       }
 
       // Invalidate StepGuard cache so the next page sees "shortlist" as completed
-      await queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
-      await queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
+      await queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] });
+
       console.log('[ShortlistStep] Cache invalidated, navigating to /dashboard/excluded-majors');
       navigate('/dashboard/excluded-majors');
     } catch (e) {

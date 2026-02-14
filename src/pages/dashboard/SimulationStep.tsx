@@ -248,8 +248,8 @@ export default function SimulationStep() {
           },
           { onConflict: "user_id,step_id" }
         );
-        queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
-        queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
+        queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] });
+
       }
     } catch {
       toast.error("خطأ في حفظ البيانات");

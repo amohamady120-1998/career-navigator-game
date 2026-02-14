@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, BarChart3, Compass, Gamepad2, FileText, Lock, CheckCircle2, LogOut, Settings, Award, Bot, AlertCircle, HelpCircle, Search, ClipboardCheck, PlayCircle, ArrowLeftCircle, UserCircle } from "lucide-react";
 import atharLogoDark from "@/assets/athar-logo-dark.png";
@@ -6,6 +5,7 @@ import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { JOURNEY_STEPS } from "@/lib/stepConfig";
+import { useJourney } from "@/hooks/use-journey";
 import {
   Sidebar,
   SidebarContent,
@@ -48,53 +48,7 @@ const STEP_SLUGS = SIDEBAR_STEPS.map(s => s.slug);
 
 export function AppSidebar() {
   const navigate = useNavigate();
-
-  const { data: profile } = useQuery({
-    queryKey: ["sidebar-profile"],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return null;
-      const { data } = await supabase
-        .from("profiles")
-        .select("has_paid")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-      return data;
-    },
-  });
-
-  const hasPaid = (profile as any)?.has_paid ?? false;
-
-  const { data: steps } = useQuery({
-    queryKey: ["journey-steps"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("journey_steps")
-        .select("*")
-        .order("order_index");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: completedSlugs } = useQuery({
-    queryKey: ["user-progress-slugs"],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return [];
-      const { data, error } = await supabase
-        .from("user_progress")
-        .select("step_id, status")
-        .eq("user_id", session.user.id)
-        .eq("status", "completed");
-      if (error) return [];
-
-      if (!steps) return [];
-      const completedStepIds = new Set(data.map(p => p.step_id));
-      return steps.filter(s => completedStepIds.has(s.id)).map(s => s.slug);
-    },
-    enabled: !!steps,
-  });
+  const { profile, completedSlugs } = useJourney();
 
   const isStepUnlocked = (slug: string): boolean => {
     const idx = STEP_SLUGS.indexOf(slug);
@@ -144,6 +98,7 @@ export function AppSidebar() {
             </div>
           </div>
         )}
+
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/40 text-xs font-semibold tracking-wide">
