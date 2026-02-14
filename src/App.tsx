@@ -58,6 +58,7 @@ import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import { ConsentGate } from "./components/ConsentGate";
+import AdminRoute from "./components/AdminRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -122,18 +123,18 @@ const App = () => (
                 <Route index element={<InstitutionDashboard />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
-              <Route path="/admin/explore-manager" element={<AdminExploreManager />} />
-              <Route path="/admin/consultations" element={<AdminConsultations />} />
-              <Route path="/admin/schools" element={<AdminSchools />} />
-              <Route path="/admin/school-orders" element={<AdminSchoolOrders />} />
-              <Route path="/admin/school-usage" element={<AdminSchoolUsage />} />
-              <Route path="/admin/school-reports" element={<AdminSchoolReports />} />
-              <Route path="/admin/school-admins" element={<AdminSchoolAdmins />} />
-              <Route path="/admin/notifications" element={<AdminNotifications />} />
-              <Route path="/admin/analytics" element={<AdminAnalytics />} />
-              <Route path="/admin/errors" element={<AdminErrors />} />
-              <Route path="/admin/health-check" element={<AdminHealthCheck />} />
-              <Route path="/admin" element={<SuperAdminDashboard />} />
+              <Route path="/admin/explore-manager" element={<AdminRoute><AdminExploreManager /></AdminRoute>} />
+              <Route path="/admin/consultations" element={<AdminRoute><AdminConsultations /></AdminRoute>} />
+              <Route path="/admin/schools" element={<AdminRoute><AdminSchools /></AdminRoute>} />
+              <Route path="/admin/school-orders" element={<AdminRoute><AdminSchoolOrders /></AdminRoute>} />
+              <Route path="/admin/school-usage" element={<AdminRoute><AdminSchoolUsage /></AdminRoute>} />
+              <Route path="/admin/school-reports" element={<AdminRoute><AdminSchoolReports /></AdminRoute>} />
+              <Route path="/admin/school-admins" element={<AdminRoute><AdminSchoolAdmins /></AdminRoute>} />
+              <Route path="/admin/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
+              <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+              <Route path="/admin/errors" element={<AdminRoute><AdminErrors /></AdminRoute>} />
+              <Route path="/admin/health-check" element={<AdminRoute><AdminHealthCheck /></AdminRoute>} />
+              <Route path="/admin" element={<AdminRoute><SuperAdminDashboard /></AdminRoute>} />
               <Route path="/share/report/:token" element={<SharedReport />} />
               <Route path="/verify/:code" element={<VerifyCertificate />} />
               <Route path="*" element={<NotFound />} />

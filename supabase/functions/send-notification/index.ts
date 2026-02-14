@@ -12,6 +12,16 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Validate caller is using service role key (only triggers should call this)
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    if (!authHeader || !authHeader.includes(serviceRoleKey)) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const payload = await req.json();
     const eventKey = payload.event_key;
 
