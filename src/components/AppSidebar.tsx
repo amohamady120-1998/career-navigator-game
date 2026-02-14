@@ -99,6 +99,9 @@ export function AppSidebar() {
   const isStepUnlocked = (slug: string): boolean => {
     const idx = STEP_SLUGS.indexOf(slug);
     if (idx === 0) return true;
+    // If this step is already completed, it's obviously unlocked
+    if (completedSlugs?.includes(slug)) return true;
+    // Unlock if previous step is completed
     const prevSlug = STEP_SLUGS[idx - 1];
     return completedSlugs?.includes(prevSlug) ?? false;
   };
@@ -124,7 +127,7 @@ export function AppSidebar() {
           <img src={atharLogoDark} alt="أثر البداية" className="h-14 object-contain" />
         </div>
 
-        {hasPaid && (
+        {completedCount > 0 && (
           <div className="px-4 pt-4 pb-2">
             <div className="flex justify-between text-xs text-sidebar-foreground/50 mb-1.5">
               <span>التقدم</span>
@@ -150,7 +153,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {SIDEBAR_STEPS.map((item) => {
                 const Icon = item.icon;
-                const unlocked = hasPaid && isStepUnlocked(item.slug);
+                const unlocked = isStepUnlocked(item.slug);
                 const completed = isStepCompleted(item.slug);
 
                 return (
