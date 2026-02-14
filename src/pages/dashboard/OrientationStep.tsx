@@ -249,8 +249,8 @@ export default function OrientationStep() {
           { onConflict: "user_id,step_id" },
         );
         localStorage.removeItem(`orientation_progress_${userId}`);
-        await queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
-        await queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
+        await queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] });
+
         toast.success("أكملت مرحلة التهيئة بنجاح!");
       }
     }

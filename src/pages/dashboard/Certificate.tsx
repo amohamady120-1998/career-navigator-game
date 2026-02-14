@@ -113,8 +113,8 @@ export default function Certificate() {
           status: "completed",
           completed_at: new Date().toISOString(),
         }, { onConflict: "user_id,step_id" });
-        queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
-        queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
+        queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] });
+
       }
 
       toast.success("تم إصدار الشهادة بنجاح!");

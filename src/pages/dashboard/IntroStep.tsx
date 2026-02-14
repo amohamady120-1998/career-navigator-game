@@ -35,8 +35,8 @@ export default function IntroStep() {
         }, { onConflict: "user_id,step_id" });
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
-      await queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
+      await queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] });
+
       navigate("/dashboard/pre-impact");
     } catch (err) {
       toast({ title: "خطأ", description: "حدث خطأ غير متوقع", variant: "destructive" });

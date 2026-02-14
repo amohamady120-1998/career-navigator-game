@@ -116,8 +116,8 @@ export default function ExcludedMajorsStep() {
             return;
           }
           console.log("[ExcludedMajors] SAVE_SUCCESS");
-          await queryClient.invalidateQueries({ queryKey: ["step-guard-progress"] });
-          await queryClient.invalidateQueries({ queryKey: ["user-progress-slugs"] });
+          await queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] });
+
           console.log("[ExcludedMajors] SIDEBAR_SYNC invalidated");
         }
       }
