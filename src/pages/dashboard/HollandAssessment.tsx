@@ -186,6 +186,29 @@ export default function HollandAssessment() {
     );
   }
 
+  const handleRetakeTest = async () => {
+    if (!userId) return;
+    setIsSaving(true);
+    try {
+      // Delete existing answers for holland questions
+      const questionIds = questions.map(q => q.id);
+      for (const qId of questionIds) {
+        await supabase.from("answers").delete().eq("user_id", userId).eq("question_id", qId);
+      }
+      // Reset local state
+      setAnswers({});
+      setTimeSpent({});
+      setCurrentIndex(0);
+      setIsCompleted(false);
+      localStorage.removeItem(`holland_time_${userId}`);
+      toast.success("تم إعادة تعيين الاختبار، يمكنك البدء من جديد");
+    } catch {
+      toast.error("حدث خطأ أثناء إعادة التعيين");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (isCompleted) {
     return (
       <motion.div
@@ -200,9 +223,20 @@ export default function HollandAssessment() {
         <p className="text-muted-foreground mb-8 max-w-md">
           شكرًا لصراحتك. لقد تم جمع إجاباتك بنجاح ونحن الآن نقوم بتحليل ميولك المهنية.
         </p>
-        <Button onClick={() => navigate("/dashboard/initial-report")} className="btn-gradient rounded-xl h-12 px-10 text-base">
-          انتقل للخطوة التالية
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button onClick={() => navigate("/dashboard/initial-report")} className="btn-gradient rounded-xl h-12 px-10 text-base">
+            كمّل وشوف تقريرك المبدئي
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleRetakeTest}
+            disabled={isSaving}
+            className="rounded-xl h-12 px-8 text-base gap-2"
+          >
+            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+            إعادة الاختبار
+          </Button>
+        </div>
       </motion.div>
     );
   }
