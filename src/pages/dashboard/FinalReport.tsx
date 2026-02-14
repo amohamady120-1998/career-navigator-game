@@ -150,20 +150,56 @@ export default function FinalReport() {
     },
   });
 
-  // 8. Simulation analysis
+  // 8. Simulation analysis (try DB first, then fallback to meta_data)
   const { data: simAnalysis } = useQuery({
     queryKey: ["final-simulation"],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return null;
+      
+      // Try simulation_responses table first
       const { data: responses } = await supabase.from("simulation_responses").select("selected_option_id, scenario_id").eq("user_id", session.user.id);
-      if (!responses?.length) return null;
-      const scenarioIds = [...new Set(responses.map(r => r.scenario_id))];
-      const { data: scenarios } = await supabase.from("simulation_scenarios").select("id, major_id, options_json").in("id", scenarioIds);
-      if (!scenarios?.length) return null;
-      const traitScores = analyzeSimulationTraits(responses, scenarios);
-      const completedMajors = [...new Set(scenarios.map(s => s.major_id))];
-      return { traitScores, totalResponses: responses.length, completedMajors };
+      if (responses?.length) {
+        const scenarioIds = [...new Set(responses.map(r => r.scenario_id))];
+        const { data: scenarios } = await supabase.from("simulation_scenarios").select("id, major_id, options_json").in("id", scenarioIds);
+        if (scenarios?.length) {
+          const traitScores = analyzeSimulationTraits(responses, scenarios);
+          const completedMajors = [...new Set(scenarios.map(s => s.major_id))];
+          return { traitScores, totalResponses: responses.length, completedMajors };
+        }
+      }
+      
+      // Fallback: read from user_progress meta_data for simulation step
+      const { data: step } = await supabase.from("journey_steps").select("id").eq("slug", "simulation").maybeSingle();
+      if (!step) return null;
+      const { data: progress } = await supabase.from("user_progress").select("meta_data").eq("user_id", session.user.id).eq("step_id", step.id).maybeSingle();
+      if (!progress?.meta_data) return null;
+      
+      const meta = progress.meta_data as any;
+      if (!meta.total_responses || meta.total_responses === 0) return null;
+      
+      // Build trait scores from meta_data trait_counts
+      const traitCounts = meta.trait_counts as Record<string, number> || {};
+      const TRAIT_MAP: Record<string, { label: string; key: string }> = {
+        action: { key: "leadership", label: "القيادة والمبادرة" },
+        analytical: { key: "analytical", label: "التحليل والمنطق" },
+        cautious: { key: "compliance", label: "الحذر والالتزام" },
+        seek_info: { key: "analytical", label: "التحليل والمنطق" },
+        risk: { key: "risk_action", label: "الجرأة والمخاطرة" },
+        safe: { key: "compliance", label: "الحذر والالتزام" },
+      };
+      
+      const scoreMap: Record<string, { key: string; label: string; score: number }> = {};
+      Object.entries(traitCounts).forEach(([trait, count]) => {
+        const mapped = TRAIT_MAP[trait];
+        if (mapped) {
+          if (!scoreMap[mapped.key]) scoreMap[mapped.key] = { key: mapped.key, label: mapped.label, score: 0 };
+          scoreMap[mapped.key].score += count;
+        }
+      });
+      
+      const traitScores = Object.values(scoreMap).sort((a, b) => b.score - a.score);
+      return { traitScores, totalResponses: meta.total_responses, completedMajors: [] };
     },
   });
 
