@@ -105,11 +105,8 @@ export default function SimulationStep() {
         .eq('step_id', step.id)
         .maybeSingle();
 
-      if (progress?.status === 'completed' || progress?.status === 'withdrawn') {
-        clearTimeout(timeout);
-        navigate('/dashboard/post-impact');
-        return;
-      }
+      // If already completed, still show the simulation (don't auto-redirect)
+      // User can redo or review it
 
       clearTimeout(timeout);
       setupScenario(0);
