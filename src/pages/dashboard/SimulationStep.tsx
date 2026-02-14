@@ -238,6 +238,26 @@ export default function SimulationStep() {
         .eq("slug", "simulation")
         .single();
 
+      // Compute metrics to save in meta_data for the final report
+      const metrics = computeMetrics(answers);
+      const traitCounts: Record<string, number> = {};
+      Object.keys(answers).forEach(key => {
+        const a = answers[key];
+        const q = SCENARIOS.find(s => s.id === key);
+        if (a.choice !== null && q) {
+          const trait = q.options[a.choice]?.trait;
+          if (trait) traitCounts[trait] = (traitCounts[trait] || 0) + 1;
+        }
+      });
+
+      const metaData = {
+        ...metrics,
+        trait_counts: traitCounts,
+        total_responses: Object.keys(answers).length,
+        reflections,
+        attempted_withdrawal: attemptedWithdrawal,
+      };
+
       if (step) {
         await supabase.from('user_progress').upsert(
           {
@@ -245,11 +265,48 @@ export default function SimulationStep() {
             step_id: step.id,
             status,
             completed_at: new Date().toISOString(),
+            meta_data: metaData,
           },
           { onConflict: "user_id,step_id" }
         );
         queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] });
+      }
 
+      // Also save individual responses to simulation_responses using DB scenarios
+      // Fetch DB scenarios to map by level
+      const { data: dbScenarios } = await supabase
+        .from("simulation_scenarios")
+        .select("id, level, options_json");
+      
+      if (dbScenarios && dbScenarios.length > 0) {
+        const responseInserts: { user_id: string; scenario_id: string; selected_option_id: string; rationale_text: string }[] = [];
+        
+        Object.entries(answers).forEach(([scenarioKey, answerData]) => {
+          if (answerData.choice === null) return;
+          const localScenario = SCENARIOS.find(s => s.id === scenarioKey);
+          if (!localScenario) return;
+          
+          // Try to find a matching DB scenario by stage/level
+          const levelStr = String(localScenario.stage);
+          const matchingDbScenario = dbScenarios.find(ds => ds.level === levelStr);
+          
+          if (matchingDbScenario) {
+            const options = matchingDbScenario.options_json as { id?: string; text?: string }[];
+            const optionId = options?.[answerData.choice]?.id || String(answerData.choice);
+            responseInserts.push({
+              user_id: session.user.id,
+              scenario_id: matchingDbScenario.id,
+              selected_option_id: optionId,
+              rationale_text: answerData.reasoning || "",
+            });
+          }
+        });
+
+        if (responseInserts.length > 0) {
+          await supabase.from("simulation_responses").upsert(responseInserts, {
+            onConflict: "user_id,scenario_id"
+          });
+        }
       }
     } catch {
       toast.error("خطأ في حفظ البيانات");
