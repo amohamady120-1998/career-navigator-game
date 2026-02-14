@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Users, Award, TrendingUp, Download, BarChart3, CheckCircle } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from "recharts";
 
 // Step display order for the funnel
 const FUNNEL_STEPS = [
@@ -179,7 +180,35 @@ export default function SchoolAnalytics({
         </Card>
       </div>
 
-      {/* Funnel */}
+      {/* Funnel Bar Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <BarChart3 className="w-5 h-5" /> تقدم الطلاب عبر المراحل
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={funnelData} layout="vertical" margin={{ right: 20, left: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+              <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} fontSize={12} />
+              <YAxis type="category" dataKey="label" width={120} fontSize={12} tick={{ fill: "hsl(var(--foreground))" }} />
+              <Tooltip
+                formatter={(value: number) => [`${value}%`, "نسبة الإكمال"]}
+                contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, direction: "rtl" }}
+                labelStyle={{ color: "hsl(var(--foreground))" }}
+              />
+              <Bar dataKey="pct" radius={[0, 6, 6, 0]} maxBarSize={28}>
+                {funnelData.map((_, i) => (
+                  <Cell key={i} fill={`hsl(var(--primary) / ${0.4 + (i / funnelData.length) * 0.6})`} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Funnel Table */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
@@ -224,7 +253,7 @@ export default function SchoolAnalytics({
         </CardContent>
       </Card>
 
-      {/* Impact Section */}
+      {/* Impact Chart */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
@@ -232,7 +261,30 @@ export default function SchoolAnalytics({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {hasImpactScores ? (
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart
+                data={[
+                  { name: "القياس القبلي", score: Math.round(impactData!.avg_pre_score! * 10) / 10 },
+                  { name: "القياس البعدي", score: Math.round(impactData!.avg_post_score! * 10) / 10 },
+                ]}
+                margin={{ top: 10, right: 20, left: 10, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" fontSize={13} tick={{ fill: "hsl(var(--foreground))" }} />
+                <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} fontSize={12} />
+                <Tooltip
+                  formatter={(value: number) => [`${value}%`, "المتوسط"]}
+                  contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, direction: "rtl" }}
+                />
+                <Bar dataKey="score" radius={[8, 8, 0, 0]} maxBarSize={60}>
+                  <Cell fill="hsl(var(--muted-foreground) / 0.5)" />
+                  <Cell fill="hsl(var(--primary))" />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : null}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
             <div className="text-center p-4 border rounded-lg">
               <p className="text-sm text-muted-foreground mb-1">أكملوا القبلي</p>
               <p className="text-2xl font-bold">{impactData?.count_pre_completed || 0}</p>

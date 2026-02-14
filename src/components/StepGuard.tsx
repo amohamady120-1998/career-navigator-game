@@ -17,7 +17,17 @@ export function StepGuard({ requiredStep, children }: StepGuardProps) {
   useEffect(() => {
     if (isLoading || !completedSlugs || !session) return;
 
-    if (completedSlugs.includes(requiredStep)) {
+    const stepIndex = STEP_SLUGS.indexOf(requiredStep);
+    
+    // First step is always accessible
+    if (stepIndex === 0) {
+      setAllowed(true);
+      return;
+    }
+
+    // Allow if this step is already completed OR previous step is completed
+    const prevSlug = STEP_SLUGS[stepIndex - 1];
+    if (completedSlugs.includes(requiredStep) || completedSlugs.includes(prevSlug)) {
       setAllowed(true);
     } else {
       // Find the first incomplete step and redirect there
