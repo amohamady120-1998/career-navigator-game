@@ -216,15 +216,15 @@ const Index = () => {
       {/* ── Secondary Links ── */}
       <section className="px-5 pb-8 relative z-10">
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-primary-foreground/50">
-          <button className="hover:text-primary-foreground/80 transition-colors hover-underline">
+          <button onClick={() => navigate("/auth?next=/dashboard/activate")} className="hover:text-primary-foreground/80 transition-colors hover-underline">
             لديك كود تفعيل؟
           </button>
           <span className="hidden sm:inline text-primary-foreground/20">|</span>
-          <button className="hover:text-primary-foreground/80 transition-colors hover-underline">
+          <button onClick={() => navigate("/auth?next=/dashboard/activate")} className="hover:text-primary-foreground/80 transition-colors hover-underline">
             لديك رابط تفعيل من ولي الأمر؟
           </button>
           <span className="hidden sm:inline text-primary-foreground/20">|</span>
-          <button className="hover:text-primary-foreground/80 transition-colors hover-underline">
+          <button onClick={() => navigate("/contact")} className="hover:text-primary-foreground/80 transition-colors hover-underline">
             تواصل معنا
           </button>
         </div>
@@ -237,8 +237,8 @@ const Index = () => {
             © {new Date().getFullYear()} أثر البداية بواسطة Uniex. جميع الحقوق محفوظة.
           </p>
           <div className="flex items-center gap-4 text-xs text-primary-foreground/35">
-            <button className="hover:text-primary-foreground/60 transition-colors">سياسة الخصوصية</button>
-            <button className="hover:text-primary-foreground/60 transition-colors">الشروط والأحكام</button>
+            <button onClick={() => navigate("/privacy")} className="hover:text-primary-foreground/60 transition-colors">سياسة الخصوصية</button>
+            <button onClick={() => navigate("/terms")} className="hover:text-primary-foreground/60 transition-colors">الشروط والأحكام</button>
           </div>
         </div>
       </footer>
