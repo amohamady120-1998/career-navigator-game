@@ -547,6 +547,39 @@ export type Database = {
         }
         Relationships: []
       }
+      parent_activation_tokens: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          parent_user_id: string
+          status: string
+          token: string
+          used_at: string | null
+          used_by_user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          parent_user_id: string
+          status?: string
+          token: string
+          used_at?: string | null
+          used_by_user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          parent_user_id?: string
+          status?: string
+          token?: string
+          used_at?: string | null
+          used_by_user_id?: string | null
+        }
+        Relationships: []
+      }
       parent_child_links: {
         Row: {
           child_user_id: string
@@ -565,6 +598,33 @@ export type Database = {
           created_at?: string
           id?: string
           parent_user_id?: string
+        }
+        Relationships: []
+      }
+      parent_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          parent_user_id: string
+          payload: Json
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          parent_user_id: string
+          payload?: Json
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          parent_user_id?: string
+          payload?: Json
+          type?: string
         }
         Relationships: []
       }
@@ -1163,6 +1223,10 @@ export type Database = {
     Functions: {
       activate_school_code: { Args: { p_code: string }; Returns: Json }
       calculate_holland_scores: { Args: { _user_id: string }; Returns: Json }
+      consume_parent_activation_token: {
+        Args: { p_token: string }
+        Returns: Json
+      }
       get_holland_code: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {

@@ -59,6 +59,8 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import { ConsentGate } from "./components/ConsentGate";
 import AdminRoute from "./components/AdminRoute";
+import ParentActivationConsume from "./pages/activate/ParentActivationConsume";
+import ContactUs from "./pages/ContactUs";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -135,6 +137,8 @@ const App = () => (
               <Route path="/admin/errors" element={<AdminRoute><AdminErrors /></AdminRoute>} />
               <Route path="/admin/health-check" element={<AdminRoute><AdminHealthCheck /></AdminRoute>} />
               <Route path="/admin" element={<AdminRoute><SuperAdminDashboard /></AdminRoute>} />
+              <Route path="/activate/parent/:token" element={<ParentActivationConsume />} />
+              <Route path="/contact" element={<ContactUs />} />
               <Route path="/share/report/:token" element={<SharedReport />} />
               <Route path="/verify/:code" element={<VerifyCertificate />} />
               <Route path="*" element={<NotFound />} />
