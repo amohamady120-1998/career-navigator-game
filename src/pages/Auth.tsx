@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,8 @@ const Auth = () => {
   const [schoolName, setSchoolName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextPath = searchParams.get("next");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -27,6 +29,12 @@ const Auth = () => {
   }, []);
 
   const redirectByRole = async (userId: string) => {
+    // If ?next= is provided, go there directly
+    if (nextPath) {
+      navigate(nextPath, { replace: true });
+      return;
+    }
+
     // Check admin role first
     const { data: adminRole } = await supabase
       .from("user_roles")

@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Check, Clock, UserPlus, Loader2, Users, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import StudentProfileView from "@/components/StudentProfileView";
+import ActivationLinkSection from "@/components/parent/ActivationLinkSection";
+import NotificationBell from "@/components/parent/NotificationBell";
 
 interface LinkedChild {
   child_user_id: string;
@@ -169,6 +171,16 @@ export default function ParentDashboard() {
 
   return (
     <div className="space-y-8" dir="rtl">
+      {/* Notification bell at top */}
+      <div className="flex justify-end">
+        <NotificationBell />
+      </div>
+
+      {/* Activation Link Section */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+        <ActivationLinkSection />
+      </motion.div>
+
       {/* Link Child Card */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <Card className="border-2 border-accent/30 shadow-lg">
