@@ -1,88 +1,86 @@
 
-# Fix: Student Journey Flow -- System Freezes, Blank Pages, and Broken Navigation
 
-## Root Cause Analysis
+# Comprehensive Journey Audit and Fix Plan
 
-After a thorough code review, I found **7 critical bugs** causing the reported issues (freezes, blank pages, wrong redirects, sidebar inconsistency):
+## Bugs Found (8 Critical Issues)
 
----
+### Bug 1: SimulationStep skips Post-Impact Assessment
+**File:** `SimulationStep.tsx` line 484
+**Problem:** After simulation summary, the CTA navigates to `/dashboard/report` (the Holland report page), completely skipping the Post-Impact Assessment (`/dashboard/post-impact`).
+**Correct flow:** Simulation -> Post-Impact -> Final Report
+**Fix:** Change navigation to `/dashboard/post-impact`
 
-### Bug 1: StepGuard route mismatches (causes redirects and blank pages)
+### Bug 2: HollandAssessment uses hardcoded step UUID
+**File:** `HollandAssessment.tsx` line 9
+**Problem:** `HOLLAND_STEP_ID = "0b586437-03db-40c4-8cdc-4f889a322c49"` is hardcoded. If this UUID doesn't match the database, the step never gets marked as completed. All other steps fetch the UUID dynamically.
+**Fix:** Fetch the UUID from `journey_steps` table by slug `"holland"`, like every other step does.
 
-The `requiredStep` values in `App.tsx` routes don't match the actual 12-step sequence. Steps are guarded against the wrong predecessor:
+### Bug 3: HollandAssessment doesn't invalidate sidebar cache
+**File:** `HollandAssessment.tsx` line ~155-160
+**Problem:** After completing the Holland test, the code saves progress but never calls `queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] })`. The sidebar checkmark won't update until the user manually navigates away.
+**Fix:** Add `useQueryClient` and invalidate after completion.
 
-| Route | Current `requiredStep` | Correct `requiredStep` |
-|-------|----------------------|----------------------|
-| `/dashboard/holland` | `pre-impact` | `orientation` |
-| `/dashboard/simulation` | `doubt-checkpoint` | `explore` |
+### Bug 4: InitialReportStep tries to INSERT into `majors` table (RLS blocked)
+**File:** `InitialReportStep.tsx` lines 127-136
+**Problem:** When the report generates recommended majors, it tries to INSERT new rows into the `majors` table. But the RLS policy only allows admins to insert. This silently fails for students, meaning `major.id` will be `undefined`, breaking the shortlist step downstream.
+**Fix:** Only SELECT existing majors by `name_ar`. If a major doesn't exist in the DB, use a generated UUID locally without inserting.
 
-This means: after completing `orientation`, the student tries to go to `holland`, but the guard checks for `pre-impact` (already done) -- works by luck. But after completing `explore`, trying to reach `simulation` checks `doubt-checkpoint` instead of `explore`. If `doubt-checkpoint` somehow wasn't marked, it redirects away.
+### Bug 5: ReportStep has NO "Continue" button
+**File:** `ReportStep.tsx`
+**Problem:** The Holland report page auto-marks the "report" step as completed and displays results, but has absolutely no CTA button to continue to the Certificate step. Students get stuck on this page.
+**Fix:** Add a "Continue to Certificate" button at the bottom.
 
-### Bug 2: OrientationStep marks the WRONG step as completed (critical!)
+### Bug 6: CompletionNextStep doesn't mark "next-step" as completed
+**File:** `CompletionNextStep.tsx`
+**Problem:** This is the final step (step 14). It never marks itself as completed in `user_progress`, so the sidebar never shows a checkmark and the journey appears forever incomplete.
+**Fix:** Mark the "next-step" step as completed when the page loads.
 
-`OrientationStep.tsx` line 107 uses `INTRO_STEP_ID` (the "intro" step UUID) instead of the "orientation" step UUID. So when a student finishes all 3 orientation modules, it marks "intro" as completed (which was already done), and "orientation" is NEVER marked as completed. This means:
-- The sidebar never shows orientation as done
-- The next step (holland) will never unlock if its guard checks for "orientation"
-- The student gets stuck forever
+### Bug 7: ExploreMajorDynamic doesn't persist data to database
+**File:** `ExploreMajorDynamic.tsx`
+**Problem:** All comfort levels and scenario choices are saved to `localStorage` only. If the student switches devices, all exploration data is lost. The Final Report tries to read explore data from the database and finds nothing.
+**Fix:** Save comfort levels and scenario choices to `user_progress.meta_data` for the explore step.
 
-### Bug 3: Missing StepGuards on `orientation` and `explore` routes
-
-In `App.tsx`:
-- `/dashboard/orientation` has NO StepGuard -- anyone can access it anytime
-- `/dashboard/explore` has NO StepGuard -- anyone can jump to it
-
-### Bug 4: PreImpactStep navigates to wrong next step
-
-After completing pre-impact, `PreImpactStep.tsx` line 65 navigates to `/dashboard/holland`, skipping the orientation step entirely.
-
-### Bug 5: DashboardLayout race condition (causes freezes and white screens)
-
-The `onAuthStateChange` callback in `DashboardLayout.tsx`:
-- Has `location.pathname` in its dependency array, re-running async operations on every navigation
-- Contains unprotected async operations (no try/catch) that can throw unhandled rejections
-- Blocks rendering with `authChecked` state that depends on the auth listener firing
-- Multiple rapid navigations can trigger conflicting redirect chains
-
-### Bug 6: ConsentGate blocks children when consent is missing
-
-`ConsentGate.tsx` line 181: `{userConsent ? children : null}` -- if the user dismisses the consent dialog (or it errors), the page renders nothing (blank page). The dialog's `onOpenChange` allows closing it, which leaves a permanent blank page.
-
-### Bug 7: QueryClient has no staleTime/gcTime defaults
-
-`App.tsx` line 62: `const queryClient = new QueryClient()` -- no default options. Every route change triggers fresh refetches of sidebar progress, step-guard data, and profile data, causing flickering and unnecessary loading spinners.
+### Bug 8: Dead code files cause confusion
+**Files:** `HollandStep.tsx`, `PostImpactStep.tsx`
+**Problem:** These files exist but are NOT used in any route. `HollandStep.tsx` navigates to `/dashboard/simulation` (wrong), and `PostImpactStep.tsx` uses the old `QuestionWizard` component. They could confuse future development.
+**Fix:** Delete these unused files.
 
 ---
 
-## Fix Plan
+## Fix Plan (Ordered by Priority)
 
-### 1. Fix OrientationStep -- Use correct step UUID (Bug 2)
-- Fetch the "orientation" step UUID dynamically from `journey_steps` table instead of hardcoding the wrong one
-- Mark "orientation" as completed (not "intro")
+### Step 1: Fix SimulationStep navigation (Bug 1)
+- Change line 484 from `navigate('/dashboard/report')` to `navigate('/dashboard/post-impact')`
+- Update button text from "شوف التقرير النهائي" to "كمّل — قياس الأثر البعدي"
 
-### 2. Fix StepGuard route values in App.tsx (Bug 1 + Bug 3)
-- `/dashboard/orientation` -- add `StepGuard requiredStep="pre-impact"`
-- `/dashboard/holland` -- change from `requiredStep="pre-impact"` to `requiredStep="orientation"`
-- `/dashboard/explore` -- add `StepGuard requiredStep="doubt-checkpoint"`
-- `/dashboard/simulation` -- change from `requiredStep="doubt-checkpoint"` to `requiredStep="explore"`
+### Step 2: Fix HollandAssessment hardcoded UUID + cache (Bugs 2, 3)
+- Remove hardcoded `HOLLAND_STEP_ID` constant
+- Fetch UUID dynamically from `journey_steps` where `slug = 'holland'`
+- Add `useQueryClient` import and call `invalidateQueries` after completion
+- This ensures sidebar updates immediately
 
-### 3. Fix PreImpactStep navigation (Bug 4)
-- Change `navigate("/dashboard/holland")` to `navigate("/dashboard/orientation")`
+### Step 3: Fix InitialReportStep RLS failure (Bug 4)
+- Replace `supabase.from('majors').insert(...)` with a SELECT-only approach
+- If a major name doesn't exist in DB, assign a local UUID without trying to insert
+- This prevents silent failures for all student users
 
-### 4. Fix DashboardLayout race condition (Bug 5)
-- Wrap all async operations in try/catch
-- Remove `location.pathname` from the dependency array to prevent re-running on every navigation
-- Use a ref for location.pathname so smart-resume only checks on initial load
-- Add a flag to prevent duplicate auth processing
+### Step 4: Add Continue button to ReportStep (Bug 5)
+- Add a "Continue to Certificate" button at the bottom of the report
+- Include a secondary "Download/Share" option
+- Use `navigate('/dashboard/certificate')`
 
-### 5. Fix ConsentGate blank page (Bug 6)
-- Prevent closing the consent dialog without consenting (remove `onOpenChange` dismiss)
-- Show children while dialog is open (so the page isn't blank behind the modal)
+### Step 5: Mark CompletionNextStep as completed (Bug 6)
+- Add a `useEffect` that marks "next-step" as completed in `user_progress` on mount
+- Invalidate sidebar cache so 14/14 shows in the progress bar
 
-### 6. Add QueryClient defaults (Bug 7)
-- Set `staleTime: 5 * 60 * 1000` and `gcTime: 10 * 60 * 1000` to prevent unnecessary refetches
+### Step 6: Persist ExploreMajorDynamic data to DB (Bug 7)
+- In the `handleFinish` function, save comfort levels and scenario choices to `user_progress.meta_data`
+- This makes the data available for the Final Report
 
-### 7. Add global unhandled rejection handler
-- Add a `window.addEventListener("unhandledrejection")` in `App.tsx` to prevent white screens from uncaught async errors
+### Step 7: Remove dead code files (Bug 8)
+- Delete `src/pages/dashboard/HollandStep.tsx`
+- Delete `src/pages/dashboard/PostImpactStep.tsx`
+- Remove their imports from `App.tsx` (they aren't used in routes but may still be imported)
 
 ---
 
@@ -90,15 +88,21 @@ The `onAuthStateChange` callback in `DashboardLayout.tsx`:
 
 | File | Changes |
 |------|---------|
-| `src/App.tsx` | Fix StepGuard values, add QueryClient defaults, add unhandled rejection handler |
-| `src/pages/dashboard/OrientationStep.tsx` | Fix step UUID to use "orientation" slug lookup |
-| `src/pages/dashboard/PreImpactStep.tsx` | Fix navigation target to `/dashboard/orientation` |
-| `src/layouts/DashboardLayout.tsx` | Add try/catch, fix dependency array, prevent re-runs |
-| `src/components/ConsentGate.tsx` | Prevent blank page when dialog is open |
+| `src/pages/dashboard/SimulationStep.tsx` | Fix navigation target (line 484) |
+| `src/pages/dashboard/HollandAssessment.tsx` | Dynamic UUID fetch + cache invalidation |
+| `src/pages/dashboard/InitialReportStep.tsx` | Remove INSERT into majors, SELECT-only |
+| `src/pages/dashboard/ReportStep.tsx` | Add Continue CTA button |
+| `src/pages/dashboard/CompletionNextStep.tsx` | Mark next-step as completed |
+| `src/pages/dashboard/ExploreMajorDynamic.tsx` | Persist explore data to DB |
+| `src/pages/dashboard/HollandStep.tsx` | DELETE (dead code) |
+| `src/pages/dashboard/PostImpactStep.tsx` | DELETE (dead code) |
+| `src/App.tsx` | Remove dead imports if present |
 
 ## No Changes To
-- Holland/scoring logic
 - Database schema or RLS policies
-- Admin dashboard
-- Student profile view
-- Any step completion logic (other than OrientationStep UUID fix)
+- `StepGuard.tsx` (already fixed)
+- `AppSidebar.tsx` (working correctly)
+- `DashboardLayout.tsx` (working correctly)
+- `useJourney` hook (working correctly)
+- Admin pages
+
