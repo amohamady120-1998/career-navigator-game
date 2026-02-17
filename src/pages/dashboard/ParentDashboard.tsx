@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 import StudentProfileView from "@/components/StudentProfileView";
 import ActivationLinkSection from "@/components/parent/ActivationLinkSection";
 import NotificationBell from "@/components/parent/NotificationBell";
+import ContactSupportCard from "@/components/shared/ContactSupportCard";
 
 interface LinkedChild {
   child_user_id: string;
@@ -304,6 +305,9 @@ export default function ParentDashboard() {
           لم يتم ربط أي حساب طالب بعد. أدخل بريد ابنك/ابنتك أعلاه للبدء.
         </motion.p>
       )}
+
+      {/* Contact Support */}
+      <ContactSupportCard />
 
       {/* Student Profile Dialog */}
       <Dialog open={profileOpen} onOpenChange={setProfileOpen}>

@@ -10,6 +10,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import StudentProfileView from "@/components/StudentProfileView";
+import ActivationCodesViewer from "@/components/institution/ActivationCodesViewer";
+import ContactSupportCard from "@/components/shared/ContactSupportCard";
 import { useToast } from "@/hooks/use-toast";
 import {
   Users, GraduationCap, FlaskConical, FileText, School, Loader2,
@@ -353,6 +355,12 @@ export default function InstitutionDashboard() {
               </Card>
             </>
           )}
+
+          {/* Activation Codes Viewer */}
+          <ActivationCodesViewer />
+
+          {/* Contact Support */}
+          <ContactSupportCard />
         </>
       )}
 
