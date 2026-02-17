@@ -481,8 +481,8 @@ export default function SimulationStep() {
             </Card>
           </div>
 
-          <Button size="lg" className="w-full h-14 text-lg font-bold rounded-xl" onClick={() => navigate('/dashboard/report')}>
-            شوف التقرير النهائي
+          <Button size="lg" className="w-full h-14 text-lg font-bold rounded-xl" onClick={() => navigate('/dashboard/post-impact')}>
+            كمّل — قياس الأثر البعدي
           </Button>
         </div>
       </div>

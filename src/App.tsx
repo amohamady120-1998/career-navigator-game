@@ -19,7 +19,7 @@ import PreAssessmentIntro from "./pages/dashboard/PreAssessmentIntro";
 import SimulationStep from "./pages/dashboard/SimulationStep";
 import ReportStep from "./pages/dashboard/ReportStep";
 import FinalReport from "./pages/dashboard/FinalReport";
-import PostImpactStep from "./pages/dashboard/PostImpactStep";
+
 import PostImpactAssessment from "./pages/dashboard/PostImpactAssessment";
 import SharedReport from "./pages/share/SharedReport";
 import VerifyCertificate from "./pages/share/VerifyCertificate";

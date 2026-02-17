@@ -123,15 +123,12 @@ export default function InitialReportStep() {
           }
         }
 
-        // Map and auto-create majors in DB
+        // Map majors to DB IDs (SELECT-only, no INSERT to avoid RLS blocks)
         const mappedMajors = await Promise.all(
           report.majors.map(async (m) => {
-            let { data } = await supabase.from('majors').select('id').eq('name_ar', m.title).maybeSingle();
-            if (!data) {
-              const insertRes = await supabase.from('majors').insert({ name_ar: m.title, is_active: true }).select('id').single();
-              data = insertRes.data;
-            }
-            return { ...m, id: data?.id };
+            const { data } = await supabase.from('majors').select('id').eq('name_ar', m.title).maybeSingle();
+            // Use DB id if found, otherwise generate a local UUID
+            return { ...m, id: data?.id || crypto.randomUUID() };
           })
         );
 

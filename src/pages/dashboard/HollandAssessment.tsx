@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowRight, ArrowLeft, Save, CheckCircle2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-
-const HOLLAND_STEP_ID = "0b586437-03db-40c4-8cdc-4f889a322c49";
 
 const OPTIONS = [
   { value: "yes" as any, label: "نعم" },
@@ -17,6 +16,7 @@ const MIN_TIME_PER_QUESTION_MS = 5000;
 
 export default function HollandAssessment() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -27,6 +27,7 @@ export default function HollandAssessment() {
   const [isCompleted, setIsCompleted] = useState(false);
   const [isTimeAllowed, setIsTimeAllowed] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [hollandStepId, setHollandStepId] = useState<string | null>(null);
 
   const questionStartTimeRef = useRef(Date.now());
 
@@ -37,6 +38,15 @@ export default function HollandAssessment() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) { navigate("/auth"); return; }
         setUserId(session.user.id);
+
+        // Fetch step UUID dynamically
+        const { data: stepRow } = await supabase
+          .from("journey_steps")
+          .select("id")
+          .eq("slug", "holland")
+          .single();
+        const stepId = stepRow?.id;
+        setHollandStepId(stepId || null);
 
         // Fetch holland questions
         const { data: dbQuestions } = await supabase
@@ -64,20 +74,20 @@ export default function HollandAssessment() {
           setAnswers(answeredMap);
 
           // Check if already completed
-          const { data: progress } = await supabase
-            .from("user_progress")
-            .select("status")
-            .eq("user_id", session.user.id)
-            .eq("step_id", HOLLAND_STEP_ID)
-            .maybeSingle();
+          if (stepId) {
+            const { data: progress } = await supabase
+              .from("user_progress")
+              .select("status")
+              .eq("user_id", session.user.id)
+              .eq("step_id", stepId)
+              .maybeSingle();
 
-          if (progress?.status === "completed") {
-            setIsCompleted(true);
-          } else {
-            // Resume at first unanswered
-            const questionIds = new Set(loaded.map((q) => q.id));
-            const firstUnanswered = loaded.findIndex((q) => !answeredMap[q.id]);
-            setCurrentIndex(firstUnanswered !== -1 ? firstUnanswered : 0);
+            if (progress?.status === "completed") {
+              setIsCompleted(true);
+            } else {
+              const firstUnanswered = loaded.findIndex((q) => !answeredMap[q.id]);
+              setCurrentIndex(firstUnanswered !== -1 ? firstUnanswered : 0);
+            }
           }
         }
 
@@ -140,7 +150,7 @@ export default function HollandAssessment() {
       setCurrentIndex((prev) => prev + 1);
     } else {
       // Complete assessment
-      if (!userId) return;
+      if (!userId || !hollandStepId) return;
       setIsSaving(true);
       try {
         // Calculate holland scores via DB functions
@@ -153,9 +163,11 @@ export default function HollandAssessment() {
         );
 
         await supabase.from("user_progress").upsert(
-          { user_id: userId, step_id: HOLLAND_STEP_ID, status: "completed", completed_at: new Date().toISOString() },
+          { user_id: userId, step_id: hollandStepId, status: "completed", completed_at: new Date().toISOString() },
           { onConflict: "user_id,step_id" }
         );
+
+        await queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] });
 
         toast.success("تم إكمال الاختبار بنجاح ✓");
         setIsCompleted(true);
@@ -190,12 +202,10 @@ export default function HollandAssessment() {
     if (!userId) return;
     setIsSaving(true);
     try {
-      // Delete existing answers for holland questions
       const questionIds = questions.map(q => q.id);
       for (const qId of questionIds) {
         await supabase.from("answers").delete().eq("user_id", userId).eq("question_id", qId);
       }
-      // Reset local state
       setAnswers({});
       setTimeSpent({});
       setCurrentIndex(0);
