@@ -1,8 +1,10 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Trophy, Briefcase, GraduationCap, TrendingUp, TrendingDown, Brain, Sparkles } from "lucide-react";
+import { Trophy, Briefcase, GraduationCap, TrendingUp, TrendingDown, Brain, Sparkles, ArrowLeft } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CourseVideo } from "@/components/CourseVideo";
 import { analyzeSimulationTraits, TRAIT_LABELS, type TraitDimension } from "@/lib/traitMapping";
@@ -34,6 +36,7 @@ const DIMENSION_DESCRIPTIONS: Record<TraitDimension, string> = {
 };
 
 export default function ReportStep() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const { data: result, isLoading } = useQuery({
@@ -344,6 +347,17 @@ export default function ReportStep() {
           )}
         </motion.div>
       )}
+      {/* Continue CTA */}
+      <div className="flex flex-col gap-3 pt-4 pb-10">
+        <Button
+          size="lg"
+          className="w-full h-14 text-lg font-bold rounded-xl"
+          onClick={() => navigate("/dashboard/certificate")}
+        >
+          كمّل — شهادة إتمام البرنامج
+          <ArrowLeft className="w-5 h-5 mr-2" />
+        </Button>
+      </div>
     </motion.div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { motion } from "framer-motion";
 
 export default function CompletionNextStep() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
   const [shortlistNames, setShortlistNames] = useState<string[]>([]);
   const [journeySummary, setJournalSummary] = useState<string | null>(null);
@@ -17,6 +19,23 @@ export default function CompletionNextStep() {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate("/auth"); return; }
+
+      // Mark "next-step" as completed
+      const { data: stepRow } = await supabase
+        .from("journey_steps")
+        .select("id")
+        .eq("slug", "next-step")
+        .maybeSingle();
+
+      if (stepRow) {
+        await supabase.from("user_progress").upsert({
+          user_id: session.user.id,
+          step_id: stepRow.id,
+          status: "completed",
+          completed_at: new Date().toISOString(),
+        }, { onConflict: "user_id,step_id" });
+        queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] });
+      }
 
       // Try to get shortlist major names
       const { data: shortlist } = await supabase
@@ -59,7 +78,7 @@ export default function CompletionNextStep() {
 
       setLoading(false);
     })();
-  }, [navigate]);
+  }, [navigate, queryClient]);
 
   if (loading) {
     return (

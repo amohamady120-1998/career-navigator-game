@@ -150,14 +150,22 @@ export default function ExploreMajorDynamic() {
       saveProgress(currentStage);
       const { data: { session } } = await supabase.auth.getSession();
       if (session && exploreStepId) {
+        // Persist explore data to DB meta_data
+        const exploreMetaData = {
+          major_name: majorNameParam,
+          comfortLevels,
+          scenarioChoices,
+          reflections,
+          completed_at: new Date().toISOString(),
+        };
         await supabase.from('user_progress').upsert({
           user_id: session.user.id,
           step_id: exploreStepId,
           status: 'completed',
-          completed_at: new Date().toISOString()
+          completed_at: new Date().toISOString(),
+          meta_data: exploreMetaData,
         }, { onConflict: 'user_id,step_id' });
         queryClient.invalidateQueries({ queryKey: ["user-journey-progress"] });
-
       }
       toast.success("تم استكشاف التخصص بنجاح!");
       navigate('/dashboard/simulation');
