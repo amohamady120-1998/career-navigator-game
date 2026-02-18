@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import InstitutionSidebar from "@/components/institution/InstitutionSidebar";
 import Breadcrumbs from "@/components/shared/Breadcrumbs";
@@ -11,38 +11,40 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function InstitutionLayout() {
   const navigate = useNavigate();
-  const [authChecked, setAuthChecked] = useState(false);
+  const [state, setState] = useState<"loading" | "authorized" | "denied">("loading");
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === "SIGNED_OUT" || !session) {
-          navigate("/auth");
-          return;
-        }
-        if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-          const [{ data: profile }, { data: adminRole }] = await Promise.all([
-            supabase.from("profiles").select("user_type").eq("user_id", session.user.id).maybeSingle(),
-            supabase.from("user_roles").select("role").eq("user_id", session.user.id).eq("role", "admin").maybeSingle(),
-          ]);
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setState("denied"); return; }
 
-          if (profile?.user_type !== "institution" && !adminRole) {
-            navigate("/dashboard", { replace: true });
-            return;
-          }
-          setAuthChecked(true);
-        }
-      }
-    );
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+      const [{ data: profile }, { data: adminRole }] = await Promise.all([
+        supabase.from("profiles").select("user_type").eq("user_id", session.user.id).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", session.user.id).eq("role", "admin").maybeSingle(),
+      ]);
+
+      setState(profile?.user_type === "institution" || adminRole ? "authorized" : "denied");
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (state === "denied") navigate("/dashboard", { replace: true });
+  }, [state, navigate]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
 
-  if (!authChecked) return null;
+  if (state === "loading") {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (state === "denied") return null;
 
   return (
     <SidebarProvider>
