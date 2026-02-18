@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GraduationCap, Users, Building2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LandingVideoHero } from "@/components/LandingVideoHero";
 import atharLogoDark from "@/assets/athar-logo-dark.png";
 
 type UserType = "student" | "parent" | "institution";
@@ -90,8 +91,11 @@ const Index = () => {
         </div>
       </header>
 
+      {/* ── Explainer Video ── */}
+      <LandingVideoHero onCtaClick={handleContinue} />
+
       {/* ── Hero ── */}
-      <section className="flex-1 flex flex-col items-center justify-center px-5 pt-8 pb-4 md:pt-16 md:pb-8 relative overflow-hidden">
+      <section className="flex-1 flex flex-col items-center justify-center px-5 pt-8 pb-4 md:pt-12 md:pb-8 relative overflow-hidden">
         {/* Decorative */}
         <div className="absolute top-10 right-10 w-72 h-72 bg-accent/8 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
