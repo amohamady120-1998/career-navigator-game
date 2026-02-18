@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ParentLayout from "./layouts/ParentLayout";
 import InstitutionLayout from "./layouts/InstitutionLayout";
+import AdminLayout from "./layouts/AdminLayout";
 import InstitutionDashboard from "./pages/dashboard/InstitutionDashboard";
 import IntroStep from "./pages/dashboard/IntroStep";
 import OrientationStep from "./pages/dashboard/OrientationStep";
@@ -36,7 +37,6 @@ import ExploreMajorDatabase from "./pages/dashboard/ExploreMajorDatabase";
 import AdminExploreManager from "./pages/admin/AdminExploreManager";
 import ExploreMajorDynamic from "./pages/dashboard/ExploreMajorDynamic";
 import ParentDashboard from "./pages/dashboard/ParentDashboard";
-import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import ConsultationBooking from "./pages/dashboard/ConsultationBooking";
 import AdminConsultations from "./pages/admin/AdminConsultations";
 import CompletionNextStep from "./pages/dashboard/CompletionNextStep";
@@ -52,15 +52,25 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminErrors from "./pages/admin/AdminErrors";
 import AdminHealthCheck from "./pages/admin/AdminHealthCheck";
+import AdminOverviewTab from "./components/admin/AdminOverviewTab";
+import AdminUsersTab from "./components/admin/AdminUsersTab";
+import PromoCodesTab from "./components/admin/PromoCodesTab";
+import SystemSettingsTab from "./components/admin/SystemSettingsTab";
 import { StepGuard } from "./components/StepGuard";
 import IntroVideo from "./pages/onboarding/IntroVideo";
 import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import { ConsentGate } from "./components/ConsentGate";
-import AdminRoute from "./components/AdminRoute";
 import ParentActivationConsume from "./pages/activate/ParentActivationConsume";
 import ContactUs from "./pages/ContactUs";
+
+// Institution pages
+import InstitutionStudentsPage from "./pages/institution/InstitutionStudentsPage";
+import InstitutionCodesPage from "./pages/institution/InstitutionCodesPage";
+import InstitutionActivityPage from "./pages/institution/InstitutionActivityPage";
+import InstitutionSettingsPage from "./pages/institution/InstitutionSettingsPage";
+import InstitutionSupportPage from "./pages/institution/InstitutionSupportPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -121,22 +131,33 @@ const App = () => (
                 <Route path="ai-counselor" element={<AICounselorPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
+              {/* Institution Portal - Sidebar Layout */}
               <Route path="/institution" element={<InstitutionLayout />}>
                 <Route index element={<InstitutionDashboard />} />
-                <Route path="settings" element={<SettingsPage />} />
+                <Route path="students" element={<InstitutionStudentsPage />} />
+                <Route path="codes" element={<InstitutionCodesPage />} />
+                <Route path="activity" element={<InstitutionActivityPage />} />
+                <Route path="settings" element={<InstitutionSettingsPage />} />
+                <Route path="support" element={<InstitutionSupportPage />} />
               </Route>
-              <Route path="/admin/explore-manager" element={<AdminRoute><AdminExploreManager /></AdminRoute>} />
-              <Route path="/admin/consultations" element={<AdminRoute><AdminConsultations /></AdminRoute>} />
-              <Route path="/admin/schools" element={<AdminRoute><AdminSchools /></AdminRoute>} />
-              <Route path="/admin/school-orders" element={<AdminRoute><AdminSchoolOrders /></AdminRoute>} />
-              <Route path="/admin/school-usage" element={<AdminRoute><AdminSchoolUsage /></AdminRoute>} />
-              <Route path="/admin/school-reports" element={<AdminRoute><AdminSchoolReports /></AdminRoute>} />
-              <Route path="/admin/school-admins" element={<AdminRoute><AdminSchoolAdmins /></AdminRoute>} />
-              <Route path="/admin/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
-              <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
-              <Route path="/admin/errors" element={<AdminRoute><AdminErrors /></AdminRoute>} />
-              <Route path="/admin/health-check" element={<AdminRoute><AdminHealthCheck /></AdminRoute>} />
-              <Route path="/admin" element={<AdminRoute><SuperAdminDashboard /></AdminRoute>} />
+              {/* Admin Portal - Sidebar Layout */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminOverviewTab />} />
+                <Route path="users" element={<AdminUsersTab />} />
+                <Route path="health" element={<AdminHealthCheck embedded />} />
+                <Route path="schools" element={<AdminSchools embedded />} />
+                <Route path="orders" element={<AdminSchoolOrders embedded />} />
+                <Route path="school-admins" element={<AdminSchoolAdmins embedded />} />
+                <Route path="usage" element={<AdminSchoolUsage embedded />} />
+                <Route path="reports" element={<AdminSchoolReports embedded />} />
+                <Route path="explore" element={<AdminExploreManager embedded />} />
+                <Route path="consultations" element={<AdminConsultations embedded />} />
+                <Route path="promos" element={<PromoCodesTab />} />
+                <Route path="notifications" element={<AdminNotifications embedded />} />
+                <Route path="analytics" element={<AdminAnalytics embedded />} />
+                <Route path="errors" element={<AdminErrors embedded />} />
+                <Route path="settings" element={<SystemSettingsTab />} />
+              </Route>
               <Route path="/activate/parent/:token" element={<ParentActivationConsume />} />
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/share/report/:token" element={<SharedReport />} />
