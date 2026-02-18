@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, GraduationCap, FlaskConical, FileText, School, Loader2,
+  Users, GraduationCap, FileText, School, Loader2,
   TrendingUp, Clock, Activity,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from "recharts";
+import Sparkline from "@/components/institution/Sparkline";
 
 const STEP_LABELS: Record<string, string> = {
   intro: "المقدمة",
@@ -43,6 +44,29 @@ interface KpiData {
   report: number;
 }
 
+interface WeeklyTrend {
+  activated: number[];
+  active: number[];
+  completed: number[];
+  total: number[];
+}
+
+function getWeekStarts(): string[] {
+  const weeks: string[] = [];
+  const now = new Date();
+  for (let i = 3; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i * 7);
+    d.setHours(0, 0, 0, 0);
+    // Start of that week (Monday)
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    weeks.push(d.toISOString());
+  }
+  return weeks;
+}
+
 export default function InstitutionDashboard() {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -53,6 +77,7 @@ export default function InstitutionDashboard() {
   const [kpi, setKpi] = useState<KpiData>({ total: 0, activated: 0, completionRate: 0, inProgress: 0, activeThisWeek: 0, holland: 0, simulation: 0, report: 0 });
   const [journeyData, setJourneyData] = useState<{ name: string; count: number }[]>([]);
   const [hollandData, setHollandData] = useState<{ name: string; value: number }[]>([]);
+  const [weeklyTrend, setWeeklyTrend] = useState<WeeklyTrend>({ activated: [], active: [], completed: [], total: [] });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -61,7 +86,7 @@ export default function InstitutionDashboard() {
 
     const { data: links } = await supabase
       .from("institution_student_links")
-      .select("student_user_id")
+      .select("student_user_id, created_at")
       .eq("institution_user_id", session.user.id);
 
     const studentIds = links?.map((l) => l.student_user_id) ?? [];
@@ -70,6 +95,7 @@ export default function InstitutionDashboard() {
       setKpi({ total: 0, activated: 0, completionRate: 0, inProgress: 0, activeThisWeek: 0, holland: 0, simulation: 0, report: 0 });
       setJourneyData([]);
       setHollandData([]);
+      setWeeklyTrend({ activated: [], active: [], completed: [], total: [] });
       setLoading(false);
       return;
     }
@@ -120,6 +146,56 @@ export default function InstitutionDashboard() {
       holland: countWith("holland"),
       simulation: countWith("simulation"),
       report: countWith("report"),
+    });
+
+    // Weekly sparkline aggregation (last 4 weeks)
+    const weekStarts = getWeekStarts();
+    const weekEnds = weekStarts.map((_, i) => {
+      if (i < weekStarts.length - 1) return weekStarts[i + 1];
+      return new Date().toISOString();
+    });
+
+    const activatedPerWeek: number[] = [];
+    const activePerWeek: number[] = [];
+    const completedPerWeek: number[] = [];
+    const totalPerWeek: number[] = [];
+
+    for (let w = 0; w < 4; w++) {
+      const wStart = weekStarts[w];
+      const wEnd = weekEnds[w];
+
+      // Activated: links created in this week
+      const activatedInWeek = (links ?? []).filter(l => l.created_at >= wStart && l.created_at < wEnd).length;
+      activatedPerWeek.push(activatedInWeek);
+
+      // Active: students with progress completed_at in this week
+      const activeInWeek = new Set<string>();
+      progress.forEach(p => {
+        if (p.status === "completed" && p.completed_at && p.completed_at >= wStart && p.completed_at < wEnd) {
+          activeInWeek.add(p.user_id);
+        }
+      });
+      activePerWeek.push(activeInWeek.size);
+
+      // Completed: students who completed report step in this week
+      const completedInWeek = progress.filter(p => {
+        if (p.status !== "completed" || !p.completed_at) return false;
+        const slug = stepMap.get(p.step_id);
+        return slug === "report" && p.completed_at >= wStart && p.completed_at < wEnd;
+      });
+      const uniqueCompleted = new Set(completedInWeek.map(p => p.user_id));
+      completedPerWeek.push(uniqueCompleted.size);
+
+      // Running total of students linked up to this week
+      const totalUpToWeek = (links ?? []).filter(l => l.created_at < wEnd).length;
+      totalPerWeek.push(totalUpToWeek);
+    }
+
+    setWeeklyTrend({
+      activated: activatedPerWeek,
+      active: activePerWeek,
+      completed: completedPerWeek,
+      total: totalPerWeek,
     });
 
     // Journey funnel
@@ -185,12 +261,12 @@ export default function InstitutionDashboard() {
         <>
           {/* KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-            <KpiCard icon={<Users className="w-5 h-5" />} label="إجمالي الطلاب" value={kpi.total} />
-            <KpiCard icon={<TrendingUp className="w-5 h-5" />} label="نسبة الإكمال" value={`${kpi.completionRate}%`} />
+            <KpiCard icon={<Users className="w-5 h-5" />} label="إجمالي الطلاب" value={kpi.total} sparkData={weeklyTrend.total} />
+            <KpiCard icon={<TrendingUp className="w-5 h-5" />} label="نسبة الإكمال" value={`${kpi.completionRate}%`} sparkData={weeklyTrend.completed} />
             <KpiCard icon={<Activity className="w-5 h-5" />} label="قيد التنفيذ" value={kpi.inProgress} />
-            <KpiCard icon={<Clock className="w-5 h-5" />} label="نشطون هذا الأسبوع" value={kpi.activeThisWeek} />
+            <KpiCard icon={<Clock className="w-5 h-5" />} label="نشطون هذا الأسبوع" value={kpi.activeThisWeek} sparkData={weeklyTrend.active} />
             <KpiCard icon={<GraduationCap className="w-5 h-5" />} label="أنهوا هولاند" value={`${pct(kpi.holland)}%`} />
-            <KpiCard icon={<FileText className="w-5 h-5" />} label="معتمدون" value={`${pct(kpi.report)}%`} />
+            <KpiCard icon={<FileText className="w-5 h-5" />} label="معتمدون" value={`${pct(kpi.report)}%`} sparkData={weeklyTrend.completed} />
           </div>
 
           {kpi.total > 0 && (
@@ -248,16 +324,19 @@ export default function InstitutionDashboard() {
   );
 }
 
-function KpiCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
+const KpiCard = React.memo(function KpiCard({ icon, label, value, sparkData }: { icon: React.ReactNode; label: string; value: string | number; sparkData?: number[] }) {
   return (
     <Card>
       <CardContent className="p-5 flex items-center gap-4">
         <div className="p-2 rounded-lg bg-primary/10 text-primary">{icon}</div>
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="text-sm text-muted-foreground">{label}</p>
           <p className="text-2xl font-bold">{value}</p>
         </div>
+        {sparkData && sparkData.length > 0 && (
+          <Sparkline data={sparkData} />
+        )}
       </CardContent>
     </Card>
   );
-}
+});
