@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Loader2, Bot, User, Trash2, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { HeroBand } from "@/components/HeroBand";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -180,120 +181,126 @@ export default function AICounselorPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)] max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center">
-            <Bot className="w-5 h-5 text-accent" />
-          </div>
-          <div>
-            <h2 className="font-bold text-sm">مستشار أثر الذكي</h2>
-            <p className="text-xs text-muted-foreground">مستشارك المهني الشخصي</p>
-          </div>
-        </div>
+    <div className="athar-page">
+      <HeroBand
+        eyebrow="مستشار أثر الذكي"
+        title="اسأل، ونساعدك تفهم أكثر"
+        description="مستشارك المهني الشخصي؛ يجيب أسئلتك عن التخصصات الجامعية والمسارات المهنية."
+      >
         {messages.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={handleClearChat} className="text-muted-foreground">
-            <Trash2 className="w-4 h-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClearChat}
+            className="gap-1.5 rounded-[10px] px-0 font-bold text-hero-muted hover:bg-transparent hover:text-hero-foreground"
+          >
+            <Trash2 className="h-4 w-4" /> مسح المحادثة
           </Button>
         )}
-      </div>
+      </HeroBand>
 
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center pt-12 space-y-6"
-          >
-            <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto">
-              <Sparkles className="w-8 h-8 text-accent" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold mb-1">مرحبًا! أنا مستشار أثر 🎓</h3>
-              <p className="text-sm text-muted-foreground">اسألني أي سؤال عن التخصصات الجامعية والمسارات المهنية</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-md mx-auto">
-              {SUGGESTED_QUESTIONS.map((q, i) => (
-                <button
-                  key={i}
-                  onClick={() => sendMessage(q)}
-                  className="text-xs text-right p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        <AnimatePresence>
-          {messages.map((msg, i) => (
+      <section className="athar-card flex h-[max(420px,calc(100vh-24rem))] flex-col p-0 md:p-0">
+        {/* Messages */}
+        <div ref={scrollRef} className="flex flex-1 flex-col gap-3 overflow-y-auto p-5">
+          {messages.length === 0 && (
             <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
-              className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+              className="space-y-6 pt-8 text-center"
             >
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-accent/10 text-accent"
-              }`}>
-                {msg.role === "user" ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
+              <div className="btn-gradient mx-auto grid h-14 w-14 place-items-center rounded-2xl shadow-premium">
+                <Sparkles className="h-7 w-7" />
               </div>
-              <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
-                msg.role === "user"
-                  ? "bg-primary text-primary-foreground rounded-tr-sm"
-                  : "bg-muted rounded-tl-sm"
-              }`}>
-                {msg.role === "assistant" ? (
-                  <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:mb-2 [&>ul]:mb-2 [&>ol]:mb-2">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                  </div>
-                ) : (
-                  <p>{msg.content}</p>
-                )}
+              <div>
+                <h3 className="mb-1 text-lg font-extrabold">مرحبًا! أنا مستشار أثر 🎓</h3>
+                <p className="text-sm text-muted-foreground">اسألني أي سؤال عن التخصصات الجامعية والمسارات المهنية</p>
+              </div>
+              <div className="mx-auto grid max-w-lg grid-cols-1 gap-2 sm:grid-cols-2">
+                {SUGGESTED_QUESTIONS.map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => sendMessage(q)}
+                    className="rounded-[13px] border-[1.5px] border-border bg-card p-3 text-start text-sm font-semibold transition-colors hover:border-accent hover:bg-accent/5"
+                  >
+                    {q}
+                  </button>
+                ))}
               </div>
             </motion.div>
-          ))}
-        </AnimatePresence>
+          )}
 
-        {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
-          <div className="flex gap-3">
-            <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center">
-              <Bot className="w-3.5 h-3.5 text-accent" />
-            </div>
-            <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
-              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-            </div>
-          </div>
-        )}
-      </div>
+          <AnimatePresence>
+            {messages.map((msg, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className={`flex items-end gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+              >
+                <div
+                  className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${
+                    msg.role === "user" ? "bg-hero-to text-hero-foreground dark:bg-accent dark:text-accent-foreground" : "bg-accent/15 text-[hsl(var(--gradient-end))]"
+                  }`}
+                >
+                  {msg.role === "user" ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
+                </div>
+                <div
+                  className={`max-w-[82%] rounded-[15px] px-4 py-[13px] text-[0.96rem] leading-[1.65] ${
+                    msg.role === "user"
+                      ? "rounded-bl-[5px] bg-hero-to text-hero-foreground dark:bg-accent/15 dark:text-foreground"
+                      : "rounded-br-[5px] bg-muted text-foreground"
+                  }`}
+                >
+                  {msg.role === "assistant" ? (
+                    <div className="prose prose-sm max-w-none dark:prose-invert [&>ol]:mb-2 [&>p]:mb-2 [&>ul]:mb-2">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p>{msg.content}</p>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
 
-      {/* Input */}
-      <div className="border-t border-border p-4">
-        <form
-          onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
-          className="flex gap-2"
-        >
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="اكتب سؤالك هنا..."
-            disabled={isLoading}
-            className="flex-1 h-11"
-          />
-          <Button
-            type="submit"
-            disabled={isLoading || !input.trim()}
-            size="icon"
-            className="h-11 w-11 shrink-0"
+          {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
+            <div className="flex items-end gap-2.5">
+              <div className="grid h-7 w-7 place-items-center rounded-full bg-accent/15 text-[hsl(var(--gradient-end))]">
+                <Bot className="h-3.5 w-3.5" />
+              </div>
+              <div className="rounded-[15px] rounded-br-[5px] bg-muted px-4 py-3">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Input */}
+        <div className="border-t border-border/60 p-4">
+          <form
+            onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
+            className="flex gap-2.5"
           >
-            <Send className="w-4 h-4" />
-          </Button>
-        </form>
-      </div>
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="اكتب سؤالك هنا..."
+              disabled={isLoading}
+              className="athar-field flex-1"
+            />
+            <Button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              className="btn-gradient h-auto shrink-0 gap-2 rounded-xl px-5 font-bold"
+              aria-label="إرسال"
+            >
+              <Send className="h-4 w-4" />
+              <span className="hidden sm:inline">إرسال</span>
+            </Button>
+          </form>
+        </div>
+      </section>
     </div>
   );
 }
