@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { ChevronLeft } from "lucide-react";
+import { HeroBand } from "@/components/HeroBand";
 
 
 const GRADE_OPTIONS = [
@@ -70,34 +72,32 @@ export default function ProfileStep() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-md mx-auto py-8"
+      className="athar-page"
     >
-      <div className="bg-card rounded-2xl p-8 shadow-xl border border-border/50">
-        <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
-          <span className="text-3xl">🚀</span>
-        </div>
-        <h2 className="text-xl font-extrabold text-center mb-1">أهلاً بك في أثر!</h2>
-        <p className="text-muted-foreground text-center mb-6 text-sm">
-          لنبني تجربتك بشكل صحيح، نحتاج لبعض المعلومات الدراسية.
-        </p>
+      <HeroBand
+        eyebrow="لنتعرّف عليك"
+        title="معلومات أساسية"
+        description="نستخدمها لتخصيص رحلتك وربط تقاريرك بمدرستك. تبقى بياناتك خاصة."
+      />
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="schoolName">اسم المدرسة *</Label>
+      <form onSubmit={handleSubmit} className="athar-card">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-[7px]">
+            <Label htmlFor="schoolName" className="text-[0.86rem] font-bold">اسم المدرسة *</Label>
             <Input
               id="schoolName"
               value={schoolName}
               onChange={(e) => setSchoolName(e.target.value)}
               placeholder="مثال: مدارس الرياض الأهلية"
               required
-              className="h-11"
+              className="athar-field"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>المرحلة الدراسية *</Label>
+          <div className="space-y-[7px]">
+            <Label className="text-[0.86rem] font-bold">المرحلة الدراسية *</Label>
             <Select value={gradeLevel} onValueChange={setGradeLevel} required>
-              <SelectTrigger className="h-11">
+              <SelectTrigger className="athar-field">
                 <SelectValue placeholder="اختر المرحلة" />
               </SelectTrigger>
               <SelectContent>
@@ -109,28 +109,31 @@ export default function ProfileStep() {
               </SelectContent>
             </Select>
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone">رقم الجوال (اختياري)</Label>
-            <Input
-              id="phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="05XXXXXXXX"
-              dir="ltr"
-              className="text-left h-11"
-            />
-          </div>
+        <div className="mt-4 space-y-[7px]">
+          <Label htmlFor="phone" className="text-[0.86rem] font-bold">رقم الجوال (اختياري)</Label>
+          <Input
+            id="phone"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="05XXXXXXXX"
+            dir="ltr"
+            className="athar-field text-left"
+          />
+        </div>
 
+        <div className="athar-foot justify-end">
           <Button
             type="submit"
             disabled={loading || !schoolName.trim() || !gradeLevel}
-            className="w-full btn-gradient text-lg h-12 rounded-xl"
+            className="btn-gradient h-auto rounded-xl px-[26px] py-3.5 text-base shadow-premium"
           >
-            {loading ? "جاري الحفظ..." : "حفظ وبدء الرحلة"}
+            {loading ? "جارٍ الحفظ..." : "حفظ وبدء الرحلة"}
+            {!loading && <ChevronLeft className="h-[17px] w-[17px]" />}
           </Button>
-        </form>
-      </div>
+        </div>
+      </form>
     </motion.div>
   );
 }

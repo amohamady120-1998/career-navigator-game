@@ -91,7 +91,7 @@ export default function DashboardLayout() {
     <>
       <PledgeModal open={showPledge} onAccept={handlePledgeAccept} />
       <SidebarProvider>
-        <div className="min-h-screen flex flex-row-reverse w-full" dir="rtl">
+        <div className="min-h-screen flex w-full" dir="rtl">
           <AppSidebar />
           <div className="flex-1 flex flex-col min-w-0">
             <header className="h-14 flex items-center justify-between border-b border-border/60 px-4 bg-card/80 backdrop-blur-sm sticky top-0 z-30">

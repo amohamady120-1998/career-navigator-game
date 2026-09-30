@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Loader2, ArrowLeft, CheckCircle2, Sparkles, MessageCircleQuestion, RotateCcw } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Sparkles, MessageCircleQuestion, RotateCcw, ChevronLeft } from "lucide-react";
+import { HeroBand } from "@/components/HeroBand";
+import { btnPrimary } from "@/lib/athar";
 import { toast } from "sonner";
 
 type DoubtOption = {
@@ -134,8 +135,8 @@ export default function DoubtCheckpointStep() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
     );
   }
@@ -143,69 +144,65 @@ export default function DoubtCheckpointStep() {
   const selectedOption = DOUBT_OPTIONS.find(o => o.id === selectedId);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans" dir="rtl">
-      <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="font-extrabold text-lg text-primary hidden sm:block">أثر ستارت</div>
-            <div className="text-sm font-bold text-muted-foreground bg-secondary px-3 py-1 rounded-full">
-              لحظة صدق
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" className="text-muted-foreground font-bold" onClick={() => navigate('/dashboard')}>
-            <ArrowLeft className="w-4 h-4 ml-2" />
-            عودة
-          </Button>
-        </div>
-      </header>
+    <div className="athar-page" dir="rtl">
+      <HeroBand
+        eyebrow="الفصل الثاني · لحظة صدق"
+        title="بعد ما شوفت الرحلة دي… إحساسك إيه؟"
+        description="لا ضغط ولا استعجال. اختر ما يعبّر عنك الآن."
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          className="rounded-[10px] px-0 font-bold text-hero-muted hover:bg-transparent hover:text-hero-foreground"
+          onClick={() => navigate('/dashboard')}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          عودة
+        </Button>
+      </HeroBand>
 
-      <main className="flex-grow py-8 px-4 max-w-2xl mx-auto w-full animate-in fade-in">
-        <div className="mb-10 text-center">
-          <span className="text-5xl mb-4 block">💭</span>
-          <h1 className="text-3xl font-bold mb-3">بعد ما شوفت الرحلة دي…</h1>
-          <p className="text-xl text-muted-foreground font-medium">إحساسك إيه؟</p>
-        </div>
-
-        <div className="space-y-3 mb-10">
+      <section className="athar-card">
+        <div className="flex flex-col gap-[11px]">
           {DOUBT_OPTIONS.map((option) => {
             const isSelected = selectedId === option.id;
             const Icon = option.icon;
             return (
-              <Card
+              <button
+                type="button"
                 key={option.id}
                 onClick={() => setSelectedId(option.id)}
-                className={`cursor-pointer p-5 flex items-center gap-4 transition-all duration-200 border-2 ${
-                  isSelected
-                    ? `${option.bgClass} shadow-md transform scale-[1.02]`
-                    : `bg-card border-border hover:border-primary/30 hover:bg-accent/5`
-                }`}
+                data-selected={isSelected}
+                aria-pressed={isSelected}
+                className="athar-option gap-[15px] rounded-[15px] p-[17px]"
               >
-                <div className={`flex-shrink-0 ${option.colorClass}`}>
-                  <Icon className="w-7 h-7" />
-                </div>
-                <p className="font-semibold text-foreground text-base flex-grow">{option.label}</p>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />}
-              </Card>
+                <span className="athar-tile h-11 w-11 rounded-xl">
+                  <Icon className="h-[21px] w-[21px]" />
+                </span>
+                <span className="flex-1 text-[1.03rem] font-bold">{option.label}</span>
+                {isSelected && <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-accent" />}
+              </button>
             );
           })}
         </div>
 
         {selectedOption && (
-          <Card className="p-6 bg-accent/5 border border-accent/20 mb-10 shadow-sm animate-in fade-in">
-            <p className="text-foreground leading-relaxed mb-6">{selectedOption.supportMessage}</p>
-            <Button
-              type="button"
-              size="lg"
-              className="w-full h-14 text-lg font-bold rounded-xl shadow-md"
-              onClick={handleContinue}
-              disabled={isSaving}
-            >
-              {isSaving ? <Loader2 className="w-6 h-6 animate-spin ml-2" /> : selectedOption.ctaText}
-              {!isSaving && <span className="ml-2">←</span>}
-            </Button>
-          </Card>
+          <div className="mt-4 animate-in fade-in rounded-[14px] border border-accent/25 bg-accent/5 px-4 py-3.5">
+            <p className="leading-relaxed">{selectedOption.supportMessage}</p>
+          </div>
         )}
-      </main>
+
+        <div className="athar-foot justify-end">
+          <Button
+            type="button"
+            className={btnPrimary}
+            onClick={handleContinue}
+            disabled={isSaving || !selectedOption}
+          >
+            {isSaving ? <Loader2 className="h-6 w-6 animate-spin" /> : selectedOption?.ctaText ?? "اختر ما يعبّر عنك"}
+            {!isSaving && selectedOption && <ChevronLeft className="h-[17px] w-[17px]" />}
+          </Button>
+        </div>
+      </section>
     </div>
   );
 }

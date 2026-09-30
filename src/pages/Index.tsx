@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { GraduationCap, Users, Building2, Loader2 } from "lucide-react";
+import { GraduationCap, Users, Building2, Loader2, Check, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LandingVideoHero } from "@/components/LandingVideoHero";
-import atharLogoDark from "@/assets/athar-logo-dark.png";
+import { AtharLogo } from "@/components/AtharLogo";
 
 type UserType = "student" | "parent" | "institution";
 
@@ -15,19 +15,19 @@ const roles: { type: UserType; label: string; icon: typeof GraduationCap; descri
     type: "student",
     label: "طالب",
     icon: GraduationCap,
-    description: "ابدأ رحلتك واكتشف ميولك والتخصصات المناسبة لك.",
+    description: "افهم ميولك، وابنِ قائمتك من التخصصات الأقرب إليك، وجرّبها قبل القرار.",
   },
   {
     type: "parent",
-    label: "ولي أمر",
+    label: "وليّ أمر",
     icon: Users,
-    description: "تابع تقدم ابنك واطمئن على رحلته بدون تدخل.",
+    description: "تابع تقدّم ابنك ونتيجته وتقريره، وادعمه بثقة دون أن تتدخّل في قراره.",
   },
   {
     type: "institution",
     label: "جهة تعليمية",
     icon: Building2,
-    description: "اشتراكات جماعية، أكواد للطلاب، وتقارير أثر مجمعة.",
+    description: "اشتراكات جماعية، ورموز تفعيل للطلاب، وتقارير أثر مجمّعة تقيس نموّ وضوحهم.",
   },
 ];
 
@@ -76,194 +76,190 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-primary" dir="rtl">
-      {/* ── Header ── */}
-      <header className="flex items-center justify-between px-5 py-4 md:px-10">
-        <img src={atharLogoDark} alt="أثر البداية" className="h-10 md:h-12 object-contain" />
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate("/auth")}
-            className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors hover-underline"
-          >
-            تسجيل الدخول
-          </button>
-          <ThemeToggle />
+    <div className="min-h-screen flex flex-col bg-background text-foreground" dir="rtl">
+      {/* ── Nav ── */}
+      <nav className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-[1020px] items-center justify-between px-[22px] py-3.5">
+          <AtharLogo />
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Button
+              variant="outline"
+              onClick={() => navigate("/auth")}
+              className="h-auto rounded-xl px-[18px] py-2.5 text-sm font-bold"
+            >
+              تسجيل الدخول
+            </Button>
+          </div>
         </div>
-      </header>
+      </nav>
 
-      {/* ── Explainer Video ── */}
-      <LandingVideoHero onCtaClick={handleContinue} />
-
-      {/* ── Hero ── */}
-      <section className="flex-1 flex flex-col items-center justify-center px-5 pt-8 pb-4 md:pt-12 md:pb-8 relative overflow-hidden">
-        {/* Decorative */}
-        <div className="absolute top-10 right-10 w-72 h-72 bg-accent/8 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
-
-        <motion.div
+      <div className="mx-auto w-full max-w-[1020px] flex-1 px-[22px]">
+        {/* ── Hero ── */}
+        <motion.header
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center max-w-2xl mx-auto relative z-10"
+          className="pb-[52px] pt-[clamp(48px,9vw,92px)] text-center"
         >
-          <h1 className="text-3xl md:text-5xl font-extrabold text-primary-foreground leading-tight mb-5">
-            اختيار التخصص مش قرار عادي.
+          <span className="mb-5 inline-block rounded-full bg-accent/10 px-4 py-2 text-sm font-bold text-[hsl(var(--gradient-end))]">
+            مبنيّ على نموذج هولاند العلمي
+          </span>
+          <h1 className="mb-[18px] text-[clamp(2.3rem,6vw,3.7rem)] font-extrabold leading-[1.12] tracking-tight">
+            قبل أن تختار،
+            <br />
+            اعرف من أنت.
           </h1>
-          <p className="text-base md:text-lg text-primary-foreground/75 leading-relaxed mb-3 max-w-lg mx-auto">
-            أثر البداية يساعدك تفهم نفسك وتوصل إلى 2–3 اختيارات قوية،
-            <br className="hidden sm:block" />
-            ثم ترتبهم بخطوات واضحة ومحاكاة تفكير حقيقية.
+          <p className="mx-auto mb-3 max-w-[44ch] text-[clamp(1.02rem,2vw,1.2rem)] text-muted-foreground">
+            مسارٌ قصير ومدروس: تفهم ميولك، وتصل إلى اختيارين أو ثلاثة من التخصصات الأقرب إليك، ثم تجرّبها
+            بنفسك قبل أن تقرّر.
           </p>
-          <p className="text-sm text-primary-foreground/45">
-            بدون أحكام. بدون إجابات صح أو غلط. القرار في إيدك.
-          </p>
-        </motion.div>
-      </section>
+          <p className="text-sm text-muted-foreground/80">بلا أحكام، ولا إجابات صحيحة أو خاطئة. القرار قرارك.</p>
+        </motion.header>
 
-      {/* ── User Type Selection ── */}
-      <section className="px-5 pb-4 md:pb-8 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto"
-        >
-          {roles.map((role) => {
-            const Icon = role.icon;
-            const isSelected = selected === role.type;
-            return (
-              <motion.button
-                key={role.type}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => handleSelect(role.type)}
-                className={`
-                  relative flex flex-col items-center gap-4 p-6 sm:p-8 rounded-2xl
-                  bg-card text-card-foreground border-2 transition-all duration-300
-                  cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent
-                  shadow-md hover:shadow-xl
-                  ${isSelected
-                    ? "border-accent ring-2 ring-accent/30 shadow-lg"
-                    : "border-transparent hover:border-accent/30"
-                  }
-                `}
-              >
-                <div
-                  className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                    isSelected ? "bg-accent/20 scale-110" : "bg-accent/10"
+        {/* ── Explainer Video ── */}
+        <LandingVideoHero onCtaClick={handleContinue} />
+
+        {/* ── User Type Selection ── */}
+        <section className="pt-10">
+          <div className="mb-[18px] text-center">
+            <h2 className="mb-1.5 text-[clamp(1.5rem,3vw,2rem)] font-extrabold tracking-tight">من أنت؟</h2>
+            <p className="text-muted-foreground">لكلّ طرفٍ مساره في أثر البداية.</p>
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="grid grid-cols-1 gap-4 md:grid-cols-3"
+          >
+            {roles.map((role) => {
+              const Icon = role.icon;
+              const isSelected = selected === role.type;
+              return (
+                <button
+                  key={role.type}
+                  onClick={() => handleSelect(role.type)}
+                  aria-pressed={isSelected}
+                  className={`relative flex flex-col rounded-[20px] border bg-card p-[26px] text-start text-card-foreground transition-all duration-200 hover:-translate-y-[3px] hover:border-accent hover:shadow-premium-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                    isSelected ? "border-accent ring-2 ring-accent/30" : "border-border"
                   }`}
                 >
-                  <Icon className="w-7 h-7 text-accent" />
-                </div>
-                <h2 className="text-xl font-extrabold">{role.label}</h2>
-                <p className="text-muted-foreground text-sm leading-relaxed text-center">{role.description}</p>
+                  <span className="athar-tile mb-4 h-12 w-12 rounded-[14px]">
+                    <Icon className="h-6 w-6" strokeWidth={1.7} />
+                  </span>
+                  <h3 className="mb-[7px] text-xl font-extrabold">{role.label}</h3>
+                  <p className="flex-1 text-[0.94rem] leading-[1.7] text-muted-foreground">{role.description}</p>
 
-                {/* Selected indicator */}
-                <AnimatePresence>
-                  {isSelected && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      className="absolute top-3 left-3 w-6 h-6 rounded-full bg-accent flex items-center justify-center"
-                    >
-                      <svg className="w-3.5 h-3.5 text-accent-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-            );
-          })}
-        </motion.div>
+                  {/* Selected indicator */}
+                  <AnimatePresence>
+                    {isSelected && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        className="absolute left-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-accent"
+                      >
+                        <Check className="h-3.5 w-3.5 text-accent-foreground" strokeWidth={3} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </button>
+              );
+            })}
+          </motion.div>
 
-        {/* Error message */}
-        <AnimatePresence>
-          {showError && (
-            <motion.p
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="text-center text-destructive text-sm mt-3 font-medium"
-            >
-              يرجى اختيار نوع الحساب للمتابعة
-            </motion.p>
-          )}
-        </AnimatePresence>
-      </section>
-
-      {/* ── Primary CTA ── */}
-      <section className="px-5 pb-6 md:pb-10 relative z-10">
-        <div className="max-w-sm mx-auto">
-          <Button
-            onClick={handleContinue}
-            disabled={loading}
-            className={`w-full h-14 text-lg font-bold rounded-xl transition-all duration-300 ${
-              selected
-                ? "btn-gradient shadow-lg hover:shadow-xl"
-                : "bg-muted text-muted-foreground cursor-not-allowed opacity-60"
-            }`}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin ml-2" />
-                جاري التحميل...
-              </>
-            ) : (
-              "متابعة"
+          {/* Error message */}
+          <AnimatePresence>
+            {showError && (
+              <motion.p
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mt-3 text-center text-sm font-medium text-destructive"
+              >
+                يُرجى اختيار نوع الحساب للمتابعة
+              </motion.p>
             )}
-          </Button>
-        </div>
-      </section>
+          </AnimatePresence>
+        </section>
 
-      {/* ── How it works ── */}
-      <section className="px-5 pb-8 relative z-10">
-        <div className="max-w-3xl mx-auto">
-          <h3 className="text-center text-primary-foreground/55 text-sm font-bold mb-5">كيف تسير الرحلة؟</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* ── Primary CTA ── */}
+        <section className="pb-12 pt-6">
+          <div className="mx-auto max-w-sm">
+            <Button
+              onClick={handleContinue}
+              disabled={loading}
+              className={`h-14 w-full rounded-xl text-lg font-bold transition-all duration-300 ${
+                selected
+                  ? "btn-gradient shadow-premium hover:shadow-premium-lg"
+                  : "cursor-not-allowed bg-muted text-muted-foreground opacity-60"
+              }`}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                  جارٍ التحميل...
+                </>
+              ) : (
+                <>
+                  متابعة
+                  <ChevronLeft className="h-5 w-5" />
+                </>
+              )}
+            </Button>
+          </div>
+        </section>
+
+        {/* ── How it works ── */}
+        <section className="pb-[60px]">
+          <h2 className="mb-[18px] text-center text-[clamp(1.5rem,3vw,2rem)] font-extrabold tracking-tight">
+            كيف تسير الرحلة؟
+          </h2>
+          <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4">
             {[
-              { n: "١", t: "نقطة البداية", d: "تتهيّأ وتقيس انطلاقك." },
-              { n: "٢", t: "اعرف نفسك", d: "تكتشف ميولك واختياراتك." },
+              { n: "١", t: "نقطة البداية", d: "تتهيّأ وتقيس نقطة انطلاقك." },
+              { n: "٢", t: "اعرف نفسك", d: "تكتشف ميولك وترتّب اختياراتك." },
               { n: "٣", t: "جرّب واختبر", d: "تتعمّق وتعيش التخصص." },
               { n: "٤", t: "قرارك وأثرك", d: "تخرج بتقرير وشهادة." },
             ].map((s) => (
-              <div key={s.n} className="rounded-2xl bg-primary-foreground/5 border border-primary-foreground/10 p-4">
-                <div className="w-9 h-9 rounded-xl bg-accent/15 text-accent font-extrabold flex items-center justify-center mb-3">{s.n}</div>
-                <p className="font-bold text-primary-foreground text-sm">{s.t}</p>
-                <p className="text-primary-foreground/50 text-xs mt-1 leading-relaxed">{s.d}</p>
+              <div key={s.n} className="rounded-2xl border border-border bg-card p-5">
+                <div className="mb-3 flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-accent/15 font-extrabold text-[hsl(var(--gradient-end))]">
+                  {s.n}
+                </div>
+                <b className="font-extrabold">{s.t}</b>
+                <p className="mt-1 text-sm leading-normal text-muted-foreground">{s.d}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── Secondary Links ── */}
-      <section className="px-5 pb-8 relative z-10">
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-primary-foreground/50">
-          <button onClick={() => navigate("/auth?next=/dashboard/activate")} className="hover:text-primary-foreground/80 transition-colors hover-underline">
-            لديك كود تفعيل؟
-          </button>
-          <span className="hidden sm:inline text-primary-foreground/20">|</span>
-          <button onClick={() => navigate("/auth?next=/dashboard/activate")} className="hover:text-primary-foreground/80 transition-colors hover-underline">
-            لديك رابط تفعيل من ولي الأمر؟
-          </button>
-          <span className="hidden sm:inline text-primary-foreground/20">|</span>
-          <button onClick={() => navigate("/contact")} className="hover:text-primary-foreground/80 transition-colors hover-underline">
-            تواصل معنا
-          </button>
-        </div>
-      </section>
+        {/* ── Secondary Links ── */}
+        <section className="pb-8">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+            <button onClick={() => navigate("/auth?next=/dashboard/activate")} className="transition-colors hover:text-foreground hover-underline">
+              لديك رمز تفعيل؟
+            </button>
+            <span className="hidden text-border sm:inline">|</span>
+            <button onClick={() => navigate("/auth?next=/dashboard/activate")} className="transition-colors hover:text-foreground hover-underline">
+              لديك رابط تفعيل من وليّ الأمر؟
+            </button>
+            <span className="hidden text-border sm:inline">|</span>
+            <button onClick={() => navigate("/contact")} className="transition-colors hover:text-foreground hover-underline">
+              تواصل معنا
+            </button>
+          </div>
+        </section>
+      </div>
 
       {/* ── Footer ── */}
-      <footer className="py-6 px-5 border-t border-primary-foreground/10">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 max-w-3xl mx-auto">
-          <p className="text-primary-foreground/35 text-xs">
+      <footer className="border-t border-border px-5 py-6">
+        <div className="mx-auto flex max-w-[1020px] flex-col items-center justify-between gap-3 sm:flex-row">
+          <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} أثر البداية بواسطة Uniex. جميع الحقوق محفوظة.
           </p>
-          <div className="flex items-center gap-4 text-xs text-primary-foreground/35">
-            <button onClick={() => navigate("/privacy")} className="hover:text-primary-foreground/60 transition-colors">سياسة الخصوصية</button>
-            <button onClick={() => navigate("/terms")} className="hover:text-primary-foreground/60 transition-colors">الشروط والأحكام</button>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <button onClick={() => navigate("/privacy")} className="transition-colors hover:text-foreground">سياسة الخصوصية</button>
+            <button onClick={() => navigate("/terms")} className="transition-colors hover:text-foreground">الشروط والأحكام</button>
           </div>
         </div>
       </footer>

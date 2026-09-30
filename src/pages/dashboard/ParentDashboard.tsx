@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -14,6 +12,8 @@ import StudentProfileView from "@/components/StudentProfileView";
 import ActivationLinkSection from "@/components/parent/ActivationLinkSection";
 import NotificationBell from "@/components/parent/NotificationBell";
 import ContactSupportCard from "@/components/shared/ContactSupportCard";
+import { HeroBand } from "@/components/HeroBand";
+import { btnPrimary, toArabicDigits } from "@/lib/athar";
 
 interface LinkedChild {
   child_user_id: string;
@@ -164,17 +164,35 @@ export default function ParentDashboard() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
     );
   }
 
+  const percents = linkedChildren.map((c) => getCompletionPercent(childProgress[c.child_user_id] || []));
+  const completedCount = percents.filter((p) => p >= 100).length;
+  const avgPercent = percents.length ? Math.round(percents.reduce((a, b) => a + b, 0) / percents.length) : 0;
+
   return (
-    <div className="space-y-8" dir="rtl">
-      {/* Notification bell at top */}
-      <div className="flex justify-end">
-        <NotificationBell />
+    <div className="athar-page max-w-[960px] space-y-4" dir="rtl">
+      <HeroBand
+        eyebrow="بوابة وليّ الأمر"
+        title="رحلة أبنائك… تتابعها دون أن تتدخّل"
+        description="تطمئن على تقدّمهم ونتائجهم وتقاريرهم، والقرار يبقى قرارهم، بثقة تبنيها معهم."
+        className="mb-0"
+      >
+        <div className="flex justify-end [&_button]:text-hero-foreground [&_button:hover]:bg-hero-foreground/10">
+          <NotificationBell />
+        </div>
+      </HeroBand>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4">
+        <Kpi value={toArabicDigits(linkedChildren.length)} label="أبناء مرتبطون" />
+        <Kpi value={toArabicDigits(completedCount)} label="رحلات مكتملة" tone="success" />
+        <Kpi value={`${toArabicDigits(avgPercent)}٪`} label="متوسط التقدّم" tone="accent" />
+        <Kpi value={toArabicDigits(Math.max(linkedChildren.length - completedCount, 0))} label="رحلات جارية" />
       </div>
 
       {/* Activation Link Section */}
@@ -183,46 +201,41 @@ export default function ParentDashboard() {
       </motion.div>
 
       {/* Link Child Card */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <Card className="border-2 border-accent/30 shadow-lg">
-          <CardHeader className="bg-primary/5 rounded-t-lg">
-            <CardTitle className="flex items-center gap-2 text-xl text-primary">
-              <UserPlus className="w-6 h-6" />
-              ربط حساب طالب
-            </CardTitle>
-            <CardDescription>
-              أدخل البريد الإلكتروني المسجّل لابنك/ابنتك لمتابعة تقدمهم في الرحلة
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="flex gap-3">
-              <Input
-                type="email"
-                placeholder="student@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                dir="ltr"
-                className="text-left flex-1"
-                onKeyDown={(e) => e.key === "Enter" && handleLinkChild()}
-              />
-              <Button
-                onClick={handleLinkChild}
-                disabled={linking || !email.trim()}
-                className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold px-6"
-              >
-                {linking ? <Loader2 className="w-4 h-4 animate-spin" /> : "ربط الحساب"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="athar-card"
+      >
+        <h3 className="mb-1 flex items-center gap-2 text-[1.08rem] font-extrabold">
+          <UserPlus className="h-5 w-5 text-accent" />
+          ربط حساب طالب
+        </h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          أدخل البريد الإلكتروني المسجّل لابنك/ابنتك لمتابعة تقدمهم في الرحلة
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Input
+            type="email"
+            placeholder="student@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            dir="ltr"
+            className="athar-field min-w-[220px] flex-1 text-left"
+            onKeyDown={(e) => e.key === "Enter" && handleLinkChild()}
+          />
+          <Button onClick={handleLinkChild} disabled={linking || !email.trim()} className={btnPrimary}>
+            {linking ? <Loader2 className="h-4 w-4 animate-spin" /> : "ربط الحساب"}
+          </Button>
+        </div>
+      </motion.section>
 
       {/* Children Section */}
       {linkedChildren.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-lg font-bold flex items-center gap-2 text-primary">
-            <Users className="w-5 h-5" />
-            أبنائي ({linkedChildren.length})
+          <h2 className="flex items-center gap-2.5 pt-2 text-[1.05rem] font-extrabold after:h-px after:flex-1 after:bg-border after:content-['']">
+            <Users className="h-5 w-5 text-accent" />
+            أبنائي ({toArabicDigits(linkedChildren.length)})
           </h2>
 
           {linkedChildren.map((child, idx) => {
@@ -231,66 +244,54 @@ export default function ParentDashboard() {
             const milestones = steps.filter((s) => MILESTONE_SLUGS.includes(s.slug));
 
             return (
-              <motion.div
+              <motion.section
                 key={child.child_user_id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: idx * 0.1 }}
+                className="athar-card"
               >
-                <Card>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base">{child.child_name}</CardTitle>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 text-xs"
-                        onClick={() => handleViewProfile(child.child_user_id, child.child_name)}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-[1.08rem] font-extrabold">{child.child_name}</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 rounded-[10px] font-bold"
+                    onClick={() => handleViewProfile(child.child_user_id, child.child_name)}
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    عرض الملف الكامل
+                  </Button>
+                </div>
+                <div className="mb-5 mt-3 flex items-center gap-3">
+                  <div className="athar-track flex-1">
+                    <i style={{ width: `${percent}%` }} />
+                  </div>
+                  <span className="whitespace-nowrap text-sm font-bold text-[hsl(var(--gradient-end))]">
+                    {toArabicDigits(percent)}٪
+                  </span>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {milestones.map((step) => (
+                    <div
+                      key={step.slug}
+                      className={`flex items-center gap-3 text-[0.95rem] font-semibold ${step.completed ? "" : "text-muted-foreground"}`}
+                    >
+                      <span
+                        className={`grid h-[26px] w-[26px] flex-none place-items-center rounded-lg ${
+                          step.completed ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"
+                        }`}
                       >
-                        <FileText className="w-3.5 h-3.5" />
-                        عرض الملف الكامل
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-3 mt-2">
-                      <Progress value={percent} className="flex-1 h-2.5" />
-                      <span className="text-sm font-bold text-primary whitespace-nowrap">
-                        {percent}%
+                        {step.completed ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : <Clock className="h-3.5 w-3.5" />}
                       </span>
+                      {step.name_ar}
+                      <small className={`ms-auto text-[0.76rem] font-bold ${step.completed ? "text-success" : "text-muted-foreground"}`}>
+                        {step.completed ? "مكتمل" : "لم يكتمل"}
+                      </small>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {milestones.map((step) => (
-                        <div
-                          key={step.slug}
-                          className={`flex items-center gap-2 p-2.5 rounded-lg border ${
-                            step.completed
-                              ? "border-[hsl(var(--success))]/30 bg-[hsl(var(--success))]/5"
-                              : "border-border bg-muted/30"
-                          }`}
-                        >
-                          {step.completed ? (
-                            <div className="w-6 h-6 rounded-full bg-[hsl(var(--success))] flex items-center justify-center shrink-0">
-                              <Check className="w-3.5 h-3.5 text-white" />
-                            </div>
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center shrink-0">
-                              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                            </div>
-                          )}
-                          <span
-                            className={`text-xs leading-tight ${
-                              step.completed ? "font-medium text-foreground" : "text-muted-foreground"
-                            }`}
-                          >
-                            {step.name_ar}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                  ))}
+                </div>
+              </motion.section>
             );
           })}
         </div>
@@ -300,7 +301,7 @@ export default function ParentDashboard() {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center text-muted-foreground py-8"
+          className="athar-card py-8 text-center text-muted-foreground"
         >
           لم يتم ربط أي حساب طالب بعد. أدخل بريد ابنك/ابنتك أعلاه للبدء.
         </motion.p>
@@ -320,6 +321,21 @@ export default function ParentDashboard() {
           )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function Kpi({ value, label, tone }: { value: React.ReactNode; label: string; tone?: "success" | "accent" }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-[18px]">
+      <div
+        className={`text-[1.55rem] font-black leading-none ${
+          tone === "success" ? "text-success" : tone === "accent" ? "text-[hsl(var(--gradient-end))]" : "text-foreground"
+        }`}
+      >
+        {value}
+      </div>
+      <div className="mt-[7px] text-[0.82rem] font-semibold text-muted-foreground">{label}</div>
     </div>
   );
 }

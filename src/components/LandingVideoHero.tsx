@@ -83,7 +83,7 @@ export const LandingVideoHero = memo(function LandingVideoHero({ onCtaClick }: L
         {/* Clip title + description */}
         <div className="text-center mb-3">
           <p className="text-sm font-bold text-accent">{clip.label}</p>
-          <p className="text-xs text-primary-foreground/60 mt-0.5">{clip.description}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{clip.description}</p>
         </div>
 
         {/* Video container */}

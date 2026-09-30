@@ -3,15 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import {
   Users, GraduationCap, FileText, School, Loader2,
-  TrendingUp, Clock, Activity,
+  TrendingUp, Clock, Activity, ChevronLeft,
 } from "lucide-react";
+import { HeroBand } from "@/components/HeroBand";
+import { btnPrimary } from "@/lib/athar";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  ResponsiveContainer,
 } from "recharts";
 import Sparkline from "@/components/institution/Sparkline";
 
@@ -28,10 +29,6 @@ const RIASEC_AR: Record<string, string> = {
   R: "واقعي", I: "بحثي", A: "فني", S: "اجتماعي", E: "مقدام", C: "تقليدي",
 };
 
-const PIE_COLORS = [
-  "hsl(210, 70%, 20%)", "hsl(160, 55%, 38%)", "hsl(30, 80%, 55%)",
-  "hsl(270, 50%, 55%)", "hsl(0, 60%, 55%)", "hsl(45, 85%, 50%)",
-];
 
 interface KpiData {
   total: number;
@@ -236,87 +233,91 @@ export default function InstitutionDashboard() {
 
   const pct = (n: number) => (kpi.total ? Math.round((n / kpi.total) * 100) : 0);
 
+  const hollandTotal = hollandData.reduce((a, d) => a + d.value, 0);
+  const hollandSorted = [...hollandData].sort((a, b) => b.value - a.value);
+  const hollandMax = Math.max(1, ...hollandData.map((d) => d.value));
+
   return (
-    <div className="space-y-6">
+    <div className="athar-page max-w-[960px] space-y-4">
+      <HeroBand
+        eyebrow="لوحة المؤسسة"
+        title="أثر البرنامج على طلابك — بالأرقام"
+        description="تابع مشاركة الطلاب ونتائجهم، وقِس نموّ وضوحهم قبل الرحلة وبعدها في مكان واحد."
+        className="mb-0"
+      />
+
       {/* Connection Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <School className="w-5 h-5 text-primary" />جلب بيانات الطلاب
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-3 items-end">
-            <Input placeholder="اسم المدرسة" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} className="max-w-sm" />
-            <Button onClick={handleLink} disabled={linking || !schoolName.trim()}>
-              {linking && <Loader2 className="w-4 h-4 animate-spin ml-2" />}جلب بيانات الطلاب
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <section className="athar-card">
+        <h3 className="mb-4 flex items-center gap-2 text-[1.08rem] font-extrabold">
+          <School className="h-5 w-5 text-accent" />جلب بيانات الطلاب
+        </h3>
+        <div className="flex flex-wrap items-end gap-3">
+          <Input placeholder="اسم المدرسة" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} className="athar-field max-w-sm" />
+          <Button onClick={handleLink} disabled={linking || !schoolName.trim()} className={btnPrimary}>
+            {linking && <Loader2 className="h-4 w-4 animate-spin" />}جلب بيانات الطلاب
+          </Button>
+        </div>
+      </section>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>
       ) : (
         <>
           {/* KPI Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-            <KpiCard icon={<Users className="w-5 h-5" />} label="إجمالي الطلاب" value={kpi.total} sparkData={weeklyTrend.total} />
-            <KpiCard icon={<TrendingUp className="w-5 h-5" />} label="نسبة الإكمال" value={`${kpi.completionRate}%`} sparkData={weeklyTrend.completed} />
-            <KpiCard icon={<Activity className="w-5 h-5" />} label="قيد التنفيذ" value={kpi.inProgress} />
-            <KpiCard icon={<Clock className="w-5 h-5" />} label="نشطون هذا الأسبوع" value={kpi.activeThisWeek} sparkData={weeklyTrend.active} />
-            <KpiCard icon={<GraduationCap className="w-5 h-5" />} label="أنهوا هولاند" value={`${pct(kpi.holland)}%`} />
-            <KpiCard icon={<FileText className="w-5 h-5" />} label="معتمدون" value={`${pct(kpi.report)}%`} sparkData={weeklyTrend.completed} />
+          <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3">
+            <KpiCard icon={<Users className="h-5 w-5" />} label="إجمالي الطلاب" value={kpi.total} sparkData={weeklyTrend.total} />
+            <KpiCard icon={<TrendingUp className="h-5 w-5" />} label="نسبة الإكمال" value={`${kpi.completionRate}%`} sparkData={weeklyTrend.completed} tone="success" />
+            <KpiCard icon={<Activity className="h-5 w-5" />} label="قيد التنفيذ" value={kpi.inProgress} tone="accent" />
+            <KpiCard icon={<Clock className="h-5 w-5" />} label="نشطون هذا الأسبوع" value={kpi.activeThisWeek} sparkData={weeklyTrend.active} />
+            <KpiCard icon={<GraduationCap className="h-5 w-5" />} label="أنهوا هولاند" value={`${pct(kpi.holland)}%`} />
+            <KpiCard icon={<FileText className="h-5 w-5" />} label="معتمدون" value={`${pct(kpi.report)}%`} sparkData={weeklyTrend.completed} />
           </div>
 
           {kpi.total > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader><CardTitle className="text-base">توزيع أنماط RIASEC</CardTitle></CardHeader>
-                <CardContent className="h-72">
-                  {hollandData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie data={hollandData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>
-                          {hollandData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                        </Pie>
-                        <Legend /><Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <p className="text-muted-foreground text-sm text-center pt-12">لا توجد بيانات هولاند بعد</p>
-                  )}
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <section className="athar-card">
+                <h3 className="mb-4 text-[1.08rem] font-extrabold">توزيع أنماط RIASEC</h3>
+                {hollandSorted.length > 0 ? (
+                  <div className="space-y-[13px]">
+                    {hollandSorted.map((d) => (
+                      <div key={d.name} className="grid grid-cols-[96px_1fr_42px] items-center gap-3">
+                        <b className="text-[0.9rem] font-semibold">{d.name}</b>
+                        <div className="h-[9px] overflow-hidden rounded-md bg-muted">
+                          <i className="block h-full rounded-md bg-accent" style={{ width: `${(d.value / hollandMax) * 100}%` }} />
+                        </div>
+                        <span className="text-left text-[0.82rem] font-bold text-muted-foreground">
+                          {Math.round((d.value / (hollandTotal || 1)) * 100)}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="pt-12 text-center text-sm text-muted-foreground">لا توجد بيانات هولاند بعد</p>
+                )}
+              </section>
 
-              <Card>
-                <CardHeader><CardTitle className="text-base">مسار إتمام الرحلة</CardTitle></CardHeader>
-                <CardContent className="h-72 text-foreground">
+              <section className="athar-card">
+                <h3 className="mb-4 text-[1.08rem] font-extrabold">مسار إتمام الرحلة</h3>
+                <div className="h-64 text-accent">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={journeyData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                      <YAxis allowDecimals={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                      <YAxis allowDecimals={false} tick={{ fill: "hsl(var(--muted-foreground))" }} />
                       <Tooltip />
-                      <Bar dataKey="count" fill="currentColor" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="count" fill="currentColor" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
-                </CardContent>
-              </Card>
+                </div>
+              </section>
             </div>
           )}
 
           {/* Quick Nav */}
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" onClick={() => navigate("/institution/students")} className="gap-2">
-              <Users className="w-4 h-4" />إدارة الطلاب
-            </Button>
-            <Button variant="outline" onClick={() => navigate("/institution/codes")} className="gap-2">
-              <GraduationCap className="w-4 h-4" />أكواد التفعيل
-            </Button>
-            <Button variant="outline" onClick={() => navigate("/institution/activity")} className="gap-2">
-              <Activity className="w-4 h-4" />سجل النشاط
-            </Button>
+          <div className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
+            <QuickLink icon={<Users className="h-[19px] w-[19px]" />} title="إدارة الطلاب" onClick={() => navigate("/institution/students")} />
+            <QuickLink icon={<GraduationCap className="h-[19px] w-[19px]" />} title="أكواد التفعيل" onClick={() => navigate("/institution/codes")} />
+            <QuickLink icon={<Activity className="h-[19px] w-[19px]" />} title="سجل النشاط" onClick={() => navigate("/institution/activity")} />
           </div>
         </>
       )}
@@ -324,19 +325,31 @@ export default function InstitutionDashboard() {
   );
 }
 
-const KpiCard = React.memo(function KpiCard({ icon, label, value, sparkData }: { icon: React.ReactNode; label: string; value: string | number; sparkData?: number[] }) {
+function QuickLink({ icon, title, onClick }: { icon: React.ReactNode; title: string; onClick: () => void }) {
   return (
-    <Card>
-      <CardContent className="p-5 flex items-center gap-4">
-        <div className="p-2 rounded-lg bg-primary/10 text-primary">{icon}</div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="text-2xl font-bold">{value}</p>
-        </div>
-        {sparkData && sparkData.length > 0 && (
-          <Sparkline data={sparkData} />
-        )}
-      </CardContent>
-    </Card>
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-[14px] border border-border bg-card px-4 py-[15px] text-start transition-all hover:-translate-y-0.5 hover:border-accent"
+    >
+      <span className="grid h-[38px] w-[38px] flex-none place-items-center rounded-[11px] bg-muted text-foreground">{icon}</span>
+      <b className="text-[0.98rem] font-bold">{title}</b>
+      <ChevronLeft className="ms-auto h-4 w-4 text-muted-foreground" />
+    </button>
+  );
+}
+
+const KpiCard = React.memo(function KpiCard({ icon, label, value, sparkData, tone }: { icon: React.ReactNode; label: string; value: string | number; sparkData?: number[]; tone?: "success" | "accent" }) {
+  return (
+    <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-[18px]">
+      <div className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-accent/15 text-[hsl(var(--gradient-end))]">{icon}</div>
+      <div className="min-w-0 flex-1">
+        <p className={`text-[1.55rem] font-black leading-none ${tone === "success" ? "text-success" : tone === "accent" ? "text-[hsl(var(--gradient-end))]" : "text-foreground"}`}>{value}</p>
+        <p className="mt-[7px] text-[0.82rem] font-semibold text-muted-foreground">{label}</p>
+      </div>
+      {sparkData && sparkData.length > 0 && (
+        <Sparkline data={sparkData} />
+      )}
+    </div>
   );
 });

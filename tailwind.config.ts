@@ -55,6 +55,20 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        hero: {
+          from: "hsl(var(--hero-from))",
+          to: "hsl(var(--hero-to))",
+          foreground: "hsl(var(--hero-foreground))",
+          muted: "hsl(var(--hero-muted))",
+          subtle: "hsl(var(--hero-subtle))",
+        },
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          light: "hsl(var(--gold-light))",
+          pale: "hsl(var(--gold-pale))",
+        },
+        cream: "hsl(var(--cream))",
+        ink: "hsl(var(--ink))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -108,6 +122,10 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.7" },
         },
+        "radar-grow": {
+          from: { transform: "scale(0)" },
+          to: { transform: "scale(1)" },
+        },
         "fade-in-up": {
           from: { opacity: "0", transform: "translateY(10px)" },
           to: { opacity: "1", transform: "translateY(0)" },
@@ -124,6 +142,7 @@ export default {
         "float": "float 3s ease-in-out infinite",
         "pulse-soft": "pulse-soft 2s ease-in-out infinite",
         "fade-in-up": "fade-in-up 0.4s ease-out forwards",
+        "radar-grow": "radar-grow 1s cubic-bezier(.2,.8,.25,1) .15s both",
       },
       boxShadow: {
         "premium": "0 4px 20px -4px hsl(var(--shadow-accent) / 0.15)",

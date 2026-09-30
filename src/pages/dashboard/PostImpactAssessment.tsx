@@ -7,6 +7,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, BarChart3, CheckCircle2 } from "lucide-react";
 import { CourseVideo } from "@/components/CourseVideo";
+import { HeroBand } from "@/components/HeroBand";
+import { LikertScale, QuestionBlock } from "@/components/LikertScale";
+import { btnOutline, btnPrimary, toArabicDigits } from "@/lib/athar";
 
 const IMPACT_QUESTIONS = [
   { id: "iq1", text: "أشعر أنني أعرف نفسي بشكل أوضح بعد هذه التجربة" },
@@ -25,7 +28,7 @@ const IMPACT_QUESTIONS = [
 
 const LIKERT_OPTIONS = [
   { value: "1", label: "لا أوافق" },
-  { value: "2", label: "أوافق قليلاً" },
+  { value: "2", label: "أوافق قليلًا" },
   { value: "3", label: "محايد" },
   { value: "4", label: "أوافق" },
   { value: "5", label: "أوافق بشدة" },
@@ -126,12 +129,14 @@ export default function PostImpactAssessment() {
 
   if (completed) {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-        <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="w-8 h-8 text-success" />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="athar-page">
+        <div className="athar-card py-16 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+            <CheckCircle2 className="h-8 w-8 text-success" />
+          </div>
+          <h2 className="text-2xl font-extrabold">تم إكمال قياس الأثر البعدي!</h2>
+          <p className="mt-2 text-muted-foreground">جارٍ الانتقال للتقرير النهائي...</p>
         </div>
-        <h2 className="text-2xl font-bold">تم إكمال قياس الأثر البعدي!</h2>
-        <p className="text-muted-foreground mt-2">جاري الانتقال للتقرير النهائي...</p>
       </motion.div>
     );
   }
@@ -139,112 +144,86 @@ export default function PostImpactAssessment() {
   const progressPct = Math.round((Object.keys(answers).length / IMPACT_QUESTIONS.length) * 100);
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <CourseVideo
-        title="نصائح ذهبية لاختيار مسارك"
-        description="قبل أن ترى نتيجتك، تذكر هذه القواعد السريعة. والآن، دعنا نقيس مدى تطور وعيك."
-        videoUrl=""
-        className="mb-8"
+    <div className="athar-page">
+      <HeroBand
+        eyebrow="الفصل الرابع · بعد رحلتك"
+        title="هل تغيّر شيء؟"
+        description="ده بيقيس التغير في وعيك بعد الرحلة. نفس أسئلة البداية؛ أجب بصدق مرة أخرى."
       />
 
-      <div className="mb-8 text-center">
-        <h2 className="text-2xl font-bold mb-2">قياس الأثر البعدي</h2>
-        <p className="text-muted-foreground">ده بيقيس التغير في وعيك بعد الرحلة</p>
+      <div className="athar-card mb-4">
+        <CourseVideo
+          title="نصائح ذهبية لاختيار مسارك"
+          description="قبل أن ترى نتيجتك، تذكر هذه القواعد السريعة. والآن، دعنا نقيس مدى تطور وعيك."
+          videoUrl=""
+        />
       </div>
 
-      {/* Progress */}
-      <div className="mb-8">
-        <div className="flex justify-between text-sm text-muted-foreground mb-2">
-          <span className="font-medium">الصفحة {currentPage + 1} من {totalPages}</span>
-          <span className="font-bold text-accent">{progressPct}%</span>
+      <div className="athar-card">
+        <div className="athar-track mb-[18px]">
+          <motion.i initial={false} animate={{ width: `${progressPct}%` }} transition={{ duration: 0.4 }} />
         </div>
-        <div className="progress-premium">
+        <p className="mb-5 flex justify-between text-sm font-bold text-muted-foreground">
+          <span>
+            الصفحة {toArabicDigits(currentPage + 1)} من {toArabicDigits(totalPages)}
+          </span>
+          <span className="text-[hsl(var(--gradient-end))]">{toArabicDigits(progressPct)}٪</span>
+        </p>
+
+        <AnimatePresence mode="wait">
           <motion.div
-            initial={false}
-            animate={{ width: `${progressPct}%` }}
-            transition={{ duration: 0.4 }}
-          />
+            key={currentPage}
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -40 }}
+            transition={{ duration: 0.3 }}
+          >
+            {pageQuestions.map((q, idx) => (
+              <QuestionBlock
+                key={q.id}
+                title={
+                  <>
+                    <span className="ml-2 font-extrabold text-[hsl(var(--gradient-end))]">
+                      {toArabicDigits(currentPage * pageSize + idx + 1)}.
+                    </span>
+                    {q.text}
+                  </>
+                }
+              >
+                <LikertScale
+                  aria-label={q.text}
+                  options={LIKERT_OPTIONS}
+                  value={answers[q.id]}
+                  onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
+                />
+              </QuestionBlock>
+            ))}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Navigation */}
+        <div className="athar-foot">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage((p) => p - 1)}
+            disabled={currentPage === 0}
+            className={btnOutline}
+          >
+            <ChevronRight className="h-4 w-4" />
+            السابق
+          </Button>
+          {currentPage < totalPages - 1 ? (
+            <Button onClick={() => setCurrentPage((p) => p + 1)} disabled={!pageAllAnswered} className={btnPrimary}>
+              التالي
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button onClick={handleSubmit} disabled={!allAnswered || submitting} className={btnPrimary}>
+              {submitting ? "جارٍ الحفظ..." : "إنهاء"}
+              {!submitting && <CheckCircle2 className="h-4 w-4" />}
+            </Button>
+          )}
         </div>
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentPage}
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -40 }}
-          transition={{ duration: 0.3 }}
-          className="space-y-5"
-        >
-          {pageQuestions.map((q, idx) => (
-            <motion.div
-              key={q.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              className="card-premium p-6"
-            >
-              <p className="text-lg font-medium mb-4">
-                <span className="text-gradient font-extrabold ml-2">
-                  {currentPage * pageSize + idx + 1}.
-                </span>
-                {q.text}
-              </p>
-              <div className="flex gap-2">
-                {LIKERT_OPTIONS.map((opt) => {
-                  const isSelected = answers[q.id] === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: opt.value }))}
-                      className={`
-                        flex-1 py-3 px-1 rounded-xl border-2 text-xs sm:text-sm font-medium
-                        transition-all duration-200 leading-tight
-                        ${isSelected
-                          ? "border-accent bg-accent/10 text-accent shadow-sm"
-                          : "border-border hover:border-accent/40 hover:bg-secondary/50"
-                        }
-                      `}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Navigation */}
-      <div className="flex justify-between mt-8">
-        <Button
-          variant="outline"
-          onClick={() => setCurrentPage((p) => p - 1)}
-          disabled={currentPage === 0}
-          className="gap-2 rounded-xl h-11"
-        >
-          <ChevronRight className="w-4 h-4" />
-          السابق
-        </Button>
-        {currentPage < totalPages - 1 ? (
-          <Button
-            onClick={() => setCurrentPage((p) => p + 1)}
-            disabled={!pageAllAnswered}
-            className="gap-2 btn-gradient rounded-xl h-11 px-8"
-          >
-            التالي
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-        ) : (
-          <Button
-            onClick={handleSubmit}
-            disabled={!allAnswered || submitting}
-            className="gap-2 btn-gradient rounded-xl h-11 px-8"
-          >
-            {submitting ? "جاري الحفظ..." : "إنهاء ✓"}
-          </Button>
-        )}
       </div>
     </div>
   );

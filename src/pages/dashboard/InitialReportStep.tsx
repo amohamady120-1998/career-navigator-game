@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
-import { Loader2, ArrowLeft, Download, Share2, Copy, Brain, Target, TrendingUp, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, ArrowLeft, Download, Share2, Copy, Target, TrendingUp, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { HeroBand } from "@/components/HeroBand";
+import { HOLLAND_LABELS_AR, type HollandCode } from "@/components/RadarChart";
+import { btnOutline, btnPrimary, toArabicDigits } from "@/lib/athar";
 
 type Major = { id?: string; title: string; reasons: string[] };
 
@@ -185,156 +187,160 @@ export default function InitialReportStep() {
 
   if (isLoading || !reportData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
     );
   }
 
+  const letters = reportData.hollandCode.split('').filter(c => c !== ' ');
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans" dir="rtl">
-      {/* HEADER */}
-      <header className="bg-card border-b border-border px-4 py-4 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="font-extrabold text-lg text-primary">أثر ستارت</div>
-            <div className="text-sm font-bold text-muted-foreground bg-muted px-3 py-1 rounded-full">
-              تقريرك المبدئي
+    <div className="athar-page" dir="rtl">
+      <HeroBand
+        eyebrow="الفصل الثاني · نتيجتك المبدئية"
+        title="نتيجة ميولك المهنية (مبدئيًا)"
+        description="💡 ده تقرير مبدئي يساعدك تبدأ… مش قرار نهائي."
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          {letters.map((letter, i) => (
+            <div key={i} className="flex items-center gap-2.5 rounded-[14px] border border-hero-foreground/10 bg-hero-foreground/5 py-1.5 pe-3.5 ps-1.5">
+              <span className="btn-gradient grid h-11 w-11 place-items-center rounded-xl text-xl font-black">{letter}</span>
+              <span className="text-sm font-bold text-hero-muted">{HOLLAND_LABELS_AR[letter as HollandCode] ?? letter}</span>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-2" onClick={handleDownloadPDF} disabled={isDownloading}>
-              {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              <span className="hidden sm:inline">PDF</span>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
-              عودة للوحة التحكم
-            </Button>
-          </div>
+          ))}
         </div>
-      </header>
-
-      <main className="flex-grow py-8 px-4 max-w-3xl mx-auto w-full">
-        {/* HERO SUMMARY */}
-        <Card className="p-8 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background mb-8 text-center animate-in fade-in duration-500 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
-            <Brain className="w-8 h-8" />
-          </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-foreground mb-2">نتيجة ميولك المهنية (مبدئيًا)</h1>
-          <p className="text-sm text-muted-foreground mb-6">
-            💡 ده تقرير مبدئي يساعدك تبدأ… مش قرار نهائي.
-          </p>
-
-          <div className="flex justify-center gap-4 mb-4">
-            {reportData.hollandCode.split('').filter(c => c !== ' ').map((letter, i) => (
-              <div key={i} className="w-14 h-14 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center font-extrabold text-2xl shadow-md">
-                {letter}
-              </div>
-            ))}
-          </div>
-
-          <div className="flex justify-center gap-2 flex-wrap">
+        {reportData.tags.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
             {reportData.tags.map((tag, i) => (
-              <span key={i} className="text-xs font-bold bg-accent text-accent-foreground px-3 py-1 rounded-full">
+              <span key={i} className="rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-xs font-bold text-accent">
                 {tag}
               </span>
             ))}
           </div>
-        </Card>
+        )}
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 rounded-[10px] border-hero-foreground/20 bg-hero-foreground/5 font-bold text-hero-foreground hover:bg-hero-foreground/10 hover:text-hero-foreground"
+            onClick={handleDownloadPDF}
+            disabled={isDownloading}
+          >
+            {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            PDF
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="rounded-[10px] font-bold text-hero-muted hover:bg-hero-foreground/10 hover:text-hero-foreground"
+            onClick={() => navigate('/dashboard')}
+          >
+            عودة للوحة التحكم
+          </Button>
+        </div>
+      </HeroBand>
 
-        {/* MEANING SECTION */}
-        <Card className="p-6 border-2 border-border bg-card mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <h2 className="text-xl font-extrabold text-foreground mb-4 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" /> إيه معنى النتيجة دي؟
-          </h2>
-          <div className="space-y-3">
-            {reportData.explanation.map((item, i) => (
-              <div key={i} className="flex items-start gap-3 text-muted-foreground text-sm leading-relaxed">
-                <span className="text-primary font-bold mt-0.5">•</span>
-                <span>{item}</span>
+      {/* MEANING SECTION */}
+      <section className="athar-card mb-4">
+        <h2 className="mb-4 flex items-center gap-2.5 text-[1.05rem] font-extrabold">
+          <SectionIcon><Sparkles className="h-4 w-4" /></SectionIcon>
+          إيه معنى النتيجة دي؟
+        </h2>
+        <ul className="flex flex-col gap-[9px]">
+          {reportData.explanation.map((item, i) => (
+            <li key={i} className="relative ps-[18px] text-[0.93rem] font-medium leading-relaxed before:absolute before:top-2 before:h-[7px] before:w-[7px] before:rounded-full before:bg-accent before:content-[''] before:[inset-inline-start:0]">
+              {item}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* STRENGTHS & INVESTMENTS */}
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <section className="rounded-[14px] border border-border bg-card p-[18px]">
+          <h3 className="mb-[13px] flex items-center gap-2 text-[0.95rem] font-extrabold text-success">
+            <TrendingUp className="h-[18px] w-[18px]" /> نقاط قوة عندك
+          </h3>
+          <ul className="flex flex-col gap-[11px]">
+            {reportData.strengths.map((item, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-[0.92rem] font-medium leading-normal">
+                <span className="mt-px grid h-[19px] w-[19px] flex-none place-items-center rounded-full bg-success/15 text-success">
+                  <CheckCircle2 className="h-3 w-3" />
+                </span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="rounded-[14px] border border-border bg-card p-[18px]">
+          <h3 className="mb-[13px] flex items-center gap-2 text-[0.95rem] font-extrabold text-[hsl(var(--gradient-end))]">
+            <Target className="h-[18px] w-[18px]" /> نقاط استثمار (تحتاج تطوير)
+          </h3>
+          <ul className="flex flex-col gap-[11px]">
+            {reportData.investmentPoints.map((item, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-[0.92rem] font-medium leading-normal">
+                <span className="mt-px grid h-[19px] w-[19px] flex-none place-items-center rounded-full bg-accent/15 text-[hsl(var(--gradient-end))]">
+                  <AlertCircle className="h-3 w-3" />
+                </span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+
+      {/* TOP MAJORS */}
+      <section className="athar-card">
+        <h2 className="mb-1 text-[1.05rem] font-extrabold">
+          أفضل {toArabicDigits(reportData.majors.length)} مسارات مناسبة لك حاليًا
+        </h2>
+        <p className="mb-3.5 text-sm text-muted-foreground">لمحة أولى؛ سنضيّقها في الخطوات القادمة.</p>
+        <div className="flex flex-col gap-[11px]">
+          {reportData.majors.map((major, i) => (
+            <div
+              key={i}
+              className={`flex items-start gap-3 rounded-[13px] border px-[17px] py-[15px] ${
+                i === 0 ? "border-accent/50 bg-accent/5" : "border-border bg-card"
+              }`}
+            >
+              <span
+                className={`grid h-8 w-8 flex-none place-items-center rounded-[9px] font-extrabold ${
+                  i === 0 ? "btn-gradient" : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {toArabicDigits(i + 1)}
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold">{major.title}</h3>
+                {major.reasons.map((reason, idx) => (
+                  <p key={idx} className="mt-0.5 text-[0.85rem] text-muted-foreground">
+                    {reason}
+                  </p>
+                ))}
               </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* STRENGTHS & INVESTMENTS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <Card className="p-5 border-2 border-border bg-card">
-            <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary" /> نقاط قوة عندك
-            </h3>
-            <div className="space-y-2">
-              {reportData.strengths.map((item, i) => (
-                <div key={i} className="flex items-start gap-2 text-muted-foreground text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  <span>{item}</span>
-                </div>
-              ))}
             </div>
-          </Card>
-
-          <Card className="p-5 border-2 border-border bg-card">
-            <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
-              <Target className="w-5 h-5 text-amber-500" /> نقاط استثمار (تحتاج تطوير)
-            </h3>
-            <div className="space-y-2">
-              {reportData.investmentPoints.map((item, i) => (
-                <div key={i} className="flex items-start gap-2 text-muted-foreground text-sm">
-                  <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
+          ))}
         </div>
 
-        {/* TOP MAJORS */}
-        <div className="mb-8">
-          <h2 className="text-xl font-extrabold text-foreground mb-4">
-            أفضل {reportData.majors.length} مسارات مناسبة لك حاليًا
-          </h2>
-          <div className="space-y-4">
-            {reportData.majors.map((major, i) => (
-              <Card key={i} className="p-5 border-2 border-border bg-card flex gap-4">
-                <div className="w-10 h-10 bg-primary text-primary-foreground rounded-xl flex items-center justify-center font-extrabold text-lg shrink-0">
-                  {i + 1}
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg text-foreground mb-2">{major.title}</h3>
-                  <div className="space-y-1">
-                    {major.reasons.map((reason, idx) => (
-                      <p key={idx} className="text-sm text-muted-foreground">
-                        {reason}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              </Card>
-            ))}
+        <div className="athar-foot">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" className={btnOutline} onClick={handleDownloadPDF} disabled={isDownloading}>
+              {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              تحميل PDF
+            </Button>
+            <Button variant="outline" className={btnOutline} onClick={() => setIsShareModalOpen(true)}>
+              <Share2 className="h-4 w-4" />
+              مشاركة التقرير
+            </Button>
           </div>
-        </div>
-
-        {/* SECONDARY ACTIONS */}
-        <div className="flex gap-3 mb-6">
-          <Button variant="outline" className="flex-1 gap-2" onClick={handleDownloadPDF} disabled={isDownloading}>
-            {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            تحميل PDF
-          </Button>
-          <Button variant="outline" className="flex-1 gap-2" onClick={() => setIsShareModalOpen(true)}>
-            <Share2 className="w-4 h-4" />
-            مشاركة التقرير
-          </Button>
-        </div>
-
-        {/* PRIMARY CTA */}
-        <div className="pb-10">
-          <Button size="lg" className="w-full h-14 text-lg font-bold rounded-xl shadow-md transition-all active:scale-95" onClick={handleContinue}>
+          <Button className={btnPrimary} onClick={handleContinue}>
             كمّل — رتّب اختياراتك
-            <ArrowLeft className="w-5 h-5 mr-2" />
+            <ArrowLeft className="h-5 w-5" />
           </Button>
         </div>
-      </main>
+      </section>
 
       {/* SHARE MODAL */}
       <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
@@ -361,5 +367,13 @@ export default function InitialReportStep() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function SectionIcon({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="grid h-7 w-7 flex-none place-items-center rounded-[9px] bg-accent/15 text-[hsl(var(--gradient-end))]">
+      {children}
+    </span>
   );
 }

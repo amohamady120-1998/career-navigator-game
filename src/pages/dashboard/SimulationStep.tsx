@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Clock, AlertTriangle, ArrowLeft, LogOut, Save, CheckCircle2, Brain, ChevronUp, ChevronDown, Activity, ShieldCheck, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { HeroBand } from "@/components/HeroBand";
+import { btnOutline, btnPrimary, toArabicDigits } from "@/lib/athar";
 
 // --- TYPES & DATA ---
 type Trait = 'action' | 'analytical' | 'cautious' | 'seek_info' | 'risk' | 'safe';
@@ -402,155 +403,179 @@ export default function SimulationStep() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
     );
   }
 
+  const stageActions = (
+    <div className="flex flex-wrap gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="rounded-[10px] font-bold text-hero-muted hover:bg-hero-foreground/10 hover:text-hero-foreground"
+        onClick={handleSaveAndExit}
+      >
+        <Save className="h-4 w-4" /> حفظ
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="rounded-[10px] font-bold text-destructive hover:bg-destructive/15 hover:text-destructive"
+        onClick={handleWithdrawClick}
+      >
+        <LogOut className="h-4 w-4" /> انسحاب
+      </Button>
+    </div>
+  );
+
   if (screen === 'withdrawing') {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-background" dir="rtl">
-        <Card className="max-w-lg w-full p-8 text-center space-y-5">
-          <LogOut className="w-12 h-12 text-destructive mx-auto" />
-          <h2 className="text-xl font-bold">طلب انسحاب</h2>
-          <p className="text-muted-foreground text-sm leading-relaxed">ليه قررت توقف هنا؟ (الانسحاب قرار يُحترم، لكن نحتاج نفهم طريقة تفكيرك)</p>
-          <Textarea placeholder="اكتب سبب الانسحاب..." rows={4} value={withdrawalReason} onChange={(e) => setWithdrawalReason(e.target.value)} />
-          <p className={`text-xs ${withdrawalReason.length < 20 ? 'text-destructive' : 'text-green-600'}`}>
+      <div className="athar-page" dir="rtl">
+        <div className="athar-card mx-auto max-w-lg space-y-5 text-center">
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-destructive/10">
+            <LogOut className="h-7 w-7 text-destructive" />
+          </span>
+          <h2 className="text-xl font-extrabold">طلب انسحاب</h2>
+          <p className="text-sm leading-relaxed text-muted-foreground">ليه قررت توقف هنا؟ (الانسحاب قرار يُحترم، لكن نحتاج نفهم طريقة تفكيرك)</p>
+          <Textarea className="athar-field" placeholder="اكتب سبب الانسحاب..." rows={4} value={withdrawalReason} onChange={(e) => setWithdrawalReason(e.target.value)} />
+          <p className={`text-xs font-bold ${withdrawalReason.length < 20 ? 'text-destructive' : 'text-success'}`}>
             {withdrawalReason.length}/20 حرف مطلوب
           </p>
-          <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={handleCancelWithdrawal}>تراجع، سأكمل</Button>
-            <Button variant="destructive" className="flex-1" onClick={handleWithdrawalConfirm} disabled={withdrawalReason.length < 20 || isSaving}>
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "تأكيد الانسحاب"}
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" className={`${btnOutline} flex-1`} onClick={handleCancelWithdrawal}>تراجع، سأكمل</Button>
+            <Button variant="destructive" className="h-auto flex-1 rounded-xl py-3.5 text-base font-bold" onClick={handleWithdrawalConfirm} disabled={withdrawalReason.length < 20 || isSaving}>
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "تأكيد الانسحاب"}
             </Button>
           </div>
-        </Card>
+        </div>
       </div>
     );
   }
 
   if (screen === 'feedback') {
     return (
-      <div className="min-h-screen flex flex-col bg-background" dir="rtl">
-        <main className="flex-grow flex items-center justify-center px-4">
-          <div className="text-center max-w-lg">
-            <div className="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-6">
-              <Brain className="w-10 h-10" />
-            </div>
-            <h2 className="text-3xl font-extrabold mb-4">نهاية {STAGE_NAMES[currentStage]}</h2>
-            <Card className="p-6 border-2 border-border mb-8 text-lg font-medium text-muted-foreground leading-relaxed">
-              {getStageFeedback(currentStage)}
-            </Card>
-            <Button size="lg" className="w-full h-14 text-lg font-bold rounded-xl" onClick={handleContinueFeedback}>
-              {currentStage === 4 ? "عرض الملخص" : "كمّل"}
-            </Button>
-          </div>
-        </main>
+      <div className="athar-page" dir="rtl">
+        <HeroBand
+          eyebrow="الفصل الثالث · محاكاة"
+          title={<>نهاية {STAGE_NAMES[currentStage]}</>}
+          description={getStageFeedback(currentStage)}
+        >
+          <Button className={btnPrimary} onClick={handleContinueFeedback}>
+            {currentStage === 4 ? "عرض الملخص" : "كمّل"}
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </HeroBand>
       </div>
     );
   }
 
   if (screen === 'summary') {
     const m = computeMetrics(answers);
+    const items = [
+      { icon: Brain, title: "نمط اتخاذ القرار", tone: "text-[hsl(var(--gradient-end))] bg-accent/15", text: <>تميل إلى الأسلوب {m.decision_style === 'analytical' ? 'التحليلي' : m.decision_style === 'action-oriented' ? 'المبادر والسريع' : 'الحذر والمتأني'}</> },
+      { icon: Activity, title: "تحت الضغط", tone: "text-destructive bg-destructive/10", text: <>أداءك يُظهر أنك {m.stress_response === 'composed' ? 'تحافظ على هدوئك' : m.stress_response === 'impulsive' ? 'تتخذ قرارات سريعة لإنقاذ الموقف' : 'تتأنى خوفاً من ارتكاب الأخطاء'}</> },
+      { icon: ShieldCheck, title: "المثابرة", tone: "text-success bg-success/15", text: <>تمتلك صلابة {m.persistence === 'resilient' ? 'عالية ومستمرة للنهاية' : 'جيدة رغم الضغوط المتقطعة'}</> },
+      { icon: Zap, title: "جودة التأمل", tone: "text-link bg-link/10", text: <>قدرتك على مراجعة قراراتك وفهم ذاتك تعتبر {m.reflection_quality === 'high' ? 'عالية جداً وعميقة' : m.reflection_quality === 'medium' ? 'جيدة وواضحة' : 'مباشرة ومختصرة'}</> },
+    ];
     return (
-      <div className="min-h-screen bg-background px-4 py-12" dir="rtl">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4"><CheckCircle2 className="w-8 h-8" /></div>
-            <h1 className="text-4xl font-extrabold mb-2">خلصنا المحاكاة…</h1>
-            <p className="text-xl text-muted-foreground font-medium">الآن صار عندنا وضوح أكبر لطريقة تفكيرك.</p>
+      <div className="athar-page" dir="rtl">
+        <HeroBand
+          eyebrow="الفصل الثالث · محاكاة"
+          title="خلصنا المحاكاة…"
+          description="الآن صار عندنا وضوح أكبر لطريقة تفكيرك."
+        />
+        <div className="athar-card">
+          <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+            {items.map(({ icon: Icon, title, tone, text }) => (
+              <div key={title} className="flex items-start gap-3 rounded-[14px] border border-border bg-muted/40 p-[18px]">
+                <span className={`grid h-9 w-9 flex-none place-items-center rounded-[11px] ${tone}`}>
+                  <Icon className="h-5 w-5" />
+                </span>
+                <div>
+                  <h3 className="mb-1 font-extrabold">{title}</h3>
+                  <p className="text-sm text-muted-foreground">{text}</p>
+                </div>
+              </div>
+            ))}
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-            <Card className="p-5 border-l-4 border-l-primary flex items-start gap-4">
-              <Brain className="w-8 h-8 text-primary shrink-0" />
-              <div><h3 className="font-bold text-lg mb-1">نمط اتخاذ القرار</h3><p className="text-muted-foreground text-sm">تميل إلى الأسلوب {m.decision_style === 'analytical' ? 'التحليلي' : m.decision_style === 'action-oriented' ? 'المبادر والسريع' : 'الحذر والمتأني'}</p></div>
-            </Card>
-            <Card className="p-5 border-l-4 border-l-destructive flex items-start gap-4">
-              <Activity className="w-8 h-8 text-destructive shrink-0" />
-              <div><h3 className="font-bold text-lg mb-1">تحت الضغط</h3><p className="text-muted-foreground text-sm">أداءك يُظهر أنك {m.stress_response === 'composed' ? 'تحافظ على هدوئك' : m.stress_response === 'impulsive' ? 'تتخذ قرارات سريعة لإنقاذ الموقف' : 'تتأنى خوفاً من ارتكاب الأخطاء'}</p></div>
-            </Card>
-            <Card className="p-5 border-l-4 border-l-green-500 flex items-start gap-4">
-              <ShieldCheck className="w-8 h-8 text-green-500 shrink-0" />
-              <div><h3 className="font-bold text-lg mb-1">المثابرة</h3><p className="text-muted-foreground text-sm">تمتلك صلابة {m.persistence === 'resilient' ? 'عالية ومستمرة للنهاية' : 'جيدة رغم الضغوط المتقطعة'}</p></div>
-            </Card>
-            <Card className="p-5 border-l-4 border-l-purple-500 flex items-start gap-4">
-              <Zap className="w-8 h-8 text-purple-500 shrink-0" />
-              <div><h3 className="font-bold text-lg mb-1">جودة التأمل</h3><p className="text-muted-foreground text-sm">قدرتك على مراجعة قراراتك وفهم ذاتك تعتبر {m.reflection_quality === 'high' ? 'عالية جداً وعميقة' : m.reflection_quality === 'medium' ? 'جيدة وواضحة' : 'مباشرة ومختصرة'}</p></div>
-            </Card>
+          <div className="athar-foot justify-end">
+            <Button className={btnPrimary} onClick={() => navigate('/dashboard/post-impact')}>
+              كمّل — قياس الأثر البعدي
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
           </div>
-
-          <Button size="lg" className="w-full h-14 text-lg font-bold rounded-xl" onClick={() => navigate('/dashboard/post-impact')}>
-            كمّل — قياس الأثر البعدي
-          </Button>
         </div>
       </div>
     );
   }
 
   if (screen === 'reflection') {
+    const warn = (v: string) => (v.length > 0 && v.length < 10 ? 'border-accent' : '');
     return (
-      <div className="min-h-screen bg-background flex flex-col" dir="rtl">
-        <header className="bg-card border-b border-border px-4 py-4 sticky top-0 z-10">
-          <div className="max-w-3xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="font-extrabold text-lg text-primary">أثر ستارت</div>
-              <div className="text-sm font-bold text-muted-foreground bg-secondary px-3 py-1 rounded-full">المرحلة 4 من 4 - المراجعة</div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" className="text-muted-foreground font-bold" onClick={handleSaveAndExit}><Save className="w-4 h-4 ml-2" />حفظ</Button>
-              <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 font-bold" onClick={handleWithdrawClick}><LogOut className="w-4 h-4 ml-1" />انسحاب</Button>
-            </div>
-          </div>
-        </header>
+      <div className="athar-page" dir="rtl">
+        <HeroBand
+          eyebrow="الفصل الثالث · محاكاة · المرحلة 4 من 4 - المراجعة"
+          title="وقفة تأمل"
+          description="الأسئلة القادمة تساعدنا في فهم وعيك الذاتي بتجربتك. (مطلوب 10 أحرف لكل إجابة على الأقل)"
+        >
+          {stageActions}
+        </HeroBand>
 
-        <main className="flex-grow py-8 px-4 max-w-2xl mx-auto w-full">
-          <h2 className="text-3xl font-bold mb-2">وقفة تأمل</h2>
-          <p className="text-muted-foreground mb-8 font-medium">الأسئلة القادمة تساعدنا في فهم وعيك الذاتي بتجربتك. (مطلوب 10 أحرف لكل إجابة على الأقل)</p>
-
-          <div className="space-y-6 mb-10">
+        <div className="athar-card">
+          <div className="space-y-5">
             <div>
-              <label className="block font-bold mb-2">1. ما هو أكثر موقف شعرت فيه أنك تتصرف بطبيعتك ولماذا؟</label>
-              <Textarea value={reflections.q1} onChange={(e) => setReflections({...reflections, q1: e.target.value})} className={reflections.q1.length > 0 && reflections.q1.length < 10 ? 'border-amber-500' : ''} rows={3}/>
+              <label className="mb-2 block font-bold">1. ما هو أكثر موقف شعرت فيه أنك تتصرف بطبيعتك ولماذا؟</label>
+              <Textarea value={reflections.q1} onChange={(e) => setReflections({...reflections, q1: e.target.value})} className={`athar-field ${warn(reflections.q1)}`} rows={3}/>
             </div>
             <div>
-              <label className="block font-bold mb-2">2. كيف تعاملت نفسياً مع المواقف التي كان فيها ضغط وقت؟</label>
-              <Textarea value={reflections.q2} onChange={(e) => setReflections({...reflections, q2: e.target.value})} className={reflections.q2.length > 0 && reflections.q2.length < 10 ? 'border-amber-500' : ''} rows={3}/>
+              <label className="mb-2 block font-bold">2. كيف تعاملت نفسياً مع المواقف التي كان فيها ضغط وقت؟</label>
+              <Textarea value={reflections.q2} onChange={(e) => setReflections({...reflections, q2: e.target.value})} className={`athar-field ${warn(reflections.q2)}`} rows={3}/>
             </div>
             <div>
-              <label className="block font-bold mb-2">3. لو أتيحت لك الفرصة لإعادة المحاكاة، ما الذي كنت ستغيره في قراراتك؟</label>
-              <Textarea value={reflections.q3} onChange={(e) => setReflections({...reflections, q3: e.target.value})} className={reflections.q3.length > 0 && reflections.q3.length < 10 ? 'border-amber-500' : ''} rows={3}/>
+              <label className="mb-2 block font-bold">3. لو أتيحت لك الفرصة لإعادة المحاكاة، ما الذي كنت ستغيره في قراراتك؟</label>
+              <Textarea value={reflections.q3} onChange={(e) => setReflections({...reflections, q3: e.target.value})} className={`athar-field ${warn(reflections.q3)}`} rows={3}/>
             </div>
           </div>
 
-          <Card className="p-6 border-2 border-primary/20 bg-primary/5 mb-8">
-            <h3 className="font-bold text-lg mb-4">بناءً على التجربة، أعد ترتيب هذه التخصصات حسب ما تراه الأنسب لك الآن:</h3>
-            <div className="space-y-2">
+          <div className="mt-6">
+            <h3 className="mb-3.5 font-extrabold">بناءً على التجربة، أعد ترتيب هذه التخصصات حسب ما تراه الأنسب لك الآن:</h3>
+            <div className="flex flex-col gap-[11px]">
               {rankings.map((major, index) => (
-                <div key={major} className="flex items-center justify-between bg-card p-3 rounded-lg border border-border">
-                  <span className="font-bold">{index + 1}. {major}</span>
-                  <div className="flex gap-1">
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={index === 0}
+                <div
+                  key={major}
+                  className={`flex items-center gap-3 rounded-[13px] border px-[17px] py-3 ${index === 0 ? "border-accent/50 bg-accent/5" : "border-border bg-card"}`}
+                >
+                  <span className={`grid h-8 w-8 flex-none place-items-center rounded-[9px] font-extrabold ${index === 0 ? "btn-gradient" : "bg-muted text-muted-foreground"}`}>
+                    {toArabicDigits(index + 1)}
+                  </span>
+                  <span className="flex-1 font-bold">{major}</span>
+                  <div className="flex flex-col gap-[3px]">
+                    <button type="button" aria-label="للأعلى" disabled={index === 0}
+                      className="grid h-[22px] w-7 place-items-center rounded-[7px] border border-border bg-card text-muted-foreground hover:border-accent disabled:opacity-40"
                       onClick={() => { const newR = [...rankings]; [newR[index-1], newR[index]] = [newR[index], newR[index-1]]; setRankings(newR); }}>
-                      <ChevronUp className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={index === rankings.length - 1}
+                      <ChevronUp className="h-[13px] w-[13px]" />
+                    </button>
+                    <button type="button" aria-label="للأسفل" disabled={index === rankings.length - 1}
+                      className="grid h-[22px] w-7 place-items-center rounded-[7px] border border-border bg-card text-muted-foreground hover:border-accent disabled:opacity-40"
                       onClick={() => { const newR = [...rankings]; [newR[index+1], newR[index]] = [newR[index], newR[index+1]]; setRankings(newR); }}>
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
+                      <ChevronDown className="h-[13px] w-[13px]" />
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
 
-          <Button size="lg" className="w-full h-14 text-lg font-bold rounded-xl"
-            disabled={reflections.q1.length < 10 || reflections.q2.length < 10 || reflections.q3.length < 10 || isSaving}
-            onClick={() => handleContinueFeedback()}>
-            {isSaving ? <Loader2 className="animate-spin" /> : "إرسال وإنهاء"}
-          </Button>
-        </main>
+          <div className="athar-foot justify-end">
+            <Button className={btnPrimary}
+              disabled={reflections.q1.length < 10 || reflections.q2.length < 10 || reflections.q3.length < 10 || isSaving}
+              onClick={() => handleContinueFeedback()}>
+              {isSaving ? <Loader2 className="animate-spin" /> : "إرسال وإنهاء"}
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -561,83 +586,76 @@ export default function SimulationStep() {
   const isNextDisabled = selectedChoice === null || !isReasoningValid || isSaving;
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col" dir="rtl">
-      <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="font-extrabold text-lg text-primary hidden sm:block">أثر ستارت</div>
-            <div className="text-sm font-bold text-muted-foreground bg-secondary px-3 py-1 rounded-full flex flex-col sm:flex-row sm:gap-1">
-              <span>المرحلة {currentStage} من 4</span><span className="hidden sm:inline">-</span><span className="text-primary">{STAGE_NAMES[currentStage]}</span>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" className="text-muted-foreground font-bold hidden sm:flex" onClick={handleSaveAndExit}>
-              <Save className="w-4 h-4 ml-2" /> حفظ
-            </Button>
-            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10 font-bold" onClick={handleWithdrawClick}>
-              <LogOut className="w-4 h-4 ml-1 sm:ml-2" /> <span className="hidden sm:inline">انسحاب</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div className="athar-page" dir="rtl">
+      <HeroBand
+        eyebrow={<>الفصل الثالث · محاكاة · المرحلة {currentStage} من 4</>}
+        title={STAGE_NAMES[currentStage]}
+        description="ليست أسئلة نظرية؛ موقف حقيقي، وقرارك يكشف كيف تفكّر فعلًا."
+      >
+        {stageActions}
+      </HeroBand>
 
-      <main className="flex-grow flex flex-col items-center py-6 px-4 max-w-2xl mx-auto w-full">
-
+      <div className="athar-card">
         {timeLeft !== null && currentQ.timeLimitMs && (
-          <div className="w-full mb-6 bg-card p-3 rounded-xl border border-border">
-            <div className="flex justify-between text-sm font-bold mb-2">
-              <span className="text-muted-foreground flex items-center"><Clock className="w-4 h-4 ml-1" /> الوقت للموقف</span>
-              <span className={timeLeft <= 10 ? "text-destructive animate-pulse font-extrabold text-base" : "text-primary"}>{timeLeft} ثانية</span>
+          <div className="mb-5">
+            <div className="mb-2 flex justify-between text-sm font-bold">
+              <span className="flex items-center gap-1 text-muted-foreground"><Clock className="h-4 w-4" /> الوقت للموقف</span>
+              <span className={timeLeft <= 10 ? "animate-pulse text-base font-extrabold text-destructive" : "text-[hsl(var(--gradient-end))]"}>{timeLeft} ثانية</span>
             </div>
-            <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
-              <div className={`h-full transition-all duration-1000 ${timeLeft <= 10 ? 'bg-destructive' : 'bg-primary'}`} style={{ width: `${(timeLeft / (currentQ.timeLimitMs / 1000)) * 100}%` }} />
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full transition-all duration-1000"
+                style={{
+                  width: `${(timeLeft / (currentQ.timeLimitMs / 1000)) * 100}%`,
+                  background: timeLeft <= 10 ? "hsl(var(--destructive))" : "linear-gradient(90deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)))",
+                }}
+              />
             </div>
           </div>
         )}
 
-        <Card className="w-full border-2 border-border p-6 mb-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-1 bg-primary h-full" />
-          <span className="inline-block px-3 py-1 bg-accent/10 text-accent-foreground font-bold text-xs rounded-md mb-4">
-            أنت الآن: {currentQ.role}
-          </span>
-          <h2 className="text-xl md:text-2xl font-bold leading-relaxed">{currentQ.text}</h2>
-        </Card>
+        <span className="mb-3 inline-block rounded-full bg-accent/10 px-3 py-1 text-xs font-bold text-[hsl(var(--gradient-end))]">
+          أنت الآن: {currentQ.role}
+        </span>
+        <h2 className="mb-[22px] text-[clamp(1.3rem,3.4vw,1.6rem)] font-extrabold leading-normal">{currentQ.text}</h2>
 
-        <div className="w-full space-y-3 mb-6">
+        <div className="mb-6 flex flex-col gap-[11px]">
           {currentQ.options.map((opt, idx) => (
             <button key={idx}
               onClick={() => { setSelectedChoice(idx); selectedChoiceRef.current = idx; }}
-              className={`w-full text-right p-4 rounded-xl border-2 transition-all font-medium ${selectedChoice === idx ? "border-primary bg-primary/5 text-primary" : "border-border bg-card hover:border-primary/40"}`}>
+              data-selected={selectedChoice === idx}
+              className="athar-option">
+              <span className="athar-tile">{["أ", "ب", "ج", "د", "هـ"][idx] ?? idx + 1}</span>
               {opt.text}
             </button>
           ))}
         </div>
 
         {currentQ.requiresReasoning && (
-          <div className="w-full mb-8">
-            <label className="block text-sm font-bold mb-2">لماذا اتخذت هذا القرار؟ <span className="text-destructive">*</span></label>
+          <div>
+            <label className="mb-2 block text-sm font-bold">لماذا اتخذت هذا القرار؟ <span className="text-destructive">*</span></label>
             <Textarea
               placeholder="اكتب تبريرك باختصار..."
-              className={`resize-none border-2 ${reasoning.length > 200 || (reasoning.length > 0 && reasoning.length < 20) ? 'border-amber-500' : 'border-border'}`}
+              className={`athar-field resize-none ${reasoning.length > 200 || (reasoning.length > 0 && reasoning.length < 20) ? 'border-accent' : ''}`}
               maxLength={200} rows={3} value={reasoning}
               onChange={(e) => setReasoning(e.target.value)}
             />
-            <div className="flex justify-between mt-2">
-              <span className={`text-xs font-bold ${reasoning.length < 20 ? 'text-amber-500' : 'text-green-600'}`}>
-                {reasoning.length < 20 ? `مطلوب ${20 - reasoning.length} حرف إضافي` : <span className="flex items-center"><CheckCircle2 className="w-3 h-3 ml-1"/> ممتاز</span>}
+            <div className="mt-2 flex justify-between">
+              <span className={`text-xs font-bold ${reasoning.length < 20 ? 'text-[hsl(var(--gradient-end))]' : 'text-success'}`}>
+                {reasoning.length < 20 ? `مطلوب ${20 - reasoning.length} حرف إضافي` : <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3"/> ممتاز</span>}
               </span>
               <span className={`text-xs font-medium ${reasoning.length >= 200 ? 'text-destructive' : 'text-muted-foreground'}`}>{reasoning.length}/200</span>
             </div>
           </div>
         )}
 
-        <div className="w-full mt-auto pt-4 pb-10">
-          <Button size="lg" className="w-full h-14 text-lg font-bold rounded-xl" disabled={isNextDisabled} onClick={handleNextClick}>
-            {isSaving ? <Loader2 className="w-6 h-6 animate-spin" /> : "اتخاذ القرار والتالي"}
-            {!isSaving && <ArrowLeft className="w-5 h-5 mr-2" />}
+        <div className="athar-foot justify-end">
+          <Button className={btnPrimary} disabled={isNextDisabled} onClick={handleNextClick}>
+            {isSaving ? <Loader2 className="h-6 w-6 animate-spin" /> : "اتخاذ القرار والتالي"}
+            {!isSaving && <ArrowLeft className="h-5 w-5" />}
           </Button>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
