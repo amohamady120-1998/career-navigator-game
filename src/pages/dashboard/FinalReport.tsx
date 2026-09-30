@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import {
   Trophy, Briefcase, GraduationCap, TrendingUp, TrendingDown, Brain, Sparkles,
@@ -12,6 +11,9 @@ import {
   MessageSquare, Link2, Unlink2, User, School, AlertCircle, Printer
 } from "lucide-react";
 import { toast } from "sonner";
+import { AtharMark } from "@/components/AtharLogo";
+import { RadarChart } from "@/components/RadarChart";
+import { btnOutline, btnPrimary, toArabicDigits } from "@/lib/athar";
 import confetti from "canvas-confetti";
 import { analyzeSimulationTraits, type TraitDimension } from "@/lib/traitMapping";
 
@@ -47,11 +49,6 @@ const DOUBT_LABELS: Record<number, string> = {
   3: "مش مرتاح، عايز أعيد",
 };
 
-const DIMENSION_COLORS: Record<string, string> = {
-  ethics: "hsl(var(--accent))", leadership: "hsl(142, 71%, 45%)", analytical: "hsl(221, 83%, 53%)",
-  empathy: "hsl(280, 67%, 55%)", risk_action: "hsl(0, 84%, 60%)", creativity: "hsl(38, 92%, 50%)",
-  compliance: "hsl(190, 70%, 45%)", commercial: "hsl(330, 65%, 50%)",
-};
 
 export default function FinalReport() {
   const navigate = useNavigate();
@@ -298,399 +295,338 @@ export default function FinalReport() {
   const topTraits = simAnalysis?.traitScores?.filter(t => t.score > 0).slice(0, 3) || [];
   const maxTraitScore = simAnalysis ? Math.max(...(simAnalysis.traitScores?.map(t => t.score) || [1]), 1) : 1;
 
+  const awarenessDelta =
+    preScore && postScore ? (postScore.percentage ?? 0) - (preScore.percentage ?? 0) : null;
+  const destination = shortlist?.[0]?.name_ar;
+  const reportDate = new Date().toLocaleDateString("ar-EG", { month: "long", year: "numeric" });
+  const doubtText = doubtData?.doubt_level ? DOUBT_LABELS[doubtData.doubt_level] || doubtData.label : null;
+
   return (
     <div ref={printRef} className="print:bg-white">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto space-y-8 pb-12">
-
-        {/* ===== HEADER ===== */}
-        <div className="text-center">
-          <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-            <Trophy className="w-10 h-10 text-accent" />
-          </div>
-          <h1 className="text-3xl font-bold mb-2">تقريرك النهائي الشامل</h1>
-          <p className="text-muted-foreground">ملخص كامل لرحلتك في اكتشاف ذاتك المهنية</p>
-          <div className="flex justify-center gap-3 mt-4 print:hidden flex-wrap">
-            <Button variant="outline" className="gap-2" onClick={handlePrint}>
-              <Printer className="w-4 h-4" /> طباعة التقرير
-            </Button>
-            <Button variant="outline" className="gap-2" onClick={handleShare}>
-              <Share2 className="w-4 h-4" /> مشاركة التقرير
-            </Button>
-            {shareToken && (
-              <Button variant="destructive" className="gap-2" onClick={handleRevokeShare}>
-                <Unlink2 className="w-4 h-4" /> إلغاء المشاركة
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="athar-page">
+        <article className="overflow-hidden rounded-[22px] border border-border bg-card shadow-premium-lg">
+          {/* ===== HERO ===== */}
+          <header className="hero-band mb-0 rounded-none p-7">
+            <div className="mb-[22px] flex items-center justify-between gap-3">
+              <span className="flex items-center gap-2 text-sm font-bold text-hero-muted">
+                <AtharMark className="h-7 w-7 rounded-lg" /> تقرير أثر البداية
+              </span>
+              <span className="text-[0.82rem] font-medium text-hero-subtle">{reportDate}</span>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="mb-1.5 text-[0.82rem] font-bold text-accent">
+                  {destination ? "وجهتك الأقرب" : "تقريرك النهائي الشامل"}
+                </div>
+                <h1 className="mb-2.5 text-[clamp(1.7rem,4.6vw,2.4rem)] font-extrabold leading-[1.1] tracking-tight">
+                  {destination ?? "ملخص رحلتك"}
+                </h1>
+                <p className="m-0 max-w-[38ch] font-normal leading-relaxed text-hero-muted">
+                  {hollandResult?.top_code ? (
+                    <>
+                      نمطك المهني الأساسي هو <b className="font-bold text-hero-foreground">{hollandResult.top_code}</b> — مزيج يعكس اهتماماتك وطريقة تفكيرك
+                    </>
+                  ) : (
+                    "ملخص كامل لرحلتك في اكتشاف ذاتك المهنية"
+                  )}
+                </p>
+              </div>
+              {hollandResult?.top_code && (
+                <div className="flex-none text-center">
+                  <div className="btn-gradient grid h-[74px] w-[74px] place-items-center rounded-full text-xl font-black shadow-premium-lg" dir="ltr">
+                    {hollandResult.top_code}
+                  </div>
+                  <span className="mt-1.5 block text-[0.76rem] font-semibold text-hero-subtle">نمطك</span>
+                </div>
+              )}
+            </div>
+            {profile && (
+              <div className="mt-[22px] border-t border-hero-foreground/10 pt-4 text-sm font-medium text-hero-subtle">
+                {[profile.full_name, profile.grade_level, profile.school_name, profile.phone].filter(Boolean).join(" · ")}
+              </div>
+            )}
+            <div className="mt-4 flex flex-wrap gap-2 print:hidden">
+              <Button variant="outline" size="sm" className={heroBtn} onClick={handlePrint}>
+                <Printer className="h-4 w-4" /> طباعة التقرير
               </Button>
-            )}
-          </div>
-        </div>
-
-        {/* ===== 1. PROFILE INFO ===== */}
-        {profile && (
-          <Card className="p-6 border border-border">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <User className="w-5 h-5 text-primary" /> بياناتك الشخصية
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {profile.full_name && (
-                <div className="bg-secondary/30 rounded-lg px-4 py-3">
-                  <p className="text-xs text-muted-foreground mb-1">الاسم</p>
-                  <p className="font-bold text-foreground">{profile.full_name}</p>
-                </div>
-              )}
-              {profile.school_name && (
-                <div className="bg-secondary/30 rounded-lg px-4 py-3">
-                  <p className="text-xs text-muted-foreground mb-1">المدرسة</p>
-                  <p className="font-bold text-foreground">{profile.school_name}</p>
-                </div>
-              )}
-              {profile.grade_level && (
-                <div className="bg-secondary/30 rounded-lg px-4 py-3">
-                  <p className="text-xs text-muted-foreground mb-1">المرحلة الدراسية</p>
-                  <p className="font-bold text-foreground">{profile.grade_level}</p>
-                </div>
-              )}
-              {profile.phone && (
-                <div className="bg-secondary/30 rounded-lg px-4 py-3">
-                  <p className="text-xs text-muted-foreground mb-1">رقم الهاتف</p>
-                  <p className="font-bold text-foreground">{profile.phone}</p>
-                </div>
+              <Button variant="outline" size="sm" className={heroBtn} onClick={handleShare}>
+                <Share2 className="h-4 w-4" /> مشاركة التقرير
+              </Button>
+              {shareToken && (
+                <Button variant="destructive" size="sm" className="gap-2 rounded-[10px] font-bold" onClick={handleRevokeShare}>
+                  <Unlink2 className="h-4 w-4" /> إلغاء المشاركة
+                </Button>
               )}
             </div>
-          </Card>
-        )}
+          </header>
 
-        {/* ===== 2. HERO SUMMARY ===== */}
-        <Card className="p-6 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-accent" /> الصورة الكبيرة
-          </h2>
-          <ul className="space-y-2 text-muted-foreground">
-            {hollandResult?.top_code && (
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                <span>نمطك المهني الأساسي هو <strong className="text-foreground">{hollandResult.top_code}</strong> — مزيج يعكس اهتماماتك وطريقة تفكيرك</span>
-              </li>
-            )}
-            {shortlist && shortlist.length > 0 && (
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                <span>اخترت {shortlist.length} تخصصات تناسب ميولك وترتيبك الشخصي</span>
-              </li>
-            )}
-            {exploreData && exploreData.length > 0 && (
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                <span>استكشفت واقع التخصص عبر {exploreData.length} مرحلة تفاعلية</span>
-              </li>
-            )}
-            {simAnalysis && (
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                <span>اتخذت قرارات في {simAnalysis.totalResponses} موقف مهني محاكي</span>
-              </li>
-            )}
-            {doubtData?.doubt_level && (
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                <span>في لحظة الصدق، قلت: <strong className="text-foreground">{DOUBT_LABELS[doubtData.doubt_level] || doubtData.label}</strong></span>
-              </li>
-            )}
-            {preScore && postScore && (postScore.percentage ?? 0) > (preScore.percentage ?? 0) && (
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                <span>ارتفع وعيك بنسبة <strong className="text-foreground">{(postScore.percentage ?? 0) - (preScore.percentage ?? 0)}%</strong> بعد الرحلة</span>
-              </li>
-            )}
-          </ul>
-        </Card>
-
-        {/* ===== 3. HOLLAND SCORES ===== */}
-        {hollandResult && scores && (
-          <Card className="p-6 border border-border">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Brain className="w-5 h-5 text-primary" /> نتائج اختبار الميول المهنية (هولاند)
-            </h2>
-            <div className="inline-block bg-primary text-primary-foreground px-5 py-2 rounded-lg text-xl font-bold mb-4">
-              {hollandResult.top_code}
-            </div>
-            {hollandResult.codeInfo?.description && (
-              <p className="text-muted-foreground mb-4">{hollandResult.codeInfo.description}</p>
-            )}
-            <div className="space-y-3">
-              {["R", "I", "A", "S", "E", "C"].map((code) => {
-                const score = Number(scores[code] || 0);
-                const pct = (score / maxScore) * 100;
-                return (
-                  <div key={code} className="flex items-center gap-3">
-                    <span className="w-16 text-sm font-medium">{riasecLabels[code]}</span>
-                    <div className="flex-1 h-5 bg-secondary rounded-full overflow-hidden">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8 }} className="h-full bg-accent rounded-full" />
-                    </div>
-                    <span className="w-8 text-sm text-muted-foreground">{score}/7</span>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-        )}
-
-        {/* ===== 4. STRENGTHS & WEAKNESSES ===== */}
-        {hollandResult?.codeInfo && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="p-6 border border-border">
-              <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-5 h-5 text-success" />
-                <h3 className="font-bold">نقاط القوة</h3>
-              </div>
-              <ul className="space-y-2">
-                {(hollandResult.codeInfo.strengths as string[])?.map((s: string, i: number) => (
-                  <li key={i} className="text-muted-foreground flex items-center gap-2 text-sm">
-                    <span className="w-2 h-2 bg-success rounded-full shrink-0" />
-                    {s}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-            <Card className="p-6 border border-border">
-              <div className="flex items-center gap-2 mb-3">
-                <TrendingDown className="w-5 h-5 text-destructive" />
-                <h3 className="font-bold">نقاط التطوير</h3>
-              </div>
-              <ul className="space-y-2">
-                {(hollandResult.codeInfo.weaknesses as string[])?.map((w: string, i: number) => (
-                  <li key={i} className="text-muted-foreground flex items-center gap-2 text-sm">
-                    <span className="w-2 h-2 bg-destructive rounded-full shrink-0" />
-                    {w}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          </div>
-        )}
-
-        {/* ===== 5. CAREER & MAJOR RECOMMENDATIONS ===== */}
-        {hollandResult?.codeInfo && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="p-6 border border-border">
-              <div className="flex items-center gap-2 mb-3">
-                <Briefcase className="w-5 h-5 text-accent" />
-                <h3 className="font-bold">مسارات مهنية مقترحة</h3>
-              </div>
-              <ul className="space-y-2">
-                {(hollandResult.codeInfo.career_paths as string[])?.map((c: string, i: number) => (
-                  <li key={i} className="text-muted-foreground text-sm">• {c}</li>
-                ))}
-              </ul>
-            </Card>
-            <Card className="p-6 border border-border">
-              <div className="flex items-center gap-2 mb-3">
-                <GraduationCap className="w-5 h-5 text-primary" />
-                <h3 className="font-bold">تخصصات موصى بها</h3>
-              </div>
-              <ul className="space-y-2">
-                {(hollandResult.codeInfo.recommended_majors as string[])?.map((m: string, i: number) => (
-                  <li key={i} className="text-muted-foreground text-sm">• {m}</li>
-                ))}
-              </ul>
-            </Card>
-          </div>
-        )}
-
-        {/* ===== 6. TOP RANKED MAJORS (Shortlist) ===== */}
-        <div>
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-accent" /> ترتيب اختياراتك النهائية
-          </h2>
-          {shortlist && shortlist.length > 0 ? (
-            <div className="space-y-3">
-              {shortlist.map((major, i) => (
-                <Card key={major.id} className="p-5 border border-border flex items-start gap-4">
-                  <div className="w-10 h-10 bg-primary text-primary-foreground rounded-xl flex items-center justify-center font-bold text-lg shrink-0">
-                    {i + 1}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg">{major.name_ar}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      تم اختياره بناءً على ترتيبك الشخصي وتوافقه مع نمطك المهني
-                    </p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="p-6 border border-border text-center text-muted-foreground">
-              ستظهر اختياراتك هنا بعد إكمال مرحلة الترتيب.
-            </Card>
-          )}
-        </div>
-
-        {/* ===== 7. EXCLUDED MAJORS ===== */}
-        {excludedMajors && excludedMajors.length > 0 && (
-          <Card className="p-6 border border-border">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-amber-500" /> تخصصات أقل توافقًا معك حاليًا
-            </h2>
-            <div className="space-y-3">
-              {excludedMajors.map((major, i) => (
-                <div key={i} className="bg-secondary/30 rounded-lg px-4 py-3">
-                  <h4 className="font-bold text-sm mb-1">{major.name}</h4>
-                  <p className="text-sm text-muted-foreground">{major.shortReason}</p>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
-
-        {/* ===== 8. DOUBT CHECKPOINT ===== */}
-        {doubtData?.doubt_level && (
-          <Card className="p-6 border border-border">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              💭 لحظة الصدق
-            </h2>
-            <div className="bg-secondary/30 rounded-lg px-4 py-3">
-              <p className="text-sm text-muted-foreground mb-1">إحساسك بعد ما شوفت نتائجك:</p>
-              <p className="font-bold text-foreground text-lg">{DOUBT_LABELS[doubtData.doubt_level] || doubtData.label}</p>
-            </div>
-          </Card>
-        )}
-
-        {/* ===== 9. EXPLORE INSIGHTS ===== */}
-        {exploreData && exploreData.length > 0 && (
-          <Card className="p-6 border border-border">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-accent" /> كيف كان إحساسك مع واقع التخصص سنة بسنة؟
-            </h2>
-            <div className="space-y-3">
-              {["year1", "year2", "year3", "year4", "post_grad"].map((stage) => {
-                const response = exploreData.find(r => r.stage_key === stage);
-                if (!response) return null;
-                return (
-                  <div key={stage} className="flex items-center justify-between bg-secondary/30 rounded-lg px-4 py-3">
-                    <span className="font-medium text-sm">{STAGE_LABELS[stage]}</span>
-                    <span className={`text-sm font-bold ${
-                      response.comfort_level === "very_comfortable" ? "text-success" :
-                      response.comfort_level === "ok" ? "text-accent" :
-                      response.comfort_level === "hesitant" ? "text-amber-500" :
-                      "text-destructive"
-                    }`}>
-                      {COMFORT_LABELS[response.comfort_level] || response.comfort_level}
+          <div className="p-5 md:p-6">
+            {/* ===== RADAR ===== */}
+            {hollandResult && scores && (
+              <section className="mb-4 text-center">
+                <div className="mb-1 text-[0.82rem] font-bold text-muted-foreground">بصمتك المهنية · نتائج اختبار الميول (هولاند)</div>
+                <RadarChart values={scores} max={maxScore} />
+                <div className="mt-2 flex flex-wrap justify-center gap-2">
+                  {["R", "I", "A", "S", "E", "C"].map((code) => (
+                    <span key={code} className="rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">
+                      {riasecLabels[code]} {Number(scores[code] || 0)}/7
                     </span>
-                  </div>
-                );
-              })}
-              {(() => {
-                const mostComfortable = exploreData.reduce((best, curr) => {
-                  const order = ["very_comfortable", "ok", "hesitant", "not_comfortable"];
-                  return order.indexOf(curr.comfort_level) < order.indexOf(best.comfort_level) ? curr : best;
-                }, exploreData[0]);
-                return (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    أكثر مرحلة شعرت فيها بالراحة: <strong className="text-foreground">{STAGE_LABELS[mostComfortable.stage_key]}</strong>
-                  </p>
-                );
-              })()}
-            </div>
-          </Card>
-        )}
-
-        {/* ===== 10. SIMULATION INSIGHTS ===== */}
-        {simAnalysis && simAnalysis.traitScores?.some(t => t.score > 0) && (
-          <Card className="p-6 border border-border">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Gamepad2 className="w-5 h-5 text-primary" /> تحليل المحاكاة المهنية
-            </h2>
-            <p className="text-sm text-muted-foreground mb-4">بناءً على قراراتك في {simAnalysis.totalResponses} موقف مهني</p>
-
-            {/* All trait bars */}
-            <div className="space-y-3 mb-6">
-              {simAnalysis.traitScores.map((t, i) => {
-                const pct = (t.score / maxTraitScore) * 100;
-                return (
-                  <div key={t.key} className="flex items-center gap-3">
-                    <span className="w-28 text-sm font-medium text-right truncate">{t.label}</span>
-                    <div className="flex-1 h-5 bg-secondary rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.8, delay: 0.1 + i * 0.05 }}
-                        className="h-full rounded-full"
-                        style={{ backgroundColor: DIMENSION_COLORS[t.key] || "hsl(var(--accent))" }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Top 3 traits */}
-            {topTraits.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="font-bold text-sm flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-accent" /> أبرز سماتك
-                </h3>
-                {topTraits.map((t) => (
-                  <div key={t.key} className="bg-secondary/30 rounded-lg px-4 py-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: DIMENSION_COLORS[t.key] || "hsl(var(--accent))" }} />
-                      <h4 className="font-bold text-sm">{t.label}</h4>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{TRAIT_FRIENDLY[t.key] || "سمة بارزة في شخصيتك المهنية"}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+                {hollandResult.codeInfo?.description && (
+                  <p className="mx-auto mt-3 max-w-[60ch] text-sm text-muted-foreground">{hollandResult.codeInfo.description}</p>
+                )}
+              </section>
             )}
-          </Card>
-        )}
 
-        {/* ===== 11. IMPACT COMPARISON ===== */}
-        <Card className="p-6 border border-border">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-success" /> التغير في وعيك بعد الرحلة
-          </h2>
-          {preScore && postScore ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-secondary/30 rounded-lg p-4 text-center">
-                  <p className="text-sm text-muted-foreground mb-1">قبل الرحلة</p>
-                  <p className="text-3xl font-bold text-foreground">{preScore.percentage}%</p>
+            {/* ===== STRIP ===== */}
+            <div className="my-[22px] grid grid-cols-2 overflow-hidden rounded-[14px] border border-border bg-muted/40 sm:grid-cols-5">
+              <StripCell value={<span dir="ltr">{hollandResult?.top_code ?? "—"}</span>} label="نمطك الأساسي" />
+              <StripCell value={toArabicDigits(shortlist?.length ?? 0)} label="تخصصات اخترتها" />
+              <StripCell value={toArabicDigits(simAnalysis?.totalResponses ?? 0)} label="مواقف محاكاة" />
+              <StripCell
+                value={awarenessDelta !== null ? `${awarenessDelta > 0 ? "↑ " : ""}${toArabicDigits(awarenessDelta)}٪` : "—"}
+                label="ارتفاع وعيك"
+                tone="success"
+              />
+              <StripCell value={doubtText ? "♥" : "—"} label={doubtText ? `«${doubtText}»` : "لحظة الصدق"} tone="accent" />
+            </div>
+
+            {/* ===== BIG PICTURE ===== */}
+            <ReportSection icon={Sparkles} title="الصورة الكبيرة">
+              <ul className="flex flex-col gap-[9px]">
+                {hollandResult?.top_code && (
+                  <Bullet>نمطك المهني الأساسي هو <strong>{hollandResult.top_code}</strong> — مزيج يعكس اهتماماتك وطريقة تفكيرك</Bullet>
+                )}
+                {shortlist && shortlist.length > 0 && <Bullet>اخترت {shortlist.length} تخصصات تناسب ميولك وترتيبك الشخصي</Bullet>}
+                {exploreData && exploreData.length > 0 && <Bullet>استكشفت واقع التخصص عبر {exploreData.length} مرحلة تفاعلية</Bullet>}
+                {simAnalysis && <Bullet>اتخذت قرارات في {simAnalysis.totalResponses} موقف مهني محاكي</Bullet>}
+                {doubtText && <Bullet>في لحظة الصدق، قلت: <strong>{doubtText}</strong></Bullet>}
+                {awarenessDelta !== null && awarenessDelta > 0 && (
+                  <Bullet>ارتفع وعيك بنسبة <strong>{awarenessDelta}%</strong> بعد الرحلة</Bullet>
+                )}
+              </ul>
+            </ReportSection>
+
+            {/* ===== STRENGTHS & WEAKNESSES ===== */}
+            {hollandResult?.codeInfo && (
+              <ReportSection icon={Brain} title="نقاط القوة والتطوير">
+                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                  <div className="rounded-[14px] border border-border p-[18px]">
+                    <div className="mb-[13px] flex items-center gap-2 font-extrabold text-success">
+                      <TrendingUp className="h-[18px] w-[18px]" /> نقاط القوة
+                    </div>
+                    <ul className="flex flex-col gap-[11px]">
+                      {(hollandResult.codeInfo.strengths as string[])?.map((s: string, i: number) => (
+                        <li key={i} className="flex items-start gap-2.5 text-[0.92rem] font-medium leading-normal">
+                          <span className="mt-px grid h-[19px] w-[19px] flex-none place-items-center rounded-full bg-success/15 text-success">
+                            <CheckCircle2 className="h-3 w-3" />
+                          </span>
+                          {s}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="rounded-[14px] border border-border p-[18px]">
+                    <div className="mb-[13px] flex items-center gap-2 font-extrabold text-[hsl(var(--gradient-end))]">
+                      <TrendingDown className="h-[18px] w-[18px]" /> نقاط التطوير
+                    </div>
+                    <ul className="flex flex-col gap-[11px]">
+                      {(hollandResult.codeInfo.weaknesses as string[])?.map((w: string, i: number) => (
+                        <li key={i} className="flex items-start gap-2.5 text-[0.92rem] font-medium leading-normal">
+                          <span className="mt-px grid h-[19px] w-[19px] flex-none place-items-center rounded-full bg-accent/15 text-[hsl(var(--gradient-end))]">
+                            <ArrowLeft className="h-3 w-3" />
+                          </span>
+                          {w}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <div className="bg-success/10 rounded-lg p-4 text-center">
-                  <p className="text-sm text-muted-foreground mb-1">بعد الرحلة</p>
-                  <p className="text-3xl font-bold text-success">{postScore.percentage}%</p>
+              </ReportSection>
+            )}
+
+            {/* ===== IMPACT COMPARISON ===== */}
+            <ReportSection icon={BarChart3} title="التغير في وعيك بعد الرحلة">
+              {preScore && postScore ? (
+                <div className="flex flex-wrap items-center gap-5 rounded-2xl border border-success/25 bg-success/5 p-[22px]">
+                  <div className="min-w-[200px] flex-1">
+                    <ImpactBar label="قبل الرحلة" value={preScore.percentage ?? 0} tone="before" />
+                    <ImpactBar label="بعد الرحلة" value={postScore.percentage ?? 0} tone="after" className="mt-3" />
+                  </div>
+                  {awarenessDelta !== null && awarenessDelta > 0 && (
+                    <div className="text-center">
+                      <b className="block text-[2.2rem] font-black leading-none text-success">+{toArabicDigits(awarenessDelta)}٪</b>
+                      <span className="text-[0.8rem] font-semibold text-muted-foreground">ارتفاع الوعي 🎉</span>
+                    </div>
+                  )}
                 </div>
-              </div>
-              {(postScore.percentage ?? 0) > (preScore.percentage ?? 0) && (
-                <p className="text-sm text-success font-medium text-center">
-                  ارتفع وعيك بنسبة {(postScore.percentage ?? 0) - (preScore.percentage ?? 0)}% بعد إكمال الرحلة 🎉
+              ) : postScore ? (
+                <div className="space-y-3">
+                  <div className="rounded-[14px] bg-success/10 p-4 text-center">
+                    <p className="mb-1 text-sm text-muted-foreground">درجة الوعي الحالية</p>
+                    <p className="text-3xl font-black text-success">{postScore.percentage}%</p>
+                  </div>
+                  <p className="text-center text-sm text-muted-foreground">لم يتم إكمال قياس الأثر القبلي للمقارنة.</p>
+                </div>
+              ) : (
+                <p className="text-center text-sm text-muted-foreground">أكمل قياس الأثر البعدي لرؤية نتائجك هنا.</p>
+              )}
+            </ReportSection>
+
+            {/* ===== SIMULATION INSIGHTS ===== */}
+            {simAnalysis && simAnalysis.traitScores?.some(t => t.score > 0) && (
+              <ReportSection icon={Gamepad2} title="تحليل المحاكاة المهنية">
+                <p className="-mt-1.5 mb-3.5 text-[0.9rem] text-muted-foreground">
+                  بناءً على قراراتك في {simAnalysis.totalResponses} موقف مهني — أبرز سماتك:
+                </p>
+                <div className="space-y-[15px]">
+                  {simAnalysis.traitScores.map((t, i) => {
+                    const pct = (t.score / maxTraitScore) * 100;
+                    const isTop = topTraits.some((tt) => tt.key === t.key);
+                    return (
+                      <div key={t.key}>
+                        <div className="mb-[7px] flex flex-wrap justify-between gap-1">
+                          <b className="text-[0.96rem] font-bold">{t.label}</b>
+                          {isTop && (
+                            <small className="text-[0.85rem] text-muted-foreground">
+                              {TRAIT_FRIENDLY[t.key] || "سمة بارزة في شخصيتك المهنية"}
+                            </small>
+                          )}
+                        </div>
+                        <div className="h-[9px] overflow-hidden rounded-md bg-muted">
+                          <motion.i
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 0.8, delay: 0.1 + i * 0.05 }}
+                            className={`block h-full rounded-md ${isTop ? "bg-accent" : "bg-link/60"}`}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ReportSection>
+            )}
+
+            {/* ===== CAREER & MAJOR RECOMMENDATIONS ===== */}
+            {hollandResult?.codeInfo && (
+              <ReportSection icon={Briefcase} title="مساراتك المقترحة">
+                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                  <PathList title="مسارات مهنية مقترحة" items={(hollandResult.codeInfo.career_paths as string[]) ?? []} />
+                  <PathList title="تخصصات موصى بها" items={(hollandResult.codeInfo.recommended_majors as string[]) ?? []} />
+                </div>
+              </ReportSection>
+            )}
+
+            {/* ===== TOP RANKED MAJORS ===== */}
+            <ReportSection icon={GraduationCap} title="ترتيب اختياراتك النهائية">
+              {shortlist && shortlist.length > 0 ? (
+                <div className="flex flex-col gap-2.5">
+                  {shortlist.map((major, i) => (
+                    <div
+                      key={major.id}
+                      className={`flex items-center gap-3.5 rounded-[13px] border px-4 py-3.5 ${
+                        i === 0 ? "border-accent/50 bg-accent/5" : "border-border"
+                      }`}
+                    >
+                      <span className={`grid h-8 w-8 flex-none place-items-center rounded-[9px] font-black ${i === 0 ? "btn-gradient" : "bg-muted text-muted-foreground"}`}>
+                        {toArabicDigits(i + 1)}
+                      </span>
+                      <div className="flex-1">
+                        <b className="font-bold">{major.name_ar}</b>
+                        <small className="mt-px block text-[0.8rem] text-muted-foreground">
+                          تم اختياره بناءً على ترتيبك الشخصي وتوافقه مع نمطك المهني
+                        </small>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-[14px] border border-border p-6 text-center text-muted-foreground">
+                  ستظهر اختياراتك هنا بعد إكمال مرحلة الترتيب.
                 </p>
               )}
-            </div>
-          ) : postScore ? (
-            <div className="space-y-3">
-              <div className="bg-success/10 rounded-lg p-4 text-center">
-                <p className="text-sm text-muted-foreground mb-1">درجة الوعي الحالية</p>
-                <p className="text-3xl font-bold text-success">{postScore.percentage}%</p>
-              </div>
-              <p className="text-sm text-muted-foreground text-center">لم يتم إكمال قياس الأثر القبلي للمقارنة.</p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center">أكمل قياس الأثر البعدي لرؤية نتائجك هنا.</p>
-          )}
-        </Card>
+            </ReportSection>
 
-        {/* ===== 12. CONVERSION CTAs ===== */}
-        <div className="space-y-3 print:hidden">
-          <Button size="lg" className="w-full h-14 text-lg font-bold rounded-xl btn-gradient gap-2" onClick={() => navigate("/dashboard/consultation")}>
-            <MessageSquare className="w-5 h-5" /> احجز استشارة الآن
-          </Button>
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" className="h-12 rounded-xl gap-2" onClick={() => navigate("/dashboard/shortlist")}>
+            {/* ===== EXPLORE INSIGHTS ===== */}
+            {exploreData && exploreData.length > 0 && (
+              <ReportSection icon={BarChart3} title="كيف كان إحساسك مع واقع التخصص سنة بسنة؟">
+                <div className="rounded-[14px] border border-border px-[18px] py-2">
+                  {["year1", "year2", "year3", "year4", "post_grad"].map((stage) => {
+                    const response = exploreData.find(r => r.stage_key === stage);
+                    if (!response) return null;
+                    return (
+                      <div key={stage} className="flex items-center justify-between border-b border-border/60 py-[9px] font-semibold last:border-b-0">
+                        <span className="text-sm">{STAGE_LABELS[stage]}</span>
+                        <span className={`text-sm font-bold ${
+                          response.comfort_level === "very_comfortable" ? "text-success" :
+                          response.comfort_level === "ok" ? "text-accent" :
+                          response.comfort_level === "hesitant" ? "text-[hsl(var(--gradient-end))]" :
+                          "text-destructive"
+                        }`}>
+                          {COMFORT_LABELS[response.comfort_level] || response.comfort_level}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                {(() => {
+                  const mostComfortable = exploreData.reduce((best, curr) => {
+                    const order = ["very_comfortable", "ok", "hesitant", "not_comfortable"];
+                    return order.indexOf(curr.comfort_level) < order.indexOf(best.comfort_level) ? curr : best;
+                  }, exploreData[0]);
+                  return (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      أكثر مرحلة شعرت فيها بالراحة: <strong className="text-foreground">{STAGE_LABELS[mostComfortable.stage_key]}</strong>
+                    </p>
+                  );
+                })()}
+              </ReportSection>
+            )}
+
+            {/* ===== EXCLUDED MAJORS ===== */}
+            {excludedMajors && excludedMajors.length > 0 && (
+              <ReportSection icon={AlertCircle} title="تخصصات أقل توافقًا معك حاليًا">
+                <div className="rounded-[14px] border border-border px-[18px]">
+                  {excludedMajors.map((major, i) => (
+                    <div key={i} className="border-b border-border/60 py-3.5 last:border-b-0">
+                      <b className="text-sm font-bold">{major.name}</b>
+                      <p className="mt-1 text-sm text-muted-foreground">{major.shortReason}</p>
+                    </div>
+                  ))}
+                </div>
+              </ReportSection>
+            )}
+
+            {/* ===== DOUBT CHECKPOINT ===== */}
+            {doubtText && (
+              <section className="relative mt-7 overflow-hidden rounded-2xl p-[22px] text-center text-hero-foreground [background:hsl(var(--hero-to))]">
+                <div aria-hidden className="absolute inset-0 opacity-50 [background:radial-gradient(60%_80%_at_80%_20%,hsl(var(--accent)/0.2),transparent_60%)]" />
+                <div className="relative mb-2 text-[0.82rem] font-bold text-accent">لحظة الصدق · إحساسك بعد ما شوفت نتائجك</div>
+                <div className="relative text-[1.4rem] font-black">«{doubtText}»</div>
+              </section>
+            )}
+
+            <p className="mt-[18px] text-center text-[0.8rem] text-muted-foreground">
+              مبني على نموذج هولاند العلمي لقياس الميول · أثر البداية
+            </p>
+          </div>
+        </article>
+
+        {/* ===== CONVERSION CTAs ===== */}
+        <div className="athar-foot print:hidden">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" className={btnOutline} onClick={() => navigate("/dashboard/shortlist")}>
               استكشف التخصصات مرة أخرى
             </Button>
-            <Button variant="outline" className="h-12 rounded-xl gap-2" onClick={() => navigate("/dashboard/certificate")}>
-              <FileText className="w-4 h-4" /> إصدار الشهادة
+            <Button variant="outline" className={btnOutline} onClick={() => navigate("/dashboard/certificate")}>
+              <FileText className="h-4 w-4" /> إصدار الشهادة
             </Button>
           </div>
+          <Button className={btnPrimary} onClick={() => navigate("/dashboard/consultation")}>
+            <MessageSquare className="h-5 w-5" /> احجز استشارة الآن
+          </Button>
         </div>
       </motion.div>
 
@@ -716,6 +652,83 @@ export default function FinalReport() {
           </DialogClose>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+const heroBtn =
+  "gap-2 rounded-[10px] border-hero-foreground/20 bg-hero-foreground/5 font-bold text-hero-foreground hover:bg-hero-foreground/10 hover:text-hero-foreground";
+
+function ReportSection({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="mt-7">
+      <div className="mb-4 flex items-center gap-[11px] after:h-px after:flex-1 after:bg-border/60 after:content-['']">
+        <span className="grid h-8 w-8 flex-none place-items-center rounded-[10px] bg-muted text-foreground">
+          <Icon className="h-[17px] w-[17px]" />
+        </span>
+        <h2 className="m-0 text-[1.15rem] font-extrabold">{title}</h2>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Bullet({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="relative ps-[18px] text-[0.93rem] font-medium leading-normal before:absolute before:top-2 before:h-[7px] before:w-[7px] before:rounded-full before:bg-accent before:content-[''] before:[inset-inline-start:0] [&_strong]:font-bold [&_strong]:text-foreground">
+      {children}
+    </li>
+  );
+}
+
+function StripCell({ value, label, tone }: { value: React.ReactNode; label: string; tone?: "success" | "accent" }) {
+  return (
+    <div className="border-border px-2.5 py-4 text-center [&:not(:first-child)]:border-s">
+      <b
+        className={`block text-xl font-black leading-none ${
+          tone === "success" ? "text-success" : tone === "accent" ? "text-[hsl(var(--gradient-end))]" : "text-foreground"
+        }`}
+      >
+        {value}
+      </b>
+      <span className="mt-[5px] block text-[0.72rem] leading-snug text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
+function ImpactBar({ label, value, tone, className }: { label: string; value: number; tone: "before" | "after"; className?: string }) {
+  return (
+    <div className={className}>
+      <div className="mb-[7px] flex justify-between text-sm font-bold text-muted-foreground">
+        <span>{label}</span>
+        <span>{toArabicDigits(value)}٪</span>
+      </div>
+      <div className="h-[11px] overflow-hidden rounded-[7px] border border-success/20 bg-card">
+        <i className={`block h-full rounded-[7px] ${tone === "after" ? "bg-success" : "bg-success/25"}`} style={{ width: `${value}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function PathList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="rounded-[14px] border border-border bg-muted/40 p-[18px]">
+      <div className="mb-[11px] text-[0.92rem] font-extrabold">{title}</div>
+      <ul className="flex flex-col gap-2">
+        {items.map((it, i) => (
+          <li key={i} className="relative ps-4 text-[0.92rem] font-medium before:absolute before:top-2 before:h-1.5 before:w-1.5 before:rounded-full before:bg-accent before:content-[''] before:[inset-inline-start:0]">
+            {it}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

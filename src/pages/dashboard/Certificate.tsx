@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Printer, Award, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import atharLogoLight from "@/assets/athar-logo-light.png";
+import { HeroBand } from "@/components/HeroBand";
+import { btnOutline, btnPrimary } from "@/lib/athar";
 
 function generateCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -129,7 +130,7 @@ export default function Certificate() {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
     );
   }
@@ -137,15 +138,16 @@ export default function Certificate() {
   // Gate: report not completed
   if (!reportCompleted) {
     return (
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20 space-y-4">
-        <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto">
-          <Award className="w-10 h-10 text-muted-foreground" />
-        </div>
-        <h2 className="text-xl font-extrabold">لا يمكن إصدار الشهادة بعد</h2>
-        <p className="text-muted-foreground">يجب إكمال التقرير النهائي أولاً قبل إصدار الشهادة</p>
-        <Button onClick={() => navigate("/dashboard/final-report")} className="btn-gradient rounded-xl px-8 gap-2">
-          <ArrowLeft className="w-4 h-4" /> اذهب للتقرير النهائي
-        </Button>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="athar-page">
+        <HeroBand
+          eyebrow="الفصل الرابع · الشهادة"
+          title="لا يمكن إصدار الشهادة بعد"
+          description="يجب إكمال التقرير النهائي أولاً قبل إصدار الشهادة"
+        >
+          <Button onClick={() => navigate("/dashboard/final-report")} className={btnPrimary}>
+            اذهب للتقرير النهائي <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </HeroBand>
       </motion.div>
     );
   }
@@ -153,16 +155,17 @@ export default function Certificate() {
   // No certificate yet — show issue button
   if (!certificate) {
     return (
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20 space-y-4">
-        <div className="w-20 h-20 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto">
-          <Award className="w-10 h-10 text-accent" />
-        </div>
-        <h2 className="text-xl font-extrabold">شهادتك جاهزة للإصدار!</h2>
-        <p className="text-muted-foreground">اضغط على الزر أدناه لإصدار شهادة إتمام رحلة أثر البداية</p>
-        <Button onClick={handleIssueCertificate} disabled={issuing} className="btn-gradient rounded-xl px-8 h-12 text-base gap-2">
-          {issuing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Award className="w-5 h-5" />}
-          إصدار الشهادة الآن
-        </Button>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="athar-page">
+        <HeroBand
+          eyebrow="الفصل الرابع · الشهادة"
+          title="شهادتك جاهزة للإصدار!"
+          description="اضغط على الزر أدناه لإصدار شهادة إتمام رحلة أثر البداية"
+        >
+          <Button onClick={handleIssueCertificate} disabled={issuing} className={btnPrimary}>
+            {issuing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Award className="h-5 w-5" />}
+            إصدار الشهادة الآن
+          </Button>
+        </HeroBand>
       </motion.div>
     );
   }
@@ -174,54 +177,89 @@ export default function Certificate() {
   const verifyUrl = `${window.location.origin}/verify/${certificate.certificate_code}`;
 
   return (
-    <div className="space-y-6" dir="rtl">
-      <div className="flex justify-end print:hidden">
-        <Button onClick={() => window.print()} className="gap-2 rounded-xl">
-          <Printer className="w-4 h-4" /> طباعة / تحميل PDF
-        </Button>
-      </div>
+    <div className="athar-page" dir="rtl">
+      <HeroBand eyebrow="الفصل الرابع · الشهادة" title="مبروك، أتممت رحلتك" className="pb-[18px] print:hidden" />
 
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
-        <div id="certificate" className="max-w-2xl mx-auto bg-card border-4 border-accent rounded-2xl p-12 text-center shadow-premium-lg print:shadow-none print:border-2">
-          <img src={atharLogoLight} alt="أثر" className="h-16 mx-auto mb-6" />
+      <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
+        <div
+          id="certificate"
+          className="relative mx-auto flex max-w-[560px] items-center justify-center overflow-hidden rounded-xl p-[clamp(30px,5vw,46px)] text-ink shadow-premium-lg [background:radial-gradient(130%_90%_at_50%_-10%,white,hsl(var(--cream))_60%)] print:shadow-none"
+        >
+          {/* Gold double frame */}
+          <span aria-hidden className="pointer-events-none absolute inset-4 rounded-md border-2 border-gold-light">
+            <span className="absolute inset-1.5 rounded-[3px] border border-gold-pale" />
+          </span>
 
-          <div className="pb-4 mb-6">
-            <div className="section-divider mb-4" />
-            <h1 className="text-3xl font-extrabold text-primary">شهادة إتمام</h1>
-            <p className="text-muted-foreground mt-1">رحلة أثر للتوجيه المهني</p>
-          </div>
-
-          <p className="text-lg text-muted-foreground mb-2">يُشهد بأن</p>
-          <h2 className="text-4xl font-extrabold text-gradient mb-6">{certificate.full_name}</h2>
-
-          <p className="text-lg text-foreground leading-relaxed max-w-md mx-auto mb-8">
-            قد أتمّ بنجاح جميع مراحل رحلة أثر البداية للتوجيه المهني،
-            شاملةً الاختبارات والمحاكاة والتقرير النهائي.
-          </p>
-
-          <div className="flex justify-between items-end text-sm text-muted-foreground border-t border-border/60 pt-4">
-            <div>
-              <p className="font-semibold">تاريخ الإصدار</p>
-              <p>{completionDate}</p>
+          <div className="relative z-[2] flex w-full max-w-[440px] flex-col items-center text-center">
+            <div className="mb-4 flex items-center gap-[9px] font-semibold">
+              <span className="grid h-[30px] w-[30px] place-items-center rounded-lg bg-ink text-gold-light">
+                <svg viewBox="0 0 24 24" fill="none" className="h-[17px] w-[17px]" aria-hidden>
+                  <path d="M3.5 15C6 9 9 9 11 13s4 5 6.5 0" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+                  <circle cx="8.6" cy="6.6" r="1.35" fill="currentColor" />
+                  <circle cx="12.2" cy="6.6" r="1.35" fill="currentColor" />
+                </svg>
+              </span>
+              أثر البداية
             </div>
-            <div>
-              <p className="font-semibold">رمز التحقق</p>
-              <p className="font-mono text-primary font-bold">{certificate.certificate_code}</p>
+            <div className="mb-2 bg-gradient-to-l from-gold via-gold-light to-gold bg-clip-text text-[0.7rem] font-semibold tracking-[0.38em] text-transparent" dir="ltr">
+              CERTIFICATE OF COMPLETION
+            </div>
+            <h1 className="mb-3.5 text-[clamp(1.5rem,4vw,2rem)] font-bold">شهادة إتمام</h1>
+            <p className="mb-2 text-sm text-muted-foreground">رحلة أثر للتوجيه المهني · يُشهد بأن</p>
+            <h2 className="m-0 text-[clamp(2rem,5vw,2.7rem)] font-extrabold">{certificate.full_name}</h2>
+            <div aria-hidden className="relative mb-[18px] mt-3.5 h-0.5 w-[min(240px,70%)] [background:linear-gradient(90deg,transparent,hsl(var(--gold-light))_25%,hsl(var(--gold-pale))_50%,hsl(var(--gold-light))_75%,transparent)]">
+              <span className="absolute left-1/2 top-[-4px] h-2 w-2 -translate-x-1/2 rounded-full bg-gold-light shadow-[0_0_0_3px_hsl(var(--cream))]" />
+            </div>
+            <p className="m-0 max-w-[46ch] text-[0.94rem] font-light leading-[1.9]">
+              قد أتمّ بنجاح جميع مراحل رحلة أثر البداية للتوجيه المهني،
+              شاملةً الاختبارات والمحاكاة والتقرير النهائي.
+            </p>
+
+            <div className="mt-[22px] inline-flex overflow-hidden rounded-[14px] border border-gold/30 bg-gold-light/5">
+              <div className="px-[clamp(16px,3vw,24px)] py-[11px]">
+                <div className="text-[0.95rem] font-bold">{completionDate}</div>
+                <div className="mt-[3px] text-[0.66rem] text-muted-foreground">تاريخ الإصدار</div>
+              </div>
+              <div className="border-s border-gold/20 px-[clamp(16px,3vw,24px)] py-[11px]">
+                <div className="font-mono text-[0.95rem] font-bold" dir="ltr">{certificate.certificate_code}</div>
+                <div className="mt-[3px] text-[0.66rem] text-muted-foreground">رمز التحقق</div>
+              </div>
+            </div>
+
+            <div className="mt-[26px] flex w-full flex-col items-center justify-between gap-[22px] sm:flex-row sm:items-end">
+              <div className="text-center">
+                <span className="mb-[5px] block min-w-[130px] border-b border-ink pb-1.5 text-[1.05rem] font-semibold">أثر البداية</span>
+                <small className="text-[0.72rem] text-muted-foreground">الجهة المانحة</small>
+              </div>
+              <div className="relative grid h-[74px] w-[74px] flex-none place-items-center" aria-hidden>
+                <span className="absolute inset-0 rounded-full border-[1.5px] border-gold-light">
+                  <span className="absolute inset-[5px] rounded-full border border-dashed border-gold/50" />
+                </span>
+                <span className="grid h-[58%] w-[58%] place-items-center rounded-full [background:conic-gradient(from_210deg,hsl(var(--gold-light)),hsl(var(--gold)),hsl(var(--gold-pale)),hsl(var(--gold)),hsl(var(--gold-light)))]">
+                  <Award className="h-1/2 w-1/2" />
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-[22px] w-full border-t border-gold/30 pt-[18px] text-center">
+              <b className="block text-[0.8rem] font-semibold">للتحقّق من صحة الشهادة</b>
+              <span className="break-all text-[0.7rem] text-muted-foreground" dir="ltr">{verifyUrl}</span>
             </div>
           </div>
-
-          <p className="text-xs text-muted-foreground mt-4">
-            للتحقق: {verifyUrl}
-          </p>
         </div>
       </motion.div>
 
-      <div className="flex flex-col items-center gap-3 print:hidden mt-6">
-        <Button type="button" onClick={() => navigate("/dashboard/next-step")} className="w-full max-w-md h-12 text-base font-bold rounded-xl btn-gradient gap-2">
-          الخطوة التالية
-        </Button>
-        <Button type="button" onClick={() => navigate("/dashboard/consultation")} variant="outline" className="w-full max-w-md rounded-xl">
-          احجز استشارة
+      <div className="athar-foot print:hidden">
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={() => window.print()} className={btnOutline}>
+            <Printer className="h-4 w-4" /> طباعة / تحميل PDF
+          </Button>
+          <Button type="button" onClick={() => navigate("/dashboard/consultation")} variant="outline" className={btnOutline}>
+            احجز استشارة
+          </Button>
+        </div>
+        <Button type="button" onClick={() => navigate("/dashboard/next-step")} className={btnPrimary}>
+          الخطوة التالية <ArrowLeft className="h-4 w-4" />
         </Button>
       </div>
     </div>

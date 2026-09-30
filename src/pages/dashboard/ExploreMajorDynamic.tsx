@@ -3,9 +3,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, ArrowLeft, Video, Target, AlertCircle, CheckCircle2, GraduationCap, Briefcase, Sparkles, Map } from "lucide-react";
+import { Loader2, ArrowLeft, Video, Target, AlertCircle, CheckCircle2, Briefcase, Sparkles, Map } from "lucide-react";
+import { HeroBand, HeroBandSubtle } from "@/components/HeroBand";
+import { btnPrimary, toArabicDigits } from "@/lib/athar";
 import { toast } from "sonner";
 
 // --- TYPES ---
@@ -179,8 +180,8 @@ export default function ExploreMajorDynamic() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
     );
   }
@@ -193,172 +194,189 @@ export default function ExploreMajorDynamic() {
     : (comfortLevels[currentStage] !== undefined && scenarioChoices[currentStage] !== undefined);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans" dir="rtl">
-      {/* HEADER & PROGRESS */}
-      <header className="bg-card border-b border-border px-4 py-4 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <GraduationCap className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="font-bold text-foreground text-sm">استكشاف: {majorData.name}</h2>
-                <p className="text-xs text-muted-foreground">رحلة افتراضية متكاملة</p>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" className="text-muted-foreground font-bold" onClick={() => navigate(-1)}>
-              <ArrowLeft className="w-4 h-4 ml-1" /> رجوع
-            </Button>
-          </div>
-          
-          {/* Progress Timeline */}
-          <div className="flex items-center justify-between gap-1">
-            {[0, 1, 2, 3, 4, 5].map((step) => (
-              <div key={step} className="flex flex-col items-center gap-1 flex-1">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
-                  currentStage >= step ? "bg-primary border-primary text-primary-foreground shadow-md" : "bg-card border-border text-muted-foreground"
-                }`}>
-                  {step === 5 ? <Sparkles className="w-4 h-4" /> : step + 1}
-                </div>
-                <span className="text-[10px] text-muted-foreground hidden sm:block">{STAGE_LABELS[step]}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </header>
+    <div className="athar-page" dir="rtl">
+      <HeroBand
+        eyebrow="الفصل الثالث · تعمّق"
+        title={<>{majorData.name} <HeroBandSubtle>من الداخل</HeroBandSubtle></>}
+        description="رحلة افتراضية متكاملة من السنة الأولى حتى سوق العمل."
+      >
+        {/* Progress Timeline */}
+        <ol className="flex flex-wrap gap-2">
+          {[0, 1, 2, 3, 4, 5].map((step) => {
+            const done = currentStage > step;
+            const current = currentStage === step;
+            return (
+              <li
+                key={step}
+                aria-current={current ? "step" : undefined}
+                className={`flex items-center gap-1.5 rounded-full py-1 pe-3 ps-1 text-xs font-bold ${
+                  current
+                    ? "bg-accent/15 text-accent"
+                    : done
+                    ? "bg-hero-foreground/10 text-hero-foreground"
+                    : "bg-hero-foreground/5 text-hero-subtle"
+                }`}
+              >
+                <span
+                  className={`grid h-6 w-6 place-items-center rounded-full text-[0.7rem] ${
+                    current ? "btn-gradient" : done ? "bg-success text-success-foreground" : "bg-hero-foreground/10"
+                  }`}
+                >
+                  {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : step === 5 ? <Sparkles className="h-3.5 w-3.5" /> : toArabicDigits(step + 1)}
+                </span>
+                {STAGE_LABELS[step]}
+              </li>
+            );
+          })}
+        </ol>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-4 rounded-[10px] px-0 font-bold text-hero-muted hover:bg-transparent hover:text-hero-foreground"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="h-4 w-4" /> رجوع
+        </Button>
+      </HeroBand>
 
-      <main className="flex-grow py-8 px-4 max-w-2xl mx-auto w-full animate-in fade-in">
+      <div className="athar-card">
         {/* BANNER */}
-        <Card className="p-4 mb-8 border border-accent/20 bg-accent/5 flex items-start gap-3 shadow-sm">
-          <div className="flex-shrink-0 mt-1">
-            <Video className="w-5 h-5 text-accent" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">
-              النسخة المصورة (وثائقي 60 دقيقة من سنة أولى للتخرج) ستكون متاحة قريباً.
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              الآن: عِش التجربة التفاعلية الواقعية واتخذ قراراتك بنفسك.
-            </p>
-          </div>
-        </Card>
+        <div
+          className="relative mb-6 grid place-items-center overflow-hidden rounded-[15px] px-5 py-8 text-center [background:radial-gradient(120%_120%_at_30%_20%,hsl(var(--hero-from)),hsl(var(--hero-to)))]"
+        >
+          <span className="btn-gradient mb-3 grid h-[60px] w-[60px] place-items-center rounded-full shadow-premium-lg">
+            <Video className="h-6 w-6" />
+          </span>
+          <p className="text-sm font-semibold text-hero-foreground">
+            النسخة المصورة (وثائقي 60 دقيقة من سنة أولى للتخرج) ستكون متاحة قريباً.
+          </p>
+          <p className="mt-1 text-xs text-hero-muted">الآن: عِش التجربة التفاعلية الواقعية واتخذ قراراتك بنفسك.</p>
+        </div>
 
         {!isReflectionStage && currentStageData ? (
           <div className="space-y-6">
-            {/* Stage Title */}
-            <div className="flex items-center gap-3">
-              <Map className="w-6 h-6 text-primary" />
-              <h1 className="text-2xl font-bold text-foreground">{currentStageData.title}</h1>
+            <p className="text-sm font-bold text-muted-foreground">
+              المرحلة {toArabicDigits(currentStage + 1)} من {toArabicDigits(5)}
+            </p>
+            <h2 className="-mt-4 flex items-center gap-2.5 text-[clamp(1.3rem,3.4vw,1.6rem)] font-extrabold">
+              <Map className="h-6 w-6 text-accent" />
+              {currentStageData.title}
+            </h2>
+
+            {/* Reality Snapshot + Challenges */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <section className="rounded-[14px] border border-border bg-muted/40 p-[18px]">
+                <h3 className="mb-3 flex items-center gap-2 font-extrabold">
+                  <IconChip><Target className="h-4 w-4" /></IconChip> الواقع في هذه المرحلة
+                </h3>
+                <p className="text-[0.93rem] leading-relaxed text-muted-foreground">{currentStageData.snapshot}</p>
+              </section>
+              <section className="rounded-[14px] border border-border bg-muted/40 p-[18px]">
+                <h3 className="mb-3 flex items-center gap-2 font-extrabold">
+                  <IconChip><AlertCircle className="h-4 w-4" /></IconChip> تحديات شائعة ستواجهها
+                </h3>
+                <ul className="flex flex-col gap-[9px]">
+                  {currentStageData.challenges.map((challenge, idx) => (
+                    <li key={idx} className="relative ps-[18px] text-[0.93rem] font-medium leading-normal before:absolute before:top-2 before:h-[7px] before:w-[7px] before:rounded-full before:bg-accent before:content-[''] before:[inset-inline-start:0]">
+                      {challenge}
+                    </li>
+                  ))}
+                </ul>
+              </section>
             </div>
 
-            {/* Reality Snapshot */}
-            <Card className="p-5 bg-card border border-border shadow-sm">
-              <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
-                <Target className="w-5 h-5 text-primary" /> الواقع في هذه المرحلة
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">{currentStageData.snapshot}</p>
-            </Card>
-
-            {/* Challenges */}
-            <Card className="p-5 bg-card border border-border shadow-sm">
-              <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-accent" /> تحديات شائعة ستواجهها
-              </h3>
-              <ul className="space-y-2">
-                {currentStageData.challenges.map((challenge, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-muted-foreground text-sm">
-                    <span className="text-accent font-bold mt-0.5">•</span> {challenge}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-
             {/* Mini Scenario */}
-            <Card className="p-5 bg-card border border-border shadow-sm">
-              <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-primary" /> موقف حقيقي: كيف تتصرف؟
+            <section>
+              <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-muted-foreground">
+                <Briefcase className="h-4 w-4" /> موقف حقيقي: كيف تتصرف؟
               </h3>
-              <p className="text-foreground font-medium mb-4">{currentStageData.scenario.question}</p>
-              <div className="space-y-3">
+              <p className="mb-4 text-[1.1rem] font-extrabold leading-normal">{currentStageData.scenario.question}</p>
+              <div className="flex flex-col gap-[11px]">
                 {currentStageData.scenario.options.map((opt, idx) => (
                   <button
                     key={idx}
                     onClick={() => setScenarioChoices({...scenarioChoices, [currentStage]: idx})}
-                    className={`w-full text-right p-4 rounded-xl border-2 transition-all font-medium text-sm ${
-                      scenarioChoices[currentStage] === idx 
-                        ? "border-primary bg-primary/5 text-primary shadow-sm" 
-                        : "border-border hover:border-primary/30 text-muted-foreground"
-                    }`}
+                    data-selected={scenarioChoices[currentStage] === idx}
+                    className="athar-option"
                   >
+                    <span className="athar-tile">{["أ", "ب", "ج", "د"][idx] ?? idx + 1}</span>
                     {opt}
                   </button>
                 ))}
               </div>
-            </Card>
+            </section>
 
             {/* Comfort Check */}
-            <Card className="p-5 bg-secondary/30 border border-border shadow-sm">
-              <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-primary" /> إحساسك تجاه هذه المرحلة؟
+            <section>
+              <h3 className="mb-3 flex items-center gap-2 font-extrabold">
+                <CheckCircle2 className="h-5 w-5 text-success" /> إحساسك تجاه هذه المرحلة؟
               </h3>
-              <div className="grid grid-cols-4 gap-2">
-                {COMFORT_LEVELS.map((level) => (
-                  <button
-                    key={level}
-                    onClick={() => setComfortLevels({...comfortLevels, [currentStage]: level})}
-                    className={`p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all text-xs ${
-                      comfortLevels[currentStage] === level
-                        ? "border-primary bg-card shadow-md text-primary font-bold scale-105"
-                        : "border-transparent bg-card/60 text-muted-foreground font-medium hover:bg-card"
-                    }`}
-                  >
-                    <span className="text-xl">{COMFORT_EMOJIS[level]}</span>
-                    {level}
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {COMFORT_LEVELS.map((level) => {
+                  const sel = comfortLevels[currentStage] === level;
+                  return (
+                    <button
+                      key={level}
+                      onClick={() => setComfortLevels({...comfortLevels, [currentStage]: level})}
+                      aria-pressed={sel}
+                      className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border-[1.5px] p-3 text-xs font-bold transition-colors ${
+                        sel ? "border-accent bg-accent/10 text-foreground" : "border-border bg-card text-muted-foreground hover:border-accent"
+                      }`}
+                    >
+                      <span className="text-xl">{COMFORT_EMOJIS[level]}</span>
+                      {level}
+                    </button>
+                  );
+                })}
               </div>
-            </Card>
+            </section>
           </div>
         ) : (
           /* REFLECTION STAGE */
           <div className="space-y-6">
-            <div className="text-center mb-6">
-              <span className="text-5xl mb-4 block">🪞</span>
-              <h1 className="text-3xl font-bold text-foreground">وقفة صدق أخيرة</h1>
-              <p className="text-muted-foreground mt-2">بعد ما عشت الرحلة كاملة بخيالك وواقعها، جاوب بصراحة.</p>
+            <div className="text-center">
+              <span className="mb-3 block text-5xl">🪞</span>
+              <h2 className="text-2xl font-extrabold">وقفة صدق أخيرة</h2>
+              <p className="mt-2 text-muted-foreground">بعد ما عشت الرحلة كاملة بخيالك وواقعها، جاوب بصراحة.</p>
             </div>
 
-            <Card className="p-6 bg-card border border-border shadow-sm space-y-6">
+            <div className="space-y-5">
               <div>
-                <label className="block font-bold text-foreground mb-2">1. بعد ما شفت التحديات، هل تحس إن التخصص ده يشبه طبيعتك؟</label>
-                <Textarea value={reflections.q1} onChange={(e) => setReflections({...reflections, q1: e.target.value})} className="bg-secondary/30" rows={2}/>
+                <label className="mb-2 block font-bold">1. بعد ما شفت التحديات، هل تحس إن التخصص ده يشبه طبيعتك؟</label>
+                <Textarea value={reflections.q1} onChange={(e) => setReflections({...reflections, q1: e.target.value})} className="athar-field" rows={2}/>
               </div>
               <div>
-                <label className="block font-bold text-foreground mb-2">2. إيه أكتر مرحلة قلقتك أو حسيت إنها صعبة عليك؟</label>
-                <Textarea value={reflections.q2} onChange={(e) => setReflections({...reflections, q2: e.target.value})} className="bg-secondary/30" rows={2}/>
+                <label className="mb-2 block font-bold">2. إيه أكتر مرحلة قلقتك أو حسيت إنها صعبة عليك؟</label>
+                <Textarea value={reflections.q2} onChange={(e) => setReflections({...reflections, q2: e.target.value})} className="athar-field" rows={2}/>
               </div>
               <div>
-                <label className="block font-bold text-foreground mb-2">3. هل أنت مستعد تتحمل ضغط بيئة العمل الخاصة بهذا المجال مستقبلاً؟</label>
-                <Textarea value={reflections.q3} onChange={(e) => setReflections({...reflections, q3: e.target.value})} className="bg-secondary/30" rows={2}/>
+                <label className="mb-2 block font-bold">3. هل أنت مستعد تتحمل ضغط بيئة العمل الخاصة بهذا المجال مستقبلاً؟</label>
+                <Textarea value={reflections.q3} onChange={(e) => setReflections({...reflections, q3: e.target.value})} className="athar-field" rows={2}/>
               </div>
-            </Card>
+            </div>
           </div>
         )}
 
         {/* NAVIGATION CTA */}
-        <div className="mt-8 pt-4 border-t border-border">
+        <div className="athar-foot justify-end">
           <Button 
-            size="lg" 
-            className="w-full h-14 text-lg font-bold rounded-xl shadow-md"
+            className={btnPrimary}
             disabled={!canProceed || isSaving}
             onClick={isReflectionStage ? handleFinish : handleNext}
           >
-            {isSaving ? <Loader2 className="w-6 h-6 animate-spin" /> : isReflectionStage ? "انتقل إلى المحاكاة الذكية" : "تأكيد واستمرار للخطوة التالية"}
-            {!isSaving && <ArrowLeft className="w-5 h-5 mr-2" />}
+            {isSaving ? <Loader2 className="h-6 w-6 animate-spin" /> : isReflectionStage ? "انتقل إلى المحاكاة الذكية" : "تأكيد واستمرار للخطوة التالية"}
+            {!isSaving && <ArrowLeft className="h-5 w-5" />}
           </Button>
         </div>
-      </main>
+      </div>
     </div>
+  );
+}
+
+function IconChip({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="grid h-7 w-7 flex-none place-items-center rounded-[9px] bg-accent/15 text-[hsl(var(--gradient-end))]">
+      {children}
+    </span>
   );
 }

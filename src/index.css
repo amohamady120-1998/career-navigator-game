@@ -67,6 +67,13 @@
     --hero-foreground: 0 0% 100%;
     --hero-muted: 212 34% 82%;
     --hero-subtle: 211 25% 70%;
+
+    /* Certificate paper (a printed document, same in both themes) */
+    --gold: 43 57% 39%;
+    --gold-light: 43 60% 58%;
+    --gold-pale: 45 75% 82%;
+    --cream: 48 50% 98%;
+    --ink: 214 72% 11%;
   }
 
   .dark {

@@ -62,6 +62,13 @@ export default {
           muted: "hsl(var(--hero-muted))",
           subtle: "hsl(var(--hero-subtle))",
         },
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          light: "hsl(var(--gold-light))",
+          pale: "hsl(var(--gold-pale))",
+        },
+        cream: "hsl(var(--cream))",
+        ink: "hsl(var(--ink))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
