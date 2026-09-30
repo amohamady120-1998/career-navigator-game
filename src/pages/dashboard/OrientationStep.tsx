@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Loader2, PlayCircle, CheckCircle2, Lock, AlertCircle, RefreshCw, Play } from "lucide-react";
+import { Loader2, PlayCircle, CheckCircle2, Lock, AlertCircle, RefreshCw, Play, ChevronLeft } from "lucide-react";
+import { HeroBand, HeroBandProgress } from "@/components/HeroBand";
+import { btnOutline, btnPrimary, toArabicDigits } from "@/lib/athar";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -292,55 +293,49 @@ export default function OrientationStep() {
   const hasVideo = !!activeModule?.videoSrc;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8" dir="rtl">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold text-foreground">التهيئة</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {completedModules.length}/{MODULES.length} مكتمل
-          </p>
-        </div>
-        <div className="progress-premium w-28 h-2">
-          <div style={{ width: `${(completedModules.length / MODULES.length) * 100}%`, transition: "width 0.4s ease" }} />
-        </div>
-      </div>
-
-      {/* Description */}
-      <div className="text-center space-y-2">
-        <h2 className="text-lg md:text-xl font-bold text-foreground">
-          خلّينا نبدأ نفهم الصورة كاملة
-        </h2>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          3 مقاطع فيديو قصيرة واختبارات سريعة لتأسيس وعيك قبل اختيار مسارك.
-        </p>
-      </div>
+    <div className="athar-page" dir="rtl">
+      <HeroBand
+        eyebrow="الفصل الأول · التهيئة"
+        title="قبل اختبار ميولك"
+        description="ثلاثة مقاطع قصيرة واختبارات سريعة تؤسّس وعيك قبل أن تختار مسارك."
+      >
+        <HeroBandProgress
+          value={(completedModules.length / MODULES.length) * 100}
+          label={`${toArabicDigits(completedModules.length)} من ${toArabicDigits(MODULES.length)}`}
+        />
+      </HeroBand>
 
       {/* Module cards */}
-      <div className="space-y-4">
+      <div className="space-y-3.5">
         {MODULES.map((mod, index) => {
           const isCompleted = completedModules.includes(mod.id);
           const isActive = index === activeModuleIndex && !allCompleted;
           const isLocked = index > activeModuleIndex && !allCompleted;
 
           return (
-            <Card key={mod.id} className={`overflow-hidden transition-all duration-300 ${isActive ? "ring-2 ring-accent shadow-lg" : ""} ${isLocked ? "opacity-50" : ""}`}>
+            <div
+              key={mod.id}
+              className={`athar-card overflow-hidden p-0 md:p-0 transition-all duration-300 ${isActive ? "border-accent/50" : ""} ${isLocked ? "opacity-60" : ""}`}
+            >
               {/* Card header */}
-              <div className="flex items-center gap-3 p-4 border-b border-border/50">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                  isCompleted ? "bg-[hsl(var(--success))]/15" : isActive ? "bg-accent/15" : "bg-muted"
-                }`}>
-                  {isCompleted ? <CheckCircle2 className="w-5 h-5 text-[hsl(var(--success))]" /> :
-                   isLocked ? <Lock className="w-5 h-5 text-muted-foreground" /> :
-                   <PlayCircle className="w-5 h-5 text-accent" />}
+              <div className="flex items-center gap-[13px] px-5 py-4">
+                <span
+                  className={`grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[10px] text-sm font-extrabold ${
+                    isCompleted
+                      ? "bg-success/15 text-success"
+                      : isActive
+                      ? "btn-gradient"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {isCompleted ? <CheckCircle2 className="h-[18px] w-[18px]" /> : isLocked ? <Lock className="h-4 w-4" /> : toArabicDigits(index + 1)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[0.95rem] font-bold text-foreground">{mod.title}</p>
+                  {isCompleted && <p className="text-xs font-bold text-success">مكتمل</p>}
+                  {isActive && <p className="text-xs font-bold text-[hsl(var(--gradient-end))]">قيد التنفيذ</p>}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-foreground text-sm">
-                    {index + 1}. {mod.title}
-                  </p>
-                  {isCompleted && <p className="text-xs text-[hsl(var(--success))]">مكتمل</p>}
-                  {isActive && <p className="text-xs text-accent">قيد التنفيذ...</p>}
-                </div>
+                {isActive && <PlayCircle className="h-5 w-5 text-accent" />}
               </div>
 
               {/* Active module content */}
@@ -353,18 +348,21 @@ export default function OrientationStep() {
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden"
                   >
-                    <div className="p-4 space-y-4">
+                    <div className="space-y-4 border-t border-border/60 p-5">
                       {/* VIDEO MODE */}
                       {currentMode === "video" && (
                         <div className="space-y-4">
                           {/* Video player */}
-                          <div className="w-full rounded-xl overflow-hidden border border-border bg-muted relative" style={{ aspectRatio: "16/9" }}>
+                          <div
+                            className="relative w-full overflow-hidden rounded-[15px] [background:radial-gradient(120%_120%_at_30%_20%,hsl(var(--hero-from)),hsl(var(--hero-to)))]"
+                            style={{ aspectRatio: "16/9" }}
+                          >
                             {hasVideo ? (
                               <>
                                 <video
                                   ref={videoRef}
                                   src={mod.videoSrc}
-                                  className="w-full h-full object-cover"
+                                  className="h-full w-full object-cover"
                                   onLoadedData={handleVideoLoaded}
                                   onTimeUpdate={handleTimeUpdate}
                                   onPlay={() => setPlaying(true)}
@@ -377,34 +375,33 @@ export default function OrientationStep() {
                                 <button
                                   onClick={togglePlay}
                                   className={`absolute inset-0 flex items-center justify-center transition-opacity ${
-                                    playing ? "opacity-0 hover:opacity-100" : "opacity-100 bg-primary/30"
+                                    playing ? "opacity-0 hover:opacity-100" : "opacity-100 bg-hero-to/30"
                                   }`}
                                   aria-label={playing ? "إيقاف" : "تشغيل"}
                                 >
-                                  <div className="w-14 h-14 rounded-full bg-accent/90 flex items-center justify-center shadow-xl">
-                                    <Play className="w-6 h-6 text-accent-foreground" />
-                                  </div>
+                                  <PlayBadge />
                                 </button>
                               </>
                             ) : (
-                              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                                <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center">
-                                  <Play className="w-7 h-7 text-accent" />
-                                </div>
-                                <span className="text-sm text-muted-foreground">الفيديو قريباً...</span>
+                              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                                <PlayBadge />
+                                <span className="text-sm font-semibold text-hero-muted">الفيديو قريبًا...</span>
                               </div>
                             )}
+                            <span className="absolute bottom-[13px] text-[0.84rem] font-semibold text-hero-muted [inset-inline-end:15px]">
+                              {toArabicDigits(index + 1)} · {mod.title}
+                            </span>
                           </div>
 
                           {/* Progress info */}
                           {hasVideo && (
                             <>
-                              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <span>نسبة المشاهدة المطلوبة: {REQUIRED_WATCH_PERCENT}%</span>
-                                <span className="font-bold text-foreground">{Math.round(videoProgress)}%</span>
+                              <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
+                                <span>نسبة المشاهدة المطلوبة: {toArabicDigits(REQUIRED_WATCH_PERCENT)}٪</span>
+                                <span className="text-foreground">{toArabicDigits(Math.round(videoProgress))}٪</span>
                               </div>
-                              <div className="progress-premium">
-                                <div style={{ width: `${Math.min(videoProgress, 100)}%`, transition: "width 0.3s ease" }} />
+                              <div className="athar-track">
+                                <i style={{ width: `${Math.min(videoProgress, 100)}%` }} />
                               </div>
                             </>
                           )}
@@ -415,7 +412,7 @@ export default function OrientationStep() {
                               setCurrentMode("quiz");
                             }}
                             disabled={hasVideo && !isVideoFinished}
-                            className={`w-full h-12 font-bold rounded-xl ${isVideoFinished || !hasVideo ? "btn-gradient" : ""}`}
+                            className={`${btnPrimary} w-full`}
                           >
                             {isVideoFinished || !hasVideo ? "انتقل للاختبار السريع" : "يجب مشاهدة المقطع للمتابعة"}
                           </Button>
@@ -425,42 +422,34 @@ export default function OrientationStep() {
                       {/* QUIZ MODE */}
                       {currentMode === "quiz" && !quizResult && (
                         <div className="space-y-5">
-                          <div className="flex items-center justify-between">
-                            <p className="font-bold text-foreground">اختبار الفهم</p>
-                            <span className="text-xs text-muted-foreground">
-                              السؤال {currentQuestionIndex + 1} من {mod.quiz.length}
-                            </span>
+                          <p className="text-sm font-bold text-muted-foreground">
+                            اختبار الفهم · السؤال {toArabicDigits(currentQuestionIndex + 1)} من {toArabicDigits(mod.quiz.length)}
+                          </p>
+                          <p className="text-[clamp(1.15rem,3vw,1.35rem)] font-extrabold leading-normal text-foreground">
+                            {mod.quiz[currentQuestionIndex].question}
+                          </p>
+                          <div className="flex flex-col gap-[11px]">
+                            {mod.quiz[currentQuestionIndex].options.map((opt, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => handleAnswerSelect(idx)}
+                                data-selected={selectedAnswers[currentQuestionIndex] === idx}
+                                className="athar-option"
+                              >
+                                <span className="athar-tile">{OPTION_LETTERS[idx] ?? idx + 1}</span>
+                                {opt}
+                              </button>
+                            ))}
                           </div>
 
-                          <div className="space-y-4">
-                            <p className="font-semibold text-foreground leading-relaxed">
-                              {mod.quiz[currentQuestionIndex].question}
-                            </p>
-                            <div className="space-y-2">
-                              {mod.quiz[currentQuestionIndex].options.map((opt, idx) => (
-                                <button
-                                  key={idx}
-                                  onClick={() => handleAnswerSelect(idx)}
-                                  className={`w-full text-right p-4 rounded-xl border-2 transition-all font-medium text-sm ${
-                                    selectedAnswers[currentQuestionIndex] === idx
-                                      ? "border-accent bg-accent/10 text-foreground"
-                                      : "border-border hover:border-accent/40 text-foreground bg-card"
-                                  }`}
-                                >
-                                  {opt}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="flex gap-3">
-                            {currentQuestionIndex > 0 && (
-                              <Button variant="outline" onClick={() => setCurrentQuestionIndex((p) => p - 1)}>
+                          <div className="flex flex-wrap justify-between gap-3 pt-2">
+                            {currentQuestionIndex > 0 ? (
+                              <Button variant="outline" className={btnOutline} onClick={() => setCurrentQuestionIndex((p) => p - 1)}>
                                 السابق
                               </Button>
-                            )}
+                            ) : <span />}
                             <Button
-                              className="flex-1 btn-gradient font-bold"
+                              className={btnPrimary}
                               disabled={selectedAnswers[currentQuestionIndex] === undefined}
                               onClick={() => {
                                 if (currentQuestionIndex < mod.quiz.length - 1) setCurrentQuestionIndex((p) => p + 1);
@@ -475,16 +464,16 @@ export default function OrientationStep() {
 
                       {/* QUIZ RESULT */}
                       {currentMode === "quiz" && quizResult && (
-                        <div className="text-center space-y-4 py-4">
+                        <div className="space-y-4 py-4 text-center">
                           {quizResult.passed ? (
                             <>
-                              <div className="w-16 h-16 rounded-full bg-[hsl(var(--success))]/15 flex items-center justify-center mx-auto">
-                                <CheckCircle2 className="w-8 h-8 text-[hsl(var(--success))]" />
+                              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/15">
+                                <CheckCircle2 className="h-8 w-8 text-success" />
                               </div>
-                              <p className="text-lg font-bold text-foreground">ممتاز! اجتزت الاختبار</p>
-                              <p className="text-sm text-muted-foreground">النتيجة: {Math.round(quizResult.score)}%</p>
+                              <p className="text-lg font-extrabold text-foreground">ممتاز! اجتزت الاختبار</p>
+                              <p className="text-sm text-muted-foreground">النتيجة: {toArabicDigits(Math.round(quizResult.score))}٪</p>
                               <Button
-                                className="btn-gradient font-bold px-8"
+                                className={btnPrimary}
                                 onClick={activeModuleIndex === MODULES.length - 1 ? handleCompleteAll : handleNextModule}
                               >
                                 {activeModuleIndex === MODULES.length - 1 ? "إنهاء التهيئة" : "انتقل للمقطع التالي"}
@@ -492,19 +481,19 @@ export default function OrientationStep() {
                             </>
                           ) : (
                             <>
-                              <div className="w-16 h-16 rounded-full bg-destructive/15 flex items-center justify-center mx-auto">
-                                <AlertCircle className="w-8 h-8 text-destructive" />
+                              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/15">
+                                <AlertCircle className="h-8 w-8 text-destructive" />
                               </div>
-                              <p className="text-lg font-bold text-foreground">لم تجتز الاختبار</p>
+                              <p className="text-lg font-extrabold text-foreground">لم تجتز الاختبار</p>
                               <p className="text-sm text-muted-foreground">
-                                النتيجة: {Math.round(quizResult.score)}% (المطلوب {PASSING_SCORE_PERCENT}%)
+                                النتيجة: {toArabicDigits(Math.round(quizResult.score))}٪ (المطلوب {toArabicDigits(PASSING_SCORE_PERCENT)}٪)
                               </p>
-                              <div className="flex gap-3 justify-center">
-                                <Button variant="outline" onClick={() => setCurrentMode("video")}>
+                              <div className="flex flex-wrap justify-center gap-3">
+                                <Button variant="outline" className={btnOutline} onClick={() => setCurrentMode("video")}>
                                   إعادة المقطع
                                 </Button>
-                                <Button variant="outline" onClick={handleRetryQuiz}>
-                                  <RefreshCw className="w-4 h-4 ml-1" />
+                                <Button variant="outline" className={btnOutline} onClick={handleRetryQuiz}>
+                                  <RefreshCw className="h-4 w-4" />
                                   إعادة الاختبار
                                 </Button>
                               </div>
@@ -516,7 +505,7 @@ export default function OrientationStep() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </Card>
+            </div>
           );
         })}
       </div>
@@ -526,17 +515,28 @@ export default function OrientationStep() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-4 py-6"
+          className="athar-card mt-6 space-y-4 text-center"
         >
           <p className="text-xl font-extrabold text-foreground">أنت الآن جاهز!</p>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+          <p className="mx-auto max-w-md text-sm text-muted-foreground">
             لقد أتممت مرحلة التهيئة بنجاح. عقليتك الآن مستعدة لاتخاذ قرارات مبنية على أسس صحيحة.
           </p>
-          <Button type="button" className="btn-gradient font-bold h-14 px-10 text-lg rounded-xl" onClick={handleCompleteAll}>
+          <Button type="button" className={btnPrimary} onClick={handleCompleteAll}>
             ابدأ اختبار هولند
+            <ChevronLeft className="h-[17px] w-[17px]" />
           </Button>
         </motion.div>
       )}
     </div>
+  );
+}
+
+const OPTION_LETTERS = ["أ", "ب", "ج", "د", "هـ"];
+
+function PlayBadge() {
+  return (
+    <span className="btn-gradient grid h-[60px] w-[60px] place-items-center rounded-full shadow-premium-lg">
+      <Play className="h-6 w-6 fill-current [margin-inline-start:3px]" />
+    </span>
   );
 }

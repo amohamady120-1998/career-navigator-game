@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
-import { Loader2, ArrowLeft, Info, AlertCircle } from "lucide-react";
+import { Loader2, ArrowLeft, Info, ShieldCheck, ChevronLeft } from "lucide-react";
+import { HeroBand } from "@/components/HeroBand";
+import { btnPrimary } from "@/lib/athar";
 import { toast } from "sonner";
 
 // --- TYPES & FALLBACK DATA ---
@@ -133,109 +134,82 @@ export default function ExcludedMajorsStep() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans" dir="rtl">
-      {/* 1) HEADER */}
-      <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="font-extrabold text-lg text-primary hidden sm:block">أثر ستارت</div>
-            <div className="text-sm font-bold text-muted-foreground bg-secondary px-3 py-1 rounded-full">
-              توضيح الاختيارات
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" className="text-muted-foreground font-bold" onClick={() => navigate('/dashboard')}>
-            <ArrowLeft className="w-4 h-4 ml-2" />
-            عودة
-          </Button>
-        </div>
-      </header>
+    <div className="athar-page" dir="rtl">
+      <HeroBand
+        eyebrow="الفصل الثاني · لماذا استبعدناها"
+        title="تخصصات أقل توافقًا معك حاليًا"
+        description="ده لا يعني إنها مستحيلة… لكن في وضعك الحالي مش الأقرب لطبيعتك."
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          className="rounded-[10px] px-0 font-bold text-hero-muted hover:bg-transparent hover:text-hero-foreground"
+          onClick={() => navigate('/dashboard')}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          عودة
+        </Button>
+      </HeroBand>
 
-      <main className="flex-grow py-8 px-4 max-w-2xl mx-auto w-full animate-in fade-in">
-        {/* 2) TITLE & SUBTITLE */}
-        <div className="mb-8">
-          <div className="mb-4">
-            <AlertCircle className="w-8 h-8 text-accent" />
-          </div>
-          <h1 className="text-3xl font-bold mb-2">تخصصات أقل توافقًا معك حاليًا</h1>
-          <p className="text-lg text-muted-foreground font-medium">
-            ده لا يعني إنها مستحيلة… لكن في وضعك الحالي مش الأقرب لطبيعتك.
-          </p>
-        </div>
-
-        {/* 3) REASSURANCE INFO CARD */}
-        <Card className="p-6 border-l-4 border-l-accent bg-accent/5 mb-8 shadow-sm">
-          <h3 className="font-bold text-lg mb-4">اطمّن، هذه ليست أحكاماً نهائية:</h3>
-          <ul className="space-y-3">
-            <li className="flex gap-3">
-              <span className="text-accent font-bold">•</span>
-              <span className="text-foreground">الميول تتغير مع الخبرات والتجارب الجديدة.</span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-accent font-bold">•</span>
-              <span className="text-foreground">المهارات يمكن أن تتطور إذا قررت الاستثمار فيها.</span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-accent font-bold">•</span>
-              <span className="text-foreground">اختيارك في المنصة اليوم ليس نهائياً، بل هو نقطة انطلاق.</span>
-            </li>
-          </ul>
-        </Card>
-
-        {/* 4) EXCLUDED MAJORS LIST */}
+      <section className="athar-card">
         {excludedMajors.length > 0 ? (
-          <div className="space-y-4 mb-8">
+          <div>
             {excludedMajors.map((major) => (
-              <Card key={major.id} className="p-5 bg-card border border-border hover:border-primary/30 transition-colors shadow-sm">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-grow">
-                    <h3 className="text-lg font-bold text-foreground mb-2">{major.name}</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{major.shortReason}</p>
-                  </div>
+              <div key={major.id} className="flex flex-wrap items-start gap-3 border-b border-border/60 py-3.5 first:pt-0 last:border-b-0">
+                <div className="min-w-0 flex-1">
+                  <b className="font-bold">{major.name}</b>
+                  <p className="mt-1 text-[0.9rem] leading-relaxed text-muted-foreground">{major.shortReason}</p>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-4 text-muted-foreground hover:text-primary"
+                  className="gap-1.5 rounded-[10px] font-bold"
                   onClick={() => setSelectedMajor(major)}
                 >
-                  <Info className="w-4 h-4 ml-2" />
+                  <Info className="h-4 w-4" />
                   اعرف أكثر
                 </Button>
-              </Card>
+              </div>
             ))}
           </div>
         ) : (
-          <Card className="p-8 bg-card text-center shadow-sm mb-8">
-            <h3 className="text-lg font-bold text-foreground mb-2">لا توجد تخصصات مستبعدة بوضوح</h3>
+          <div className="py-4 text-center">
+            <h3 className="mb-2 text-lg font-bold">لا توجد تخصصات مستبعدة بوضوح</h3>
             <p className="text-muted-foreground">إجاباتك تظهر مرونة عالية وتوافقاً مع مجموعة كبيرة من التخصصات.</p>
-          </Card>
+          </div>
         )}
 
-        {/* 5) MICRO NOTE AT BOTTOM */}
-        <Card className="p-4 bg-primary/5 border border-primary/20 mb-8 shadow-sm">
-          <p className="text-sm text-foreground">
-            🤔 لو أنت حاسس إن في تخصص منهم مهم جداً بالنسبة لك… ده طبيعي تماماً. هنراجع ده في الخطوة الجاية.
-          </p>
-        </Card>
+        {/* Reassurance */}
+        <div className="mt-4 rounded-[14px] border border-success/25 bg-success/5 px-4 py-3.5">
+          <h3 className="mb-2.5 flex items-center gap-2 font-bold text-success">
+            <ShieldCheck className="h-[18px] w-[18px]" />
+            اطمّن، هذه ليست أحكاماً نهائية:
+          </h3>
+          <ul className="space-y-2 text-[0.92rem] font-medium">
+            <li>• الميول تتغير مع الخبرات والتجارب الجديدة.</li>
+            <li>• المهارات يمكن أن تتطور إذا قررت الاستثمار فيها.</li>
+            <li>• اختيارك في المنصة اليوم ليس نهائياً، بل هو نقطة انطلاق.</li>
+          </ul>
+        </div>
 
-        {/* 6) PRIMARY CTA */}
-        <Button
-          type="button"
-          size="lg"
-          className="w-full h-14 text-lg font-bold rounded-xl shadow-md mb-10"
-          onClick={handleContinue}
-          disabled={isSaving}
-        >
-          {isSaving ? <Loader2 className="w-6 h-6 animate-spin ml-2" /> : "كمّل — لو لسه متردد"}
-        </Button>
-      </main>
+        <p className="mt-4 rounded-[14px] border border-border bg-muted/50 px-4 py-3.5 text-sm">
+          🤔 لو أنت حاسس إن في تخصص منهم مهم جداً بالنسبة لك… ده طبيعي تماماً. هنراجع ده في الخطوة الجاية.
+        </p>
+
+        <div className="athar-foot justify-end">
+          <Button type="button" className={btnPrimary} onClick={handleContinue} disabled={isSaving}>
+            {isSaving ? <Loader2 className="h-6 w-6 animate-spin" /> : "كمّل — لو لسه متردد"}
+            {!isSaving && <ChevronLeft className="h-[17px] w-[17px]" />}
+          </Button>
+        </div>
+      </section>
 
       {/* DETAILED EXPLANATION MODAL */}
       <Dialog open={!!selectedMajor} onOpenChange={(open) => !open && setSelectedMajor(null)}>
@@ -253,7 +227,7 @@ export default function ExcludedMajorsStep() {
 
           <div className="flex justify-end gap-3">
             <DialogClose asChild>
-              <Button variant="outline">حسناً، فهمت</Button>
+              <Button variant="outline" className="rounded-xl font-bold">حسناً، فهمت</Button>
             </DialogClose>
           </div>
         </DialogContent>

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2, ArrowRight, ArrowLeft, Save, CheckCircle2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { HeroBand, HeroBandProgress } from "@/components/HeroBand";
+import { btnOutline, btnPrimary, toArabicDigits } from "@/lib/athar";
 
 const OPTIONS = [
   { value: "yes" as any, label: "نعم" },
@@ -193,7 +195,7 @@ export default function HollandAssessment() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
       </div>
     );
   }
@@ -221,32 +223,28 @@ export default function HollandAssessment() {
 
   if (isCompleted) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4"
-      >
-        <div className="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mb-6">
-          <CheckCircle2 className="w-10 h-10 text-success" />
-        </div>
-        <h2 className="text-2xl font-bold mb-3">تم الانتهاء من الاختبار</h2>
-        <p className="text-muted-foreground mb-8 max-w-md">
-          شكرًا لصراحتك. لقد تم جمع إجاباتك بنجاح ونحن الآن نقوم بتحليل ميولك المهنية.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button onClick={() => navigate("/dashboard/initial-report")} className="btn-gradient rounded-xl h-12 px-10 text-base">
-            كمّل وشوف تقريرك المبدئي
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleRetakeTest}
-            disabled={isSaving}
-            className="rounded-xl h-12 px-8 text-base gap-2"
-          >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-            إعادة الاختبار
-          </Button>
-        </div>
+      <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="athar-page" dir="rtl">
+        <HeroBand
+          eyebrow="الفصل الثاني · اختبار الميول"
+          title="تم الانتهاء من الاختبار"
+          description="شكرًا لصراحتك. جمعنا إجاباتك بنجاح، ونحن الآن نحلّل ميولك المهنية."
+        >
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={() => navigate("/dashboard/initial-report")} className={btnPrimary}>
+              كمّل وشوف تقريرك المبدئي
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleRetakeTest}
+              disabled={isSaving}
+              className={`${btnOutline} border-hero-foreground/20 bg-hero-foreground/5 text-hero-foreground hover:bg-hero-foreground/10 hover:text-hero-foreground`}
+            >
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+              إعادة الاختبار
+            </Button>
+          </div>
+        </HeroBand>
       </motion.div>
     );
   }
@@ -262,98 +260,77 @@ export default function HollandAssessment() {
   else if (currentIndex === questions.length - 1) nextBtnLabel = "إنهاء الاختبار ✓";
 
   return (
-    <div className="max-w-2xl mx-auto py-6 px-4" dir="rtl">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-lg font-bold">اختبار الميول المهنية</h1>
-          <p className="text-sm text-muted-foreground flex items-center gap-1">
-            سؤال {currentIndex + 1} من {questions.length}
-            {isSaving && <Loader2 className="w-3 h-3 animate-spin" />}
+    <div className="athar-page" dir="rtl">
+      <HeroBand
+        eyebrow="الفصل الثاني · اختبار الميول"
+        title="ما الذي يشبهك؟"
+        description="مواقف قصيرة؛ اختر الأقرب إليك. كل إجابة تضيف لمسة إلى صورتك."
+      >
+        <HeroBandProgress value={progressPercent} label={`${toArabicDigits(Math.round(progressPercent))}٪`} />
+      </HeroBand>
+
+      <div className="athar-card">
+        {/* Header */}
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="flex items-center gap-1 text-sm font-bold text-muted-foreground">
+            سؤال {toArabicDigits(currentIndex + 1)} من {toArabicDigits(questions.length)}
+            {isSaving && <Loader2 className="h-3 w-3 animate-spin" />}
           </p>
+          <Button variant="outline" size="sm" onClick={handleSaveAndExit} className="gap-1.5 rounded-[10px] font-bold">
+            <Save className="h-4 w-4" />
+            حفظ وخروج
+          </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={handleSaveAndExit} className="gap-1.5 rounded-xl">
-          <Save className="w-4 h-4" />
-          حفظ وخروج
-        </Button>
-      </div>
 
-      {/* Progress Bar */}
-      <div className="h-2 rounded-full bg-secondary mb-8 overflow-hidden">
-        <motion.div
-          className="h-full rounded-full bg-accent"
-          initial={false}
-          animate={{ width: `${progressPercent}%` }}
-          transition={{ duration: 0.4 }}
-        />
-      </div>
+        {/* Question */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentIndex}
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -30 }}
+            transition={{ duration: 0.25 }}
+          >
+            <p className="mb-[22px] text-[clamp(1.3rem,3.4vw,1.6rem)] font-extrabold leading-normal">{currentQuestion.text}</p>
 
-      {/* Question */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentIndex}
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -30 }}
-          transition={{ duration: 0.25 }}
-        >
-          <div className="card-premium p-6 mb-6">
-            <p className="text-sm text-muted-foreground mb-1">
-              سؤال {currentIndex + 1} من {questions.length}
-            </p>
-            <p className="text-xl font-semibold leading-relaxed">{currentQuestion.text}</p>
-          </div>
+            {/* Options */}
+            <div className="mb-5 flex flex-col gap-[11px]">
+              {OPTIONS.map((option, idx) => {
+                const isSelected = answers[currentQuestion.id] === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => handleSelectOption(option.value)}
+                    data-selected={isSelected}
+                    className="athar-option"
+                  >
+                    <span className="athar-tile">{["أ", "ب", "ج", "د", "هـ"][idx] ?? idx + 1}</span>
+                    <span className="flex-1">{option.label}</span>
+                    {isSelected && <CheckCircle2 className="h-5 w-5 text-accent" />}
+                  </button>
+                );
+              })}
+            </div>
 
-          {/* Options */}
-          <div className="space-y-3 mb-6">
-            {OPTIONS.map((option) => {
-              const isSelected = answers[currentQuestion.id] === option.value;
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => handleSelectOption(option.value)}
-                  className={`w-full p-4 rounded-xl border-2 text-right transition-all duration-200 flex items-center justify-between ${
-                    isSelected
-                      ? "border-accent bg-accent/10 shadow-sm"
-                      : "border-border bg-card hover:border-accent/40 hover:bg-secondary/50"
-                  }`}
-                >
-                  <span className={`text-base font-medium ${isSelected ? "text-accent-foreground" : "text-foreground"}`}>
-                    {option.label}
-                  </span>
-                  {isSelected && <CheckCircle2 className="w-5 h-5 text-accent" />}
-                </button>
-              );
-            })}
-          </div>
+            {/* Reassurance */}
+            <div className="flex items-center gap-3 rounded-[14px] border border-success/25 bg-success/5 px-4 py-3.5 text-[0.92rem] font-semibold text-success">
+              <ShieldCheck className="h-[18px] w-[18px] flex-none" />
+              مفيش إجابة صح أو غلط… اختار اللي يشبهك.
+            </div>
+          </motion.div>
+        </AnimatePresence>
 
-          {/* Reassurance */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center mb-8">
-            <ShieldCheck className="w-4 h-4" />
-            مفيش إجابة صح أو غلط… اختار اللي يشبهك.
-          </div>
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Navigation */}
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={handlePrev}
-          disabled={currentIndex === 0}
-          className="gap-2 rounded-xl h-11"
-        >
-          <ArrowRight className="w-4 h-4" />
-          السابق
-        </Button>
-        <Button
-          onClick={handleNext}
-          disabled={!canProceed}
-          className="gap-2 btn-gradient rounded-xl h-11 px-8"
-        >
-          {nextBtnLabel}
-          {canProceed && <ArrowLeft className="w-4 h-4" />}
-        </Button>
+        {/* Navigation */}
+        <div className="athar-foot">
+          <Button variant="outline" onClick={handlePrev} disabled={currentIndex === 0} className={btnOutline}>
+            <ArrowRight className="h-4 w-4" />
+            السابق
+          </Button>
+          <Button onClick={handleNext} disabled={!canProceed} className={btnPrimary}>
+            {nextBtnLabel}
+            {canProceed && <ArrowLeft className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
     </div>
   );
