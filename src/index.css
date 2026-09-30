@@ -175,6 +175,21 @@
     box-shadow: 0 1px 2px hsl(var(--hero-to) / 0.04), 0 30px 60px -42px hsl(var(--hero-to) / 0.3);
   }
 
+  /* Page frame used by journey and portal screens (prototype `.page`) */
+  .athar-page {
+    @apply mx-auto w-full max-w-[820px] pb-16;
+  }
+
+  /* Text inputs / select triggers (prototype `.fld input`) */
+  .athar-field {
+    @apply h-auto rounded-[11px] border-[1.5px] border-border bg-card px-[15px] py-[13px] text-base focus-visible:border-accent focus-visible:ring-0 focus-visible:ring-offset-0;
+  }
+
+  /* Back / next row under a card (prototype `.foot`) */
+  .athar-foot {
+    @apply mt-7 flex flex-wrap items-center justify-between gap-3;
+  }
+
   /* Selectable option row (MCQ / branch) */
   .athar-option {
     @apply flex w-full items-center gap-3.5 rounded-[13px] border-[1.5px] border-border bg-card px-[18px] py-4 text-start text-base font-semibold text-card-foreground transition-colors duration-150;
@@ -221,7 +236,9 @@
   /* Gradient accent button */
   .btn-gradient {
     background: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)));
-    @apply text-accent-foreground font-bold transition-all duration-300;
+    @apply font-bold transition-all duration-300;
+    /* Navy label on amber, as in the prototype `.btn-p` — wins over Button variant text colours */
+    color: hsl(var(--accent-foreground)) !important;
   }
   .btn-gradient:hover {
     filter: brightness(1.08);
