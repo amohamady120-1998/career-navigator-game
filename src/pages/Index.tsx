@@ -217,6 +217,27 @@ const Index = () => {
         </div>
       </section>
 
+      {/* ── How it works ── */}
+      <section className="px-5 pb-8 relative z-10">
+        <div className="max-w-3xl mx-auto">
+          <h3 className="text-center text-primary-foreground/55 text-sm font-bold mb-5">كيف تسير الرحلة؟</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { n: "١", t: "نقطة البداية", d: "تتهيّأ وتقيس انطلاقك." },
+              { n: "٢", t: "اعرف نفسك", d: "تكتشف ميولك واختياراتك." },
+              { n: "٣", t: "جرّب واختبر", d: "تتعمّق وتعيش التخصص." },
+              { n: "٤", t: "قرارك وأثرك", d: "تخرج بتقرير وشهادة." },
+            ].map((s) => (
+              <div key={s.n} className="rounded-2xl bg-primary-foreground/5 border border-primary-foreground/10 p-4">
+                <div className="w-9 h-9 rounded-xl bg-accent/15 text-accent font-extrabold flex items-center justify-center mb-3">{s.n}</div>
+                <p className="font-bold text-primary-foreground text-sm">{s.t}</p>
+                <p className="text-primary-foreground/50 text-xs mt-1 leading-relaxed">{s.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Secondary Links ── */}
       <section className="px-5 pb-8 relative z-10">
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-primary-foreground/50">
