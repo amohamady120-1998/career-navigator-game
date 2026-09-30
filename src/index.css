@@ -215,6 +215,11 @@
     color: hsl(var(--hero-foreground));
   }
 
+  .dark .athar-tile {
+    background: hsl(var(--accent) / 0.15);
+    color: hsl(var(--accent));
+  }
+
   /* Amber gradient progress track */
   .athar-track {
     @apply h-1.5 overflow-hidden rounded-full bg-muted;
