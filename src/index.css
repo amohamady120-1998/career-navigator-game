@@ -60,6 +60,13 @@
     --gradient-end: 25 95% 48%;
     --shadow-accent: 38 95% 56%;
     --glass-bg: 0 0% 100% / 0.7;
+
+    /* Hero band — signature navy moment (stays navy in both themes) */
+    --hero-from: 212 68% 15%;
+    --hero-to: 214 81% 10%;
+    --hero-foreground: 0 0% 100%;
+    --hero-muted: 212 34% 82%;
+    --hero-subtle: 211 25% 70%;
   }
 
   .dark {
@@ -106,6 +113,9 @@
     --sidebar-ring: 38 95% 56%;
 
     --glass-bg: 214 60% 10% / 0.7;
+
+    --hero-from: 212 62% 13%;
+    --hero-to: 214 81% 8%;
   }
 }
 
@@ -129,6 +139,69 @@
 }
 
 @layer components {
+  /* ── Athar prototype primitives ── */
+  .hero-band {
+    @apply relative overflow-hidden rounded-[22px] mb-6;
+    background: linear-gradient(150deg, hsl(var(--hero-from)), hsl(var(--hero-to)));
+    color: hsl(var(--hero-foreground));
+    padding: clamp(24px, 3.5vw, 36px);
+    box-shadow: 0 34px 66px -38px hsl(var(--hero-to) / 0.5);
+  }
+  .hero-band::before {
+    content: "";
+    position: absolute;
+    top: -45%;
+    inset-inline-start: -8%;
+    width: 54%;
+    height: 180%;
+    background: radial-gradient(closest-side, hsl(var(--accent) / 0.2), transparent 70%);
+    pointer-events: none;
+  }
+  .hero-band::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.04;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  .hero-band > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .athar-card {
+    @apply bg-card text-card-foreground border border-border rounded-[20px] p-5 md:p-[26px];
+    box-shadow: 0 1px 2px hsl(var(--hero-to) / 0.04), 0 30px 60px -42px hsl(var(--hero-to) / 0.3);
+  }
+
+  /* Selectable option row (MCQ / branch) */
+  .athar-option {
+    @apply flex w-full items-center gap-3.5 rounded-[13px] border-[1.5px] border-border bg-card px-[18px] py-4 text-start text-base font-semibold text-card-foreground transition-colors duration-150;
+  }
+  .athar-option:hover {
+    @apply border-accent bg-accent/5;
+  }
+  .athar-option[data-selected="true"] {
+    @apply border-accent bg-accent/10;
+  }
+
+  /* Navy letter / number tile used inside options */
+  .athar-tile {
+    @apply grid h-[34px] w-[34px] flex-none place-items-center rounded-[10px] text-sm font-extrabold;
+    background: hsl(var(--hero-to));
+    color: hsl(var(--hero-foreground));
+  }
+
+  /* Amber gradient progress track */
+  .athar-track {
+    @apply h-1.5 overflow-hidden rounded-full bg-muted;
+  }
+  .athar-track > i {
+    @apply block h-full rounded-full transition-[width] duration-500;
+    background: linear-gradient(90deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)));
+  }
+
   /* Premium card with subtle hover lift */
   .card-premium {
     @apply bg-card border border-border rounded-xl shadow-sm transition-all duration-300;
