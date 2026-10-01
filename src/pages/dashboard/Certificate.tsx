@@ -6,8 +6,23 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Printer, Award, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { QRCodeSVG } from "qrcode.react";
 import { HeroBand } from "@/components/HeroBand";
+import { RadarChart } from "@/components/RadarChart";
 import { btnOutline, btnPrimary } from "@/lib/athar";
+
+/** Public verification lives on the production domain, not the hosting origin. */
+const VERIFY_HOST = "athar.uniex.tech";
+
+/** Fallback name used by older certificates when the profile had no name. */
+const PLACEHOLDER_NAME = "طالب أثر";
+
+type CertificateDetails = {
+  fullName: string | null;
+  hollandCode: string | null;
+  hollandScores: Record<string, number> | null;
+  topMajor: string | null;
+};
 
 function generateCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -27,6 +42,12 @@ export default function Certificate() {
     issued_at: string;
   } | null>(null);
   const [issuing, setIssuing] = useState(false);
+  const [details, setDetails] = useState<CertificateDetails>({
+    fullName: null,
+    hollandCode: null,
+    hollandScores: null,
+    topMajor: null,
+  });
 
   useEffect(() => {
     (async () => {
@@ -68,6 +89,63 @@ export default function Certificate() {
         .eq("user_id", session.user.id)
         .maybeSingle();
 
+      // Student details shown on the certificate
+      const [{ data: profile }, { data: holland }, { data: reportStep }] = await Promise.all([
+        supabase.from("profiles").select("full_name").eq("user_id", session.user.id).maybeSingle(),
+        supabase
+          .from("holland_results")
+          .select("top_code, scores")
+          .eq("user_id", session.user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase.from("journey_steps").select("id").eq("slug", "initial-report").maybeSingle(),
+      ]);
+
+      // Closest destination = first (highest-fit) major of the initial report
+      let topMajor: string | null = null;
+      if (reportStep) {
+        const { data: reportProgress } = await supabase
+          .from("user_progress")
+          .select("meta_data")
+          .eq("user_id", session.user.id)
+          .eq("step_id", reportStep.id)
+          .maybeSingle();
+        const majors = (reportProgress?.meta_data as { majors?: { title?: string }[] } | null)?.majors;
+        topMajor = majors?.[0]?.title ?? null;
+      }
+      // Fallback: the student's own first choice
+      if (!topMajor) {
+        const { data: shortlist } = await supabase
+          .from("student_shortlist")
+          .select("ranking_ids, major_ids")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        const firstId = (shortlist?.ranking_ids as string[] | null)?.[0] ?? (shortlist?.major_ids as string[] | null)?.[0];
+        if (firstId) {
+          const { data: major } = await supabase.from("majors").select("name_ar").eq("id", firstId).maybeSingle();
+          topMajor = major?.name_ar ?? null;
+        }
+      }
+
+      const realName = profile?.full_name?.trim() || null;
+      setDetails({
+        fullName: realName,
+        hollandCode: holland?.top_code ?? null,
+        hollandScores: (holland?.scores as Record<string, number> | null) ?? null,
+        topMajor,
+      });
+
+      // Older certificates may have been issued with the placeholder name; store the real one
+      // so the public verification page shows it too.
+      if (cert && realName && cert.full_name === PLACEHOLDER_NAME) {
+        const { error: renameError } = await supabase
+          .from("certificates")
+          .update({ full_name: realName })
+          .eq("user_id", session.user.id);
+        if (!renameError) cert.full_name = realName;
+      }
+
       if (cert) setCertificate(cert);
       setLoading(false);
     })();
@@ -86,7 +164,10 @@ export default function Certificate() {
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      const fullName = profile?.full_name || "طالب أثر";
+      const fullName =
+        profile?.full_name?.trim() ||
+        (session.user.user_metadata?.full_name as string | undefined)?.trim() ||
+        PLACEHOLDER_NAME;
       const code = generateCode();
 
       const { data, error } = await supabase.from("certificates").upsert({
@@ -174,7 +255,8 @@ export default function Certificate() {
     year: "numeric", month: "long", day: "numeric",
   });
 
-  const verifyUrl = `${window.location.origin}/verify/${certificate.certificate_code}`;
+  const verifyUrl = `https://${VERIFY_HOST}/verify/${certificate.certificate_code}`;
+  const displayName = details.fullName || certificate.full_name;
 
   return (
     <div className="athar-page" dir="rtl">
@@ -189,6 +271,13 @@ export default function Certificate() {
           <span aria-hidden className="pointer-events-none absolute inset-4 rounded-md border-2 border-gold-light">
             <span className="absolute inset-1.5 rounded-[3px] border border-gold-pale" />
           </span>
+
+          {/* Faint Holland radar watermark (prototype `.fc-radar`) */}
+          {details.hollandScores && (
+            <div aria-hidden className="pointer-events-none absolute inset-0 grid place-items-center opacity-[0.06]">
+              <RadarChart variant="watermark" values={details.hollandScores} className="w-[64%] max-w-none" ariaLabel="" />
+            </div>
+          )}
 
           <div className="relative z-[2] flex w-full max-w-[440px] flex-col items-center text-center">
             <div className="mb-4 flex items-center gap-[9px] font-semibold">
@@ -206,7 +295,7 @@ export default function Certificate() {
             </div>
             <h1 className="mb-3.5 text-[clamp(1.5rem,4vw,2rem)] font-bold">شهادة إتمام</h1>
             <p className="mb-2 text-sm text-muted-foreground">رحلة أثر للتوجيه المهني · يُشهد بأن</p>
-            <h2 className="m-0 text-[clamp(2rem,5vw,2.7rem)] font-extrabold">{certificate.full_name}</h2>
+            <h2 className="m-0 text-[clamp(2rem,5vw,2.7rem)] font-extrabold">{displayName}</h2>
             <div aria-hidden className="relative mb-[18px] mt-3.5 h-0.5 w-[min(240px,70%)] [background:linear-gradient(90deg,transparent,hsl(var(--gold-light))_25%,hsl(var(--gold-pale))_50%,hsl(var(--gold-light))_75%,transparent)]">
               <span className="absolute left-1/2 top-[-4px] h-2 w-2 -translate-x-1/2 rounded-full bg-gold-light shadow-[0_0_0_3px_hsl(var(--cream))]" />
             </div>
@@ -215,15 +304,10 @@ export default function Certificate() {
               شاملةً الاختبارات والمحاكاة والتقرير النهائي.
             </p>
 
-            <div className="mt-[22px] inline-flex overflow-hidden rounded-[14px] border border-gold/30 bg-gold-light/5">
-              <div className="px-[clamp(16px,3vw,24px)] py-[11px]">
-                <div className="text-[0.95rem] font-bold">{completionDate}</div>
-                <div className="mt-[3px] text-[0.66rem] text-muted-foreground">تاريخ الإصدار</div>
-              </div>
-              <div className="border-s border-gold/20 px-[clamp(16px,3vw,24px)] py-[11px]">
-                <div className="font-mono text-[0.95rem] font-bold" dir="ltr">{certificate.certificate_code}</div>
-                <div className="mt-[3px] text-[0.66rem] text-muted-foreground">رمز التحقق</div>
-              </div>
+            <div className="mt-[22px] inline-flex max-w-full overflow-hidden rounded-[14px] border border-gold/30 bg-gold-light/5">
+              <MetaCell value={<span dir="ltr">{details.hollandCode ?? "—"}</span>} label="النمط المهني" />
+              <MetaCell value={details.topMajor ?? "—"} label="الوجهة الأقرب" />
+              <MetaCell value={completionDate} label="تاريخ الإصدار" />
             </div>
 
             <div className="mt-[26px] flex w-full flex-col items-center justify-between gap-[22px] sm:flex-row sm:items-end">
@@ -241,9 +325,22 @@ export default function Certificate() {
               </div>
             </div>
 
-            <div className="mt-[22px] w-full border-t border-gold/30 pt-[18px] text-center">
-              <b className="block text-[0.8rem] font-semibold">للتحقّق من صحة الشهادة</b>
-              <span className="break-all text-[0.7rem] text-muted-foreground" dir="ltr">{verifyUrl}</span>
+            <div className="mt-[22px] flex w-full items-center justify-center gap-3 border-t border-gold/30 pt-[18px]">
+              <QRCodeSVG
+                value={verifyUrl}
+                size={48}
+                level="M"
+                bgColor="transparent"
+                fgColor="currentColor"
+                className="flex-none rounded text-ink"
+                aria-label="رمز QR للتحقّق من الشهادة"
+              />
+              <div className="min-w-0 text-start">
+                <b className="block text-[0.8rem] font-semibold">للتحقّق من صحة الشهادة</b>
+                <span className="block break-all text-[0.7rem] text-muted-foreground" dir="ltr">
+                  {certificate.certificate_code} · {VERIFY_HOST}/verify
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -262,6 +359,15 @@ export default function Certificate() {
           الخطوة التالية <ArrowLeft className="h-4 w-4" />
         </Button>
       </div>
+    </div>
+  );
+}
+
+function MetaCell({ value, label }: { value: React.ReactNode; label: string }) {
+  return (
+    <div className="min-w-0 px-[clamp(12px,3vw,24px)] py-[11px] [&:not(:first-child)]:border-s [&:not(:first-child)]:border-gold/20">
+      <div className="text-[0.95rem] font-bold">{value}</div>
+      <div className="mt-[3px] text-[0.66rem] text-muted-foreground">{label}</div>
     </div>
   );
 }
