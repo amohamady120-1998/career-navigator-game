@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, ArrowLeft, Video, Target, AlertCircle, CheckCircle2, Briefcase, Sparkles, Map } from "lucide-react";
+import { Loader2, ArrowLeft, Video, Target, AlertCircle, CheckCircle2, Briefcase, Sparkles, Map, Play } from "lucide-react";
 import { HeroBand, HeroBandSubtle } from "@/components/HeroBand";
 import { btnPrimary, toArabicDigits } from "@/lib/athar";
 import { toast } from "sonner";
@@ -64,6 +64,21 @@ const getMajorData = (majorName: string): MajorData => {
   };
 };
 
+// --- VIDEO SEGMENTS (YouTube, unlisted) ---
+type VideoSegment = { id: string; title: string; desc: string; duration: string };
+
+const aiSegments: VideoSegment[] = [
+  { id: "TRkTKt440uk", title: "ليه الذكاء الاصطناعي؟ — قصة البداية", desc: "كيف يغيّر الذكاء الاصطناعي حياتنا — من قصة واقعية إلى قرار دراسته.", duration: "١:٢٥" },
+];
+
+/** Segments per major; majors without an entry keep the "coming soon" banner. */
+const getMajorSegments = (majorName: string): VideoSegment[] =>
+  majorName.includes("الذكاء الاصطناعي") ? aiSegments : [];
+
+/** Embed with minimal YouTube branding. */
+const youtubeEmbedUrl = (id: string) =>
+  `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&playsinline=1&iv_load_policy=3`;
+
 const COMFORT_LEVELS: ComfortLevel[] = ["مريح جدًا", "مقبول", "متردد", "مش مريح"];
 const COMFORT_EMOJIS: Record<ComfortLevel, string> = { "مريح جدًا": "🤩", "مقبول": "🙂", "متردد": "🤔", "مش مريح": "😰" };
 
@@ -86,6 +101,8 @@ export default function ExploreMajorDynamic() {
   const [comfortLevels, setComfortLevels] = useState<Record<number, ComfortLevel>>({});
   const [scenarioChoices, setScenarioChoices] = useState<Record<number, number>>({});
   const [reflections, setReflections] = useState({ q1: "", q2: "", q3: "" });
+  const segments = getMajorSegments(majorData.name);
+  const [activeSegment, setActiveSegment] = useState(0);
 
   const storageKey = `athar_explore_${majorNameParam}`;
 
@@ -240,18 +257,64 @@ export default function ExploreMajorDynamic() {
       </HeroBand>
 
       <div className="athar-card">
-        {/* BANNER */}
-        <div
-          className="relative mb-6 grid place-items-center overflow-hidden rounded-[15px] px-5 py-8 text-center [background:radial-gradient(120%_120%_at_30%_20%,hsl(var(--hero-from)),hsl(var(--hero-to)))]"
-        >
-          <span className="btn-gradient mb-3 grid h-[60px] w-[60px] place-items-center rounded-full shadow-premium-lg">
-            <Video className="h-6 w-6" />
-          </span>
-          <p className="text-sm font-semibold text-hero-foreground">
-            النسخة المصورة (وثائقي 60 دقيقة من سنة أولى للتخرج) ستكون متاحة قريباً.
-          </p>
-          <p className="mt-1 text-xs text-hero-muted">الآن: عِش التجربة التفاعلية الواقعية واتخذ قراراتك بنفسك.</p>
-        </div>
+        {segments.length > 0 ? (
+          /* VIDEO PLAYER + SEGMENT LIST (prototype s9) */
+          <div className="mb-6">
+            <div className="relative mb-4 aspect-video overflow-hidden rounded-[15px] bg-hero-to">
+              <iframe
+                key={segments[activeSegment].id}
+                src={youtubeEmbedUrl(segments[activeSegment].id)}
+                title={segments[activeSegment].title}
+                className="absolute inset-0 h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+                loading="lazy"
+              />
+            </div>
+            <p className="mb-2 text-sm leading-relaxed text-muted-foreground">{segments[activeSegment].desc}</p>
+            <ol>
+              {segments.map((seg, i) => {
+                const current = i === activeSegment;
+                return (
+                  <li key={seg.id} className="border-b border-border/60 last:border-b-0">
+                    <button
+                      type="button"
+                      onClick={() => setActiveSegment(i)}
+                      aria-current={current ? "true" : undefined}
+                      className={`flex w-full items-center gap-[13px] rounded-xl px-2 py-[13px] text-start transition-colors ${
+                        current ? "bg-accent/10" : "hover:bg-muted/60"
+                      }`}
+                    >
+                      <span
+                        className={`grid h-[26px] w-[26px] flex-none place-items-center rounded-lg text-[0.78rem] font-extrabold ${
+                          current ? "btn-gradient" : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {current ? <Play className="h-3 w-3 fill-current" /> : toArabicDigits(i + 1)}
+                      </span>
+                      <span className={`flex-1 text-[0.93rem] font-bold ${current ? "text-foreground" : ""}`}>{seg.title}</span>
+                      <span className="text-[0.8rem] text-muted-foreground">{seg.duration}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        ) : (
+          /* BANNER */
+          <div
+            className="relative mb-6 grid place-items-center overflow-hidden rounded-[15px] px-5 py-8 text-center [background:radial-gradient(120%_120%_at_30%_20%,hsl(var(--hero-from)),hsl(var(--hero-to)))]"
+          >
+            <span className="btn-gradient mb-3 grid h-[60px] w-[60px] place-items-center rounded-full shadow-premium-lg">
+              <Video className="h-6 w-6" />
+            </span>
+            <p className="text-sm font-semibold text-hero-foreground">
+              النسخة المصورة (وثائقي 60 دقيقة من سنة أولى للتخرج) ستكون متاحة قريباً.
+            </p>
+            <p className="mt-1 text-xs text-hero-muted">الآن: عِش التجربة التفاعلية الواقعية واتخذ قراراتك بنفسك.</p>
+          </div>
+        )}
 
         {!isReflectionStage && currentStageData ? (
           <div className="space-y-6">
