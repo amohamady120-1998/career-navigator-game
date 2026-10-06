@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, ArrowLeft, Video, Target, AlertCircle, CheckCircle2, Briefcase, Sparkles, Map } from "lucide-react";
 import { HeroBand, HeroBandSubtle } from "@/components/HeroBand";
+import { MajorVideoPlayer, type VideoSegment } from "@/components/MajorVideoPlayer";
 import { btnPrimary, toArabicDigits } from "@/lib/athar";
 import { toast } from "sonner";
 
@@ -64,6 +65,15 @@ const getMajorData = (majorName: string): MajorData => {
   };
 };
 
+// --- VIDEO SEGMENTS (YouTube, unlisted) ---
+const aiSegments: VideoSegment[] = [
+  { id: "TRkTKt440uk", title: "ليه الذكاء الاصطناعي؟ — قصة البداية", desc: "كيف يغيّر الذكاء الاصطناعي حياتنا — من قصة واقعية إلى قرار دراسته.", duration: "١:٢٥" },
+];
+
+/** Segments per major; majors without an entry keep the "coming soon" banner. */
+const getMajorSegments = (majorName: string): VideoSegment[] =>
+  majorName.includes("الذكاء الاصطناعي") ? aiSegments : [];
+
 const COMFORT_LEVELS: ComfortLevel[] = ["مريح جدًا", "مقبول", "متردد", "مش مريح"];
 const COMFORT_EMOJIS: Record<ComfortLevel, string> = { "مريح جدًا": "🤩", "مقبول": "🙂", "متردد": "🤔", "مش مريح": "😰" };
 
@@ -86,6 +96,7 @@ export default function ExploreMajorDynamic() {
   const [comfortLevels, setComfortLevels] = useState<Record<number, ComfortLevel>>({});
   const [scenarioChoices, setScenarioChoices] = useState<Record<number, number>>({});
   const [reflections, setReflections] = useState({ q1: "", q2: "", q3: "" });
+  const segments = getMajorSegments(majorData.name);
 
   const storageKey = `athar_explore_${majorNameParam}`;
 
@@ -240,18 +251,23 @@ export default function ExploreMajorDynamic() {
       </HeroBand>
 
       <div className="athar-card">
-        {/* BANNER */}
-        <div
-          className="relative mb-6 grid place-items-center overflow-hidden rounded-[15px] px-5 py-8 text-center [background:radial-gradient(120%_120%_at_30%_20%,hsl(var(--hero-from)),hsl(var(--hero-to)))]"
-        >
-          <span className="btn-gradient mb-3 grid h-[60px] w-[60px] place-items-center rounded-full shadow-premium-lg">
-            <Video className="h-6 w-6" />
-          </span>
-          <p className="text-sm font-semibold text-hero-foreground">
-            النسخة المصورة (وثائقي 60 دقيقة من سنة أولى للتخرج) ستكون متاحة قريباً.
-          </p>
-          <p className="mt-1 text-xs text-hero-muted">الآن: عِش التجربة التفاعلية الواقعية واتخذ قراراتك بنفسك.</p>
-        </div>
+        {segments.length > 0 ? (
+          /* VIDEO PLAYER + SEGMENT LIST (prototype s9) */
+          <MajorVideoPlayer segments={segments} className="mb-6" />
+        ) : (
+          /* BANNER */
+          <div
+            className="relative mb-6 grid place-items-center overflow-hidden rounded-[15px] px-5 py-8 text-center [background:radial-gradient(120%_120%_at_30%_20%,hsl(var(--hero-from)),hsl(var(--hero-to)))]"
+          >
+            <span className="btn-gradient mb-3 grid h-[60px] w-[60px] place-items-center rounded-full shadow-premium-lg">
+              <Video className="h-6 w-6" />
+            </span>
+            <p className="text-sm font-semibold text-hero-foreground">
+              النسخة المصورة (وثائقي 60 دقيقة من سنة أولى للتخرج) ستكون متاحة قريباً.
+            </p>
+            <p className="mt-1 text-xs text-hero-muted">الآن: عِش التجربة التفاعلية الواقعية واتخذ قراراتك بنفسك.</p>
+          </div>
+        )}
 
         {!isReflectionStage && currentStageData ? (
           <div className="space-y-6">

@@ -20,8 +20,11 @@ interface RadarChartProps {
   /** Value that maps to the outer ring. Defaults to the largest value (min 1). */
   max?: number;
   labels?: Partial<Record<HollandCode, string>>;
-  /** "light" for cards, "dark" for placement on a HeroBand / navy surface. */
-  variant?: "light" | "dark";
+  /**
+   * "light" for cards, "dark" for placement on a HeroBand / navy surface,
+   * "watermark" for the faint label-less mark behind the certificate (prototype `.fc-radar`).
+   */
+  variant?: "light" | "dark" | "watermark";
   className?: string;
   /** Accessible summary; defaults to a list of the labels with their values. */
   ariaLabel?: string;
@@ -49,6 +52,7 @@ export function RadarChart({ values, max, labels, variant = "light", className, 
   const pts = nums.map((n, i) => point(i, (Math.min(n, top) / top) * R));
   const names = { ...HOLLAND_LABELS_AR, ...labels };
   const dark = variant === "dark";
+  const mark = variant === "watermark";
 
   const summary =
     ariaLabel ?? HOLLAND_ORDER.map((c, i) => `${names[c]}: ${Math.round(nums[i])}`).join("، ");
@@ -68,7 +72,7 @@ export function RadarChart({ values, max, labels, variant = "light", className, 
           points={ring(R * f)}
           fill="none"
           strokeWidth={1}
-          className={dark ? "stroke-hero-foreground/15" : "stroke-border"}
+          className={mark ? "stroke-ink" : dark ? "stroke-hero-foreground/15" : "stroke-border"}
         />
       ))}
       {HOLLAND_ORDER.map((_, i) => {
@@ -81,17 +85,19 @@ export function RadarChart({ values, max, labels, variant = "light", className, 
             x2={p.x}
             y2={p.y}
             strokeWidth={1}
-            className={dark ? "stroke-hero-foreground/10" : "stroke-border/70"}
+            className={mark ? "stroke-ink" : dark ? "stroke-hero-foreground/10" : "stroke-border/70"}
           />
         );
       })}
       <polygon
         points={pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ")}
-        strokeWidth={2.5}
+        strokeWidth={mark ? 2 : 2.5}
         strokeLinejoin="round"
         className={cn(
-          "motion-safe:animate-radar-grow [transform-box:fill-box] [transform-origin:center]",
-          dark ? "fill-accent/25 stroke-accent" : "fill-accent/15 stroke-[hsl(var(--gradient-end))]",
+          mark
+            ? "fill-gold stroke-ink"
+            : "motion-safe:animate-radar-grow [transform-box:fill-box] [transform-origin:center]",
+          !mark && (dark ? "fill-accent/25 stroke-accent" : "fill-accent/15 stroke-[hsl(var(--gradient-end))]"),
         )}
       />
       {pts.map((p, i) => (
@@ -99,11 +105,11 @@ export function RadarChart({ values, max, labels, variant = "light", className, 
           key={i}
           cx={p.x}
           cy={p.y}
-          r={4.5}
-          className={dark ? "fill-accent" : "fill-[hsl(var(--gradient-end))]"}
+          r={mark ? 5 : 4.5}
+          className={mark ? "fill-ink" : dark ? "fill-accent" : "fill-[hsl(var(--gradient-end))]"}
         />
       ))}
-      {HOLLAND_ORDER.map((c, i) => {
+      {!mark && HOLLAND_ORDER.map((c, i) => {
         const p = point(i, R + 20);
         const anchor = Math.abs(p.x - C) < 1 ? "middle" : p.x > C ? "start" : "end";
         const dy = i === 0 ? -4 : i === 3 ? 14 : 5;

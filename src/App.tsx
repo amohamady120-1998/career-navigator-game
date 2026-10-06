@@ -61,6 +61,7 @@ import IntroVideo from "./pages/onboarding/IntroVideo";
 import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import PreviewExplore from "./pages/PreviewExplore";
 import { ConsentGate } from "./components/ConsentGate";
 import ParentActivationConsume from "./pages/activate/ParentActivationConsume";
 import ContactUs from "./pages/ContactUs";
@@ -95,6 +96,8 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
+              {/* TEMPORARY: video player preview — remove after review */}
+              <Route path="/preview-explore" element={<PreviewExplore />} />
               <Route path="/onboarding/intro-video" element={<IntroVideo />} />
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<IntroStep />} />
